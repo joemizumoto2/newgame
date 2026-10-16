@@ -79,7 +79,8 @@ input[type=range]:focus-visible{outline:3px solid var(--accent);outline-offset:3
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;width:min(260px,100%)}
 .bar i{display:block;height:100%;background:var(--fg);transition:width .3s}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 5px 7px;min-width:0;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 5px 7px;min-width:0;cursor:pointer;text-align:left;font:inherit;color:inherit;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}
+.card .c{align-self:stretch}
 .card .c{height:44px;border-radius:2px}
 .card.no .c{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--line) 6px 7px);}
 .card .n{font-size:12px;font-weight:700;margin-top:5px;line-height:1.3;overflow-wrap:anywhere}
@@ -124,6 +125,22 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .spout.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
 .spout:disabled{opacity:.4;cursor:not-allowed}
 .spout:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* ---- しずくモード ---- */
+.droprows{display:flex;flex-direction:column;gap:10px}
+.droprow{display:grid;grid-template-columns:3.2em repeat(2,minmax(0,1fr));gap:10px;align-items:center}
+.droprow > b{font-size:15px}
+.dropbtn{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.dropbtn .dot{border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1px solid rgba(0,0,0,.2);flex:none}
+.dropbtn .dot.big{width:24px;height:24px}.dropbtn .dot.small{width:12px;height:12px}
+.dropbtn:active{transform:translateY(1px)}
+.dropbtn:disabled{opacity:.4;cursor:not-allowed}
+.dropbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.meter{display:flex;gap:4px;flex-wrap:wrap}
+.meter i{width:14px;height:14px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1px solid var(--muted)}
+.meter i.used{background:var(--fg);border-color:var(--fg)}
+.cup.bump{animation:bump .25s}
+@keyframes bump{50%{transform:scale(1.02)}}
+.badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -131,11 +148,12 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
   <header>
     <div>
       <h1>色名あつめ</h1>
-      <p>赤・緑・青の光と彩度で色を作り、名前のある色を集めます。数値は出ません。お題モードはつまみで合わせ、調合モードは光を注いで、何ができるか試します。</p>
+      <p>赤・緑・青の光と彩度で色を作り、名前のある色を集めます。数値は出ません。お題モードはつまみで合わせます。しずくモードは限られた滴数で、注ぐモードは長押しで光を注いで、何ができるか試します。白に近い繊細な色の一部は、注ぐモードでしか作れません。</p>
     </div>
     <div class="tabs" role="group" aria-label="モード">
       <button id="tab-quiz" aria-pressed="true">お題モード</button>
-      <button id="tab-free" aria-pressed="false">調合モード</button>
+      <button id="tab-drop" aria-pressed="false">しずくモード</button>
+      <button id="tab-free" aria-pressed="false">注ぐモード</button>
     </div>
   </header>
 
@@ -169,6 +187,32 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         </div>
       </div>
 
+    </div>
+  </section>
+
+  <section class="pour" id="bench-drop" hidden>
+    <div class="stage">
+      <div class="cupwrap">
+        <div class="rim"></div>
+        <div class="cup" id="cup-d"></div>
+      </div>
+      <div class="sample" id="sample-d" hidden><i id="sample-d-sw"></i><span><b id="sample-d-name"></b><br><span class="muted" id="sample-d-sub"></span></span></div>
+    </div>
+    <div class="knobs">
+      <div class="actions" style="justify-content:space-between"><span class="muted">器に入るのは <b id="d-cap">12</b> 滴まで</span><div class="meter" id="meter"></div></div>
+      <div class="droprows">
+        <div class="droprow"><b>赤</b><button class="dropbtn" data-ch="0" data-a="64"><span class="dot big" style="background:#ff0000"></span>大きいしずく</button><button class="dropbtn" data-ch="0" data-a="16"><span class="dot small" style="background:#ff0000"></span>小さいしずく</button></div>
+        <div class="droprow"><b>緑</b><button class="dropbtn" data-ch="1" data-a="64"><span class="dot big" style="background:#00ff00"></span>大きいしずく</button><button class="dropbtn" data-ch="1" data-a="16"><span class="dot small" style="background:#00ff00"></span>小さいしずく</button></div>
+        <div class="droprow"><b>青</b><button class="dropbtn" data-ch="2" data-a="64"><span class="dot big" style="background:#0000ff"></span>大きいしずく</button><button class="dropbtn" data-ch="2" data-a="16"><span class="dot small" style="background:#0000ff"></span>小さいしずく</button></div>
+        <div class="droprow"><b>彩度</b><button class="dropbtn" data-ch="s" style="grid-column:span 2"><span class="dot big" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span>彩度のしずく（今の色を鮮やかに）</button></div>
+      </div>
+      <div class="panel">
+        <div class="status" id="d-status">真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。</div>
+        <div class="actions">
+          <button class="btn" id="d-done">仕上げる</button>
+          <button class="btn ghost" id="d-empty">器を空ける</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -213,7 +257,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。見つけた色をタップすると調合モードに見本を出します</span>
+      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。見つけた色をタップすると注ぐモードに見本を出します</span>
     </div>
     <div class="grid" id="grid"></div>
   </section>
@@ -510,13 +554,7 @@ function showSample(c,sub){ $('sample').hidden=false; $('sample-sw').style.backg
 function renderCups(){ $('p-cups').textContent = cups ? `これまでに ${cups} 杯` : ''; }
 $('p-done').onclick=()=>{
   if(finished) return; stopPour(); finished=true; setSpouts(false); $('p-done').disabled=true;
-  cups++; store.set('iro-cups',cups); renderCups();
-  const [n,d]=nearest(cupRGB()), st=$('p-status');
-  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); showSample(n,'新しく見つけた色');
-    st.className='status good'; st.textContent=`「${n.kana}」ができました。図鑑に載せました。`; }
-  else if(d<6){ showSample(n,'図鑑に載っている色'); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
-  else if(d<12){ $('sample').hidden=true; st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
-  else { $('sample').hidden=true; st.className='status'; st.textContent='名前のない色ができました。'; }
+  judgeCup(cupRGB(),$('p-status'),showSample,()=>$('sample').hidden=true);
   $('p-empty').textContent='次の器へ';
 };
 function emptyCup(){ stopPour(); cupC=[0,0,0]; finished=false; setSpouts(true); $('p-done').disabled=false; paintCup();
@@ -524,25 +562,61 @@ function emptyCup(){ stopPour(); cupC=[0,0,0]; finished=false; setSpouts(true); 
   $('p-status').className='status'; $('p-status').textContent='真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。'; }
 $('p-empty').onclick=emptyCup;
 
+// ---------- しずくモード ----------
+// 大きいしずく＝1/4、小さいしずく＝1/16、彩度のしずく＝今の色の鮮やかさを3割ほど上げる。器は12滴まで。
+const DROP_CAP=12, DROP_SAT=0.35;
+let dropC=[0,0,0], dropUsed=0, dropDone=false;
+function satDrop(c){ const [h,s,l]=rgb2hsl(c); return s ? hsl2rgb(h,s+(1-s)*DROP_SAT,l) : c; }
+function renderDrop(){
+  $('cup-d').style.backgroundColor=rgb2hex(dropC);
+  $('meter').innerHTML=Array.from({length:DROP_CAP},(_,i)=>`<i class="${i<dropUsed?'used':''}"></i>`).join('');
+  document.querySelectorAll('.dropbtn').forEach(b=>b.disabled=dropDone||dropUsed>=DROP_CAP);
+  $('d-done').disabled=dropDone;
+}
+document.querySelectorAll('.dropbtn').forEach(b=>b.onclick=()=>{
+  if(dropDone||dropUsed>=DROP_CAP) return;
+  if(b.dataset.ch==='s') dropC=satDrop(dropC); else { const i=+b.dataset.ch; dropC=dropC.slice(); dropC[i]=Math.min(255,dropC[i]+ +b.dataset.a); }
+  dropUsed++; const cup=$('cup-d'); cup.classList.remove('bump'); void cup.offsetWidth; cup.classList.add('bump');
+  if(dropUsed>=DROP_CAP){ $('d-status').className='status'; $('d-status').textContent='器がいっぱいになりました。「仕上げる」を押してください。'; }
+  renderDrop();
+});
+function judgeCup(rgb, st, show, hide){
+  cups++; store.set('iro-cups',cups); renderCups();
+  const [n,d]=nearest(rgb);
+  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); show(n,'新しく見つけた色');
+    st.className='status good'; st.textContent=`「${n.kana}」ができました。図鑑に載せました。`; }
+  else if(d<6){ show(n,'図鑑に載っている色'); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
+  else if(d<12){ hide(); st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
+  else { hide(); st.className='status'; st.textContent='名前のない色ができました。'; }
+}
+function showSampleD(c,sub){ $('sample-d').hidden=false; $('sample-d-sw').style.background=c.hex; $('sample-d-name').textContent=c.kana; $('sample-d-sub').textContent=sub; }
+$('d-done').onclick=()=>{ if(dropDone) return; dropDone=true; renderDrop();
+  judgeCup(dropC,$('d-status'),showSampleD,()=>$('sample-d').hidden=true); $('d-empty').textContent='次の器へ'; };
+$('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropDone=false; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
+  $('d-status').className='status'; $('d-status').textContent='真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。'; renderDrop(); };
+
 function setMode(m){
   mode=m; stopPour();
-  $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-free').setAttribute('aria-pressed',m==='free');
-  $('bench-quiz').hidden=m!=='quiz'; $('bench-pour').hidden=m!=='free';
+  $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-drop').setAttribute('aria-pressed',m==='drop'); $('tab-free').setAttribute('aria-pressed',m==='free');
+  $('bench-quiz').hidden=m!=='quiz'; $('bench-drop').hidden=m!=='drop'; $('bench-pour').hidden=m!=='free';
   if(m==='quiz') renderQuiz();
   update();
 }
 $('tab-quiz').onclick=()=>setMode('quiz');
 $('tab-free').onclick=()=>setMode('free');
+$('tab-drop').onclick=()=>setMode('drop');
 
 // ---------- 図鑑 ----------
 let filter='all';
+// しずくモードの12滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
+const POUR_ONLY=new Set(["aliceblue","azure","blanchedalmond","cornsilk","floralwhite","ghostwhite","honeydew","ivory","lavenderblush","lightgoldenrodyellow","lightyellow","mintcream","oldlace","papayawhip","seashell","snow","whitesmoke"]);
 function renderGrid(flashName){
   $('found-n').textContent=found.size; $('all-n').textContent=COLORS.length;
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const list = COLORS.filter(c => filter==='all' || (filter==='yes') === found.has(c.name));
   $('grid').innerHTML = list.map(c=>{ const has=found.has(c.name);
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色'}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div></button>`; }).join('');
+      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div>${POUR_ONLY.has(c.name)?'<span class="badge">注ぐ限定</span>':''}</button>`; }).join('');
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
   if(!found.has(c.name)) return; setMode('free'); showSample(c,'見本');
@@ -551,6 +625,6 @@ document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
 Object.values(K).forEach(k=>k.addEventListener('input',update));
-renderGrid(); newQuiz(); paintCup(); renderCups(); update();
+renderGrid(); newQuiz(); paintCup(); renderDrop(); renderCups(); update();
 })();
 </script>
