@@ -268,6 +268,10 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="all" aria-pressed="true">すべて</button>
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
+        <button data-f="drop3" aria-pressed="false">しずく金</button>
+        <button data-f="drop2" aria-pressed="false">しずく銀</button>
+        <button data-f="pour3" aria-pressed="false">注ぐ金</button>
+        <button data-f="pour2" aria-pressed="false">注ぐ銀</button>
       </div>
       <span class="muted" style="font-size:13px">未登録の色は名前を伏せて、色の方向だけ出しています。っぽい色で図鑑に載ります。誤差1%のぴったりを一発で作ると金冠、1色だけの継ぎ足しで仕上げると銀冠。冠はしずくと注ぐで別々です。見つけた色をタップすると注ぐモードに見本を出します</span>
     </div>
@@ -638,8 +642,9 @@ function reachDrop(c0,target){ const ok=rgb=>dE(rgb2lab(rgb),target.lab)<EXACT_T
 // 継ぎ足しチャレンジの判定
 function judgeChallenge(rgb, target, st, mode){
   const d=dE(rgb2lab(rgb),target.lab);
-  if(d<EXACT_TH){ record(target,2,mode); st.className='status good'; st.textContent=`「${target.kana}」ぴったり。${MODE_JA[mode]}銀冠です。`; }
-  else { const [n]=nearest(rgb); st.className='status'; st.textContent=`ぴったりには届きませんでした。図鑑は「${target.kana}」っぽい色のままです。`+(n.name!==target.name?'（別の色に近づいていました）':''); }
+  const pct=`差 ${d<0.05?'0.0':d.toFixed(1)}%`;
+  if(d<EXACT_TH){ record(target,2,mode); st.className='status good'; st.textContent=`「${target.kana}」ぴったり（${pct}）。${MODE_JA[mode]}銀冠です。`; }
+  else { const [n]=nearest(rgb); st.className='status'; st.textContent=`ぴったりには届きませんでした（${pct}、ぴったりは1%未満）。図鑑は「${target.kana}」っぽい色のままです。`+(n.name!==target.name?'（別の色に近づいていました）':''); }
 }
 function showSampleD(c,sub){ $('sample-d').hidden=false; $('sample-d-sw').style.background=c.hex; $('sample-d-name').textContent=c.kana; $('sample-d-sub').textContent=sub; }
 $('d-done').onclick=()=>{
@@ -665,6 +670,10 @@ $('tab-drop').onclick=()=>setMode('drop');
 
 // ---------- 図鑑 ----------
 let filter='all';
+function passFilter(c){
+  if(filter==='all') return true;
+  if(filter==='yes'||filter==='no') return (filter==='yes')===found.has(c.name);
+  const m=filter.slice(0,-1), v=+filter.slice(-1); return crowns[m][c.name]===v; }
 // 色の系統とヒント。未発見の色は名前を伏せたまま「暗い青系」のように方向だけ見せる
 const FAMS=[['赤','#d8323c'],['橙','#ee8a2a'],['茶','#8b5a2b'],['黄','#e6c619'],['緑','#3fa34d'],['青緑','#1fa6a6'],['青','#3a63c9'],['紫','#7d45c2'],['桃・赤紫','#d94f9e'],['白っぽい色','#efe9df'],['白・灰・黒','#8a8a8a']];
 function family(c){ const [h,s,l]=rgb2hsl(c.rgb), d=Math.max(...c.rgb)-Math.min(...c.rgb);
@@ -692,9 +701,10 @@ function renderGrid(flashName){
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色、'+c.hint}">
       <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:c.hint}</div>${POUR_ONLY.has(c.name)?'<span class="badge">注ぐ限定</span>':''}</button>`; };
   $('grid').innerHTML = FAMS.map(([f,sw])=>{ const all=COLORS.filter(c=>c.fam===f), got=all.filter(c=>found.has(c.name)).length;
-    const list=all.filter(c => filter==='all' || (filter==='yes') === found.has(c.name));
+    const list=all.filter(passFilter);
     if(!list.length) return '';
     return `<div class="fam"><h3><i style="background:${sw}"></i>${f}<span>${got} / ${all.length}</span></h3><div class="grid">${list.map(card).join('')}</div></div>`; }).join('');
+  if(!$('grid').innerHTML) $('grid').innerHTML='<p class="muted">まだこの条件に当てはまる色はありません。</p>';
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
   if(!found.has(c.name)) return; setMode('free'); showSample(c,'見本');
