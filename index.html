@@ -1,0 +1,1494 @@
+<title>建国サクセス</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: スマホ一列のアプリ。上に国の帯と、建物が増えていく国の挿絵。その下に能力表と「この3年の事業」。3年ごとに年代記が積もる */
+:root{
+  --bg:#E6EBEE; --surface:#FFFFFF; --surface-2:#EFF3F5; --ink:#15202B; --muted:#596673; --line:#D0D9DE;
+  --primary:#25368C; --primary-ink:#FFFFFF; --primary-soft:#E1E5F6;
+  --gold:#8F6300; --gold-bg:#FFF0C2; --blue:#2160C4; --blue-bg:#E0EAFB; --red:#B12F24; --red-bg:#FAE1DC;
+  --atk:#CF4238; --def:#2A66CF; --mob:#138F64; --pow:#C27F06;
+  --good:#138F64; --warn:#B87200; --bad:#BF3328;
+  --f-plain:#C3DBA9; --f-mount:#CDC4B4; --f-sea:#A8CAE2; --f-snow:#E6EEF4; --f-sand:#EAD5A3; --f-mark:rgba(21,32,43,.16);
+  --shadow:0 1px 0 rgba(21,32,43,.04), 0 8px 24px -16px rgba(21,32,43,.35);
+  --font-display:'Dela Gothic One','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+  --font-head:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic','Noto Sans JP',system-ui,sans-serif;
+  --font-body:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic','Noto Sans JP',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E1317; --surface:#172027; --surface-2:#1E2930; --ink:#E6ECF0; --muted:#97A5AF; --line:#2B3740;
+  --primary:#9AA7FF; --primary-ink:#0E1317; --primary-soft:#232B4D;
+  --gold:#EBBE52; --gold-bg:#3A2F12; --blue:#82AAFF; --blue-bg:#1A2944; --red:#FF8A7C; --red-bg:#3C1F1B;
+  --atk:#FF776C; --def:#72A1FF; --mob:#4DCB97; --pow:#F2B947;
+  --good:#4DCB97; --warn:#F2B947; --bad:#FF776C;
+  --f-plain:#2D4128; --f-mount:#3C3830; --f-sea:#1C3448; --f-snow:#2E3A44; --f-sand:#4A3E25; --f-mark:rgba(230,236,240,.14);
+  --shadow:0 1px 0 rgba(0,0,0,.2), 0 10px 26px -18px rgba(0,0,0,.8);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0E1317; --surface:#172027; --surface-2:#1E2930; --ink:#E6ECF0; --muted:#97A5AF; --line:#2B3740;
+  --primary:#9AA7FF; --primary-ink:#0E1317; --primary-soft:#232B4D;
+  --gold:#EBBE52; --gold-bg:#3A2F12; --blue:#82AAFF; --blue-bg:#1A2944; --red:#FF8A7C; --red-bg:#3C1F1B;
+  --atk:#FF776C; --def:#72A1FF; --mob:#4DCB97; --pow:#F2B947;
+  --good:#4DCB97; --warn:#F2B947; --bad:#FF776C;
+  --f-plain:#2D4128; --f-mount:#3C3830; --f-sea:#1C3448; --f-snow:#2E3A44; --f-sand:#4A3E25; --f-mark:rgba(230,236,240,.14);
+  --shadow:0 1px 0 rgba(0,0,0,.2), 0 10px 26px -18px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.app{max-width:560px;margin:0 auto;padding-block:18px 64px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--font-head);font-weight:700;margin:0;text-wrap:balance;line-height:1.3}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+.quiet{background:var(--surface-2);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+
+button{font:inherit;color:inherit}
+.btn{font-weight:700;font-size:16px;padding:14px 18px;border-radius:12px;border:0;background:var(--primary);color:var(--primary-ink);cursor:pointer;width:100%;transition:transform .08s ease}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.btn.sm{width:auto;font-size:14px;padding:9px 14px}
+.link{background:none;border:0;padding:6px 0;color:var(--muted);font-weight:700;cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:10px}
+
+/* タイトル */
+.hero{display:flex;flex-direction:column;gap:14px;padding-block:18px 6px}
+.logo{font-family:var(--font-display);font-weight:400;font-size:clamp(44px, 13vw, 64px);letter-spacing:.02em;line-height:1.05}
+.logo span{display:block;color:var(--primary)}
+.lead{font-size:16px;max-width:34em}
+.steps{display:grid;gap:10px;counter-reset:step;padding:0;margin:0;list-style:none}
+.steps li{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start}
+.steps li::before{counter-increment:step;content:counter(step);font-family:var(--font-head);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary)}
+.steps b{display:block}
+
+/* 能力表 */
+.stats{display:flex;flex-direction:column;gap:7px}
+.srow{display:grid;grid-template-columns:3.2em 1fr 2.2em 1.4em;gap:10px;align-items:center}
+.slabel{font-weight:700;font-size:13px}
+.bar{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:var(--c);transition:width .5s ease}
+.sval{font-family:var(--font-head);font-variant-numeric:tabular-nums;text-align:right;font-size:15px}
+.rk{font-family:var(--font-head);font-size:17px;text-align:center;color:var(--muted)}
+.rk-S{color:var(--gold)} .rk-A{color:var(--atk)} .rk-B{color:var(--pow)} .rk-C{color:var(--mob)} .rk-D{color:var(--def)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.chip.up{color:var(--c)}
+.chip.mult{color:var(--primary);background:var(--primary-soft)}
+.sp{font-size:13px;font-weight:700;padding:3px 10px;border-radius:8px;border:1px solid transparent;white-space:nowrap}
+.sp.gold{background:var(--gold-bg);color:var(--gold);border-color:color-mix(in srgb, var(--gold) 35%, transparent)}
+.sp.blue{background:var(--blue-bg);color:var(--blue)}
+.sp.red{background:var(--red-bg);color:var(--red)}
+.splist{display:flex;flex-direction:column;gap:8px}
+.splist div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.type{font-family:var(--font-head);font-size:13px;padding:3px 10px;border-radius:8px;color:var(--c);background:color-mix(in srgb, var(--c) 14%, transparent);white-space:nowrap}
+
+/* 国の帯 */
+.nation{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.nation h2{font-size:22px;overflow-wrap:anywhere}
+.flag{display:block;border-radius:4px;box-shadow:0 0 0 1px var(--line);flex:none}
+.bigrank{font-family:var(--font-head);font-size:44px;line-height:1;text-align:center}
+.bigrank small{display:block;font-family:var(--font-body);font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+
+/* 問い */
+.qhead{display:flex;justify-content:space-between;align-items:center}
+.pips{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px}
+.pips i{height:6px;border-radius:3px;background:var(--line)}
+.pips i.on{background:var(--primary)}
+.pips i.win{background:var(--good)} .pips i.lose{background:var(--bad)}
+.q{font-size:28px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:6px;box-shadow:var(--shadow)}
+.opt:hover{border-color:var(--primary)}
+.opt.sel{border-color:var(--primary);background:var(--primary-soft)}
+.opt-k{font-family:var(--font-head);font-size:20px}
+.opt-why{font-size:13px;color:var(--muted)}
+
+/* 育成 */
+.period{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.period b{font-family:var(--font-head);font-weight:700;font-size:18px}
+.morale{display:grid;grid-template-columns:3.2em 1fr auto;gap:10px;align-items:center}
+.mstate{font-size:12px;font-weight:700;color:var(--c)}
+.cards{display:grid;gap:10px}
+.pcard{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;box-shadow:var(--shadow)}
+.pcard:hover{border-color:var(--primary)}
+.pcard .ck{font-family:var(--font-head);font-size:19px}
+.pcard .cd{font-size:13px;color:var(--muted)}
+.pcard .cg{font-size:12px;font-weight:700;color:var(--primary)}
+.pcard.comp-card{background:var(--gold-bg);border-color:color-mix(in srgb, var(--gold) 30%, transparent)}
+.pcard.comp-card .cg{color:var(--gold)}
+.roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.comp{background:var(--surface-2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.comp b{font-family:var(--font-head);font-weight:700;font-size:15px}
+.comp .bond{color:var(--gold);letter-spacing:.15em;font-size:12px}
+.comp.off{opacity:.55}
+.frame{border-radius:14px;overflow:hidden;border:1px solid var(--line);aspect-ratio:16/9;background:var(--surface-2);max-width:100%}
+.frame svg{display:block;width:100%;height:100%}
+.pcard{flex-direction:row;align-items:center;gap:12px}
+.pcard .thumb{flex:none;width:112px;aspect-ratio:104/58;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.pcard .thumb svg{display:block;width:100%;height:100%}
+.pcard .ptext{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cause{align-self:flex-start;font-size:12px;font-weight:700;color:var(--gold);background:var(--gold-bg);padding:3px 10px;border-radius:999px}
+.cause::before{content:"↩ "}
+.chain{list-style:none;margin:0 0 6px 6px;padding:0 0 0 14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:14px}
+.chain li{position:relative;display:grid;grid-template-columns:3.4em 1fr;gap:6px}
+.chain li::before{content:"";position:absolute;left:-19px;top:.55em;width:8px;height:8px;border-radius:50%;background:var(--line)}
+.chain li.root::before{background:var(--gold)}
+.chain li.root{font-weight:700}
+.chain .y{font-family:var(--font-head);color:var(--muted);font-variant-numeric:tabular-nums}
+.verdict-line{text-align:center;font-weight:700;color:var(--muted)}
+.fates li.bad{color:var(--bad)}
+@media (max-width:420px){.pcard .thumb{width:96px}}
+.story{display:flex;flex-direction:column;gap:12px;font-size:16px;line-height:1.9}
+.judge{font-family:var(--font-head);font-size:18px;line-height:1.6}
+.reveal .bar i{animation:grow 1.1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes grow{from{width:0}}
+.closing{font-size:16px;line-height:1.9}
+.fates{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.pips i.war{outline:2px solid color-mix(in srgb, var(--bad) 55%, transparent);outline-offset:1px}
+.ev h3{font-size:22px}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;background:var(--surface-2);border:1.5px solid transparent;border-radius:12px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.choice:hover{border-color:var(--primary)}
+.choice b{font-size:15px}
+.choice span{font-size:12px;color:var(--muted)}
+.got{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:var(--gold-bg)}
+.got .eyebrow{color:var(--gold)}
+.chron{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.chron li{display:grid;grid-template-columns:3.6em 1fr;gap:8px}
+.chron .y{font-family:var(--font-head);color:var(--muted);font-variant-numeric:tabular-nums}
+.chron.scroll{max-height:260px;overflow:auto;padding-right:4px}
+
+/* 戦役 */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mini{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mini h3{font-size:16px;overflow-wrap:anywhere}
+.mini .stats .srow{grid-template-columns:2.2em 1fr 1.3em;gap:6px}
+.mini .sval{display:none}
+.hint{font-size:13px;padding:10px 12px;border-radius:10px;background:var(--surface-2)}
+.hint b{color:var(--c)}
+.tactics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tac{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px}
+.tac b{font-family:var(--font-head);font-weight:700;font-size:16px}
+.tac span{font-size:11px;color:var(--muted);line-height:1.45}
+.tac.sel{border-color:var(--primary);background:var(--primary-soft)}
+
+/* 観戦 */
+.bhead{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end}
+.bside{display:flex;flex-direction:column;gap:4px;min-width:0}
+.bside.r{text-align:right}
+.bside b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stam{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.stam i{display:block;height:100%;background:var(--c);width:100%}
+.bside.r .stam i{margin-left:auto}
+.vsmark{font-family:var(--font-head);color:var(--muted);font-size:14px;padding-bottom:2px}
+.arena{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
+.arena canvas{display:block;width:100%;height:230px}
+.field-tag{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--surface);color:var(--ink);opacity:.92}
+.blog{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;max-height:170px;overflow:auto}
+.blog li{padding:4px 10px;border-radius:8px;background:var(--surface-2)}
+.blog li.p{color:var(--ink);box-shadow:inset 3px 0 0 var(--cp)}
+.blog li.e{color:var(--ink);box-shadow:inset -3px 0 0 var(--ce);text-align:right}
+.blog li.n{color:var(--muted);text-align:center;background:none}
+.verdict{font-family:var(--font-head);font-size:40px;line-height:1.1}
+.verdict.win{color:var(--good)} .verdict.lose{color:var(--bad)}
+.reasons{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px;font-size:14px}
+
+.legend{font-size:20px;font-family:var(--font-head);color:var(--gold);text-align:center;padding:8px;border-radius:10px;background:var(--gold-bg)}
+.title-big{font-family:var(--font-head);font-size:34px;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font-weight:700;font-size:14px;padding:10px 16px;border-radius:999px;z-index:20}
+textarea.copybox{width:100%;min-height:150px;font:inherit;font-size:13px;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+input.name{font-family:var(--font-head);font-size:22px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.hall{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.hall li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.hall .rec{font-family:var(--font-head);font-size:14px;font-variant-numeric:tabular-nums}
+.opt-k,.pcard .ck,.sval,.rk,.bigrank,.title-big,.verdict,.type,.vsmark,.steps li::before{font-weight:700}
+.judge{font-weight:500}
+.chron .y,.chain .y{font-weight:500}
+@media (prefers-reduced-motion: reduce){ .bar i{transition:none} .btn{transition:none} .reveal .bar i{animation:none} }
+</style>
+
+<main id="app" class="app" aria-live="polite"></main>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+'use strict';
+/* ===== ゲームの中身（DOMに依存しない部分） ===== */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const roll=p=>Math.random()<p;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+const STAT_KEYS=['atk','def','mob','pow'];
+const LABEL={atk:'攻撃',def:'守備',mob:'機動',pow:'国力',morale:'民心'};
+const SHORT={atk:'攻',def:'守',mob:'機',pow:'力',morale:'民心'};
+const rankOf=v=>v>=90?'S':v>=80?'A':v>=70?'B':v>=60?'C':v>=50?'D':v>=40?'E':v>=20?'F':'G';
+
+/* 建国の問い。効果(d)は画面に出さない */
+const QUESTIONS=[
+ {id:'terrain',q:'長い旅の果てに、あなたが足を止めた土地は',opts:[
+  {k:'山岳',t:'雪をいただく山に囲まれた谷',d:{def:12,mob:-6},flags:['山岳']},
+  {k:'海',t:'潮風の吹く入り江',d:{mob:10,pow:2},flags:['海']},
+  {k:'平野',t:'地平まで続く草原',d:{atk:6,pow:6,def:-6},flags:['平野']},
+  {k:'島',t:'霧に包まれた島',d:{def:8,mob:6,atk:-6},flags:['島']}]},
+ {id:'climate',q:'その土地で迎えた、最初の冬は',opts:[
+  {k:'寒冷',t:'長く、骨まで凍える冬',d:{def:10,pow:-5},flags:['寒冷'],mult:{fortify:1.2}},
+  {k:'温暖',t:'短く、穏やかな冬',d:{pow:8,morale:5},flags:['温暖'],mult:{farm:1.2}},
+  {k:'乾燥',t:'乾いた風が吹きやまない冬',d:{mob:6,atk:4,pow:-4},flags:['乾燥']},
+  {k:'熱帯',t:'冬と呼べる季節がなかった',d:{pow:10,def:-4},flags:['熱帯']}]},
+ {id:'resource',q:'民が最初の冬を越すために頼ったのは',opts:[
+  {k:'鉱物',t:'山肌に見つけた鉄',d:{atk:8,pow:2},mult:{arms:1.3}},
+  {k:'農作物',t:'皆で拓いた小さな畑',d:{pow:10},mult:{farm:1.3}},
+  {k:'漁業',t:'海と川の魚',d:{pow:5,mob:5},flags:['漁業'],mult:{trade:1.25}},
+  {k:'技術',t:'旅のあいだに磨いた職人の技',d:{mob:4,def:4},flags:['技術'],mult:{arms:1.1,fortify:1.1,trade:1.1,farm:1.1}}]},
+ {id:'population',q:'あなたについてきた民は',opts:[
+  {k:'少数精鋭',t:'わずかだが、旅で鍛えられた者たち',d:{mob:10,atk:2,pow:-6}},
+  {k:'中規模',t:'百ほどの家族',d:{atk:3,def:3,mob:3,pow:3}},
+  {k:'大集団',t:'道中で膨れ上がった大集団',d:{pow:12,atk:6,mob:-8},costMult:1.2}]},
+ {id:'education',q:'子どもたちに、まず何を教えるか',opts:[
+  {k:'理系',t:'星と数の読み方',d:{mob:5,def:3},flags:['理系']},
+  {k:'文系',t:'文字と言葉',d:{pow:4,mob:4},flags:['文系']},
+  {k:'芸術',t:'歌と物語',d:{morale:15,pow:2},flags:['芸術']},
+  {k:'体育',t:'剣と馬',d:{atk:8,morale:5},flags:['体育']}]},
+ {id:'tax',q:'王として、民に求める貢ぎは',opts:[
+  {k:'軽い',t:'今は、何も求めない',d:{morale:20,pow:-6}},
+  {k:'普通',t:'収穫の一割',d:{}},
+  {k:'重い',t:'収穫の三割',d:{pow:12,morale:-20}}]},
+ {id:'food',q:'民が囲む夕餉は',opts:[
+  {k:'粥',t:'麦の粥',d:{pow:6,def:2}},
+  {k:'黒パン',t:'固い黒パン',d:{atk:3,mob:3}},
+  {k:'干し肉',t:'干し肉',d:{atk:8,pow:-2}},
+  {k:'魚',t:'魚の塩漬け',d:{mob:6}}]},
+ {id:'motto',q:'王冠の内側に刻む言葉は',opts:[
+  {k:'自由',t:'「誰もが自由に」',d:{mob:8,def:-3},mult:{trade:1.2}},
+  {k:'調和',t:'「和をもって」',d:{morale:10,def:5}},
+  {k:'挑戦',t:'「恐れず挑め」',d:{atk:6,mob:4,morale:-5}},
+  {k:'伝統',t:'「祖先に恥じぬよう」',d:{def:8,pow:4,mob:-4}}]},
+];
+
+const TYPES={
+ guard:{name:'守り型',beats:'mobile',c:'def'},
+ mass:{name:'物量型',beats:'guard',c:'pow'},
+ mobile:{name:'機動型',beats:'mass',c:'mob'},
+};
+const adv=(a,b)=>TYPES[a].beats===b?1:TYPES[b].beats===a?-1:0;
+function computeType(s){
+  const sc={guard:s.def,mass:(s.atk+s.pow)/2*1.08,mobile:s.mob};
+  return Object.keys(sc).reduce((a,b)=>sc[b]>sc[a]?b:a);
+}
+
+const SPECIALS={
+ tekiheki:{name:'鉄壁',tier:'blue',desc:'押し込まれるほど守りが固くなる',battle:'鉄壁の守りで踏みとどまる',
+   cond:g=>g.cnt.fortify>=3||((g.prog.tekiheki||0)>=1&&g.cnt.fortify>=1)},
+ chinori:{name:'地の利',tier:'blue',desc:'地元の戦場での有利がさらに大きい',battle:'地の利を存分に活かす',
+   cond:g=>(has(g,'山岳')||has(g,'島'))&&g.cnt.fortify>=2},
+ kaiyo:{name:'海洋国家',tier:'blue',desc:'海峡の戦場で攻めと会心が伸びる',battle:'船団が海から回り込む',
+   cond:g=>(has(g,'海')||has(g,'島')||has(g,'漁業'))&&(g.cnt.trade>=2||(g.prog.kaiyo||0)>=1)},
+ kiba:{name:'騎馬の民',tier:'blue',desc:'開戦直後の突撃が強い',battle:'騎馬隊が突撃した',
+   cond:g=>((g.prog.kiba||0)>=1&&g.cnt.arms>=1)||((has(g,'平野')||has(g,'乾燥'))&&g.cnt.arms>=3)},
+ heitan:{name:'兵站の達人',tier:'blue',desc:'兵が疲れにくい',battle:'兵站が行き届き、兵は疲れを見せない',
+   cond:g=>g.cnt.farm>=3},
+ iryo:{name:'医術',tier:'blue',desc:'傷ついた兵がすぐに立ち直る(疲れにくい)',battle:'医術所の手当てで、兵がすぐに立ち直る',
+   cond:g=>(g.prog.iryo||0)>=1},
+ gaiko:{name:'外交上手',tier:'blue',desc:'調略で、有利な位置から開戦する',battle:'調略で有利な位置を取っていた',
+   cond:g=>((g.prog.gaiko||0)>=1&&g.cnt.trade>=1)||(g.prog.gaiko||0)>=2||g.cnt.trade>=4},
+ kishu:{name:'奇襲戦法',tier:'blue',desc:'開戦直後、相手の守りを崩す',battle:'奇襲で相手の守りを崩した',
+   cond:g=>(g.prog.kishu||0)>=2||(g.s.mob>=70&&g.cnt.arms>=2)},
+ fukutsu:{name:'不屈',tier:'gold',desc:'敗北寸前に一度だけ大きく押し返す',battle:'不屈の反撃で押し返した',
+   cond:g=>(g.prog.saigai||0)>=3},
+ ogon:{name:'黄金期',tier:'gold',desc:'戦いの後半に攻守が伸びる',battle:'黄金期の勢いで押し上げる',
+   cond:g=>(g.prog.ogon||0)>=2||(has(g,'芸術')&&g.cnt.fest>=2)},
+ meisho:{name:'名将',tier:'gold',desc:'会心の一撃が出やすく、強い',battle:'名将の采配が冴える',
+   cond:g=>(g.prog.meisho||0)>=2||((g.prog.meisho||0)>=1&&g.cnt.arms>=3)},
+ kakusei:{name:'覚醒',tier:'gold',desc:'すべての力が底上げされる',battle:'覚醒した国力がみなぎる',
+   cond:g=>(g.prog.kakusei||0)>=1},
+ akumyo:{name:'悪名',tier:'red',desc:'相手の兵が奮い立ち、攻めが強くなる',battle:'悪名が相手の兵を奮い立たせる',
+   cond:g=>(g.prog.akumyo||0)>=2},
+ naifun:{name:'内紛',tier:'red',desc:'兵が疲れやすい',battle:'内紛で足並みが乱れる',
+   cond:g=>(g.prog.naifun||0)>=1},
+ boso:{name:'暴走',tier:'red',desc:'攻めは激しいが、守りが崩れている',battle:'暴走する軍勢が守りを捨てて攻める',
+   cond:g=>(g.prog.boso||0)>=1},
+};
+const TIER_ORDER={gold:0,blue:1,red:2};
+
+function newGame(){
+  return {answers:{},flags:[],mult:{},costMult:1,s:{atk:20,def:20,mob:20,pow:20},morale:60,turn:1,
+    cnt:{arms:0,fortify:0,trade:0,farm:0,fest:0},prog:{},specials:[],used:[],chron:[],name:'',flag:null,type:null,rank:null,done:false,
+    built:[],seeds:{},links:[],battles:[],lastKind:null};
+}
+const has=(g,f)=>g.flags.includes(f);
+function add(g,d){for(const k in d){ if(k==='morale') g.morale=clamp(g.morale+d[k],0,100); else g.s[k]=clamp(g.s[k]+d[k],1,100); }}
+function prog(g,k,n=1){g.prog[k]=(g.prog[k]||0)+n}
+const snap=g=>({...g.s,morale:g.morale});
+function diff(a,b){const d={};for(const k in a){if(b[k]!==a[k])d[k]=b[k]-a[k]}return d}
+
+function buildFromAnswers(ans){
+  const g=newGame();
+  QUESTIONS.forEach((q,i)=>{
+    const o=q.opts[ans[i]]; if(!o) return;
+    add(g,o.d||{}); (o.flags||[]).forEach(f=>g.flags.push(f));
+    for(const k in (o.mult||{})) g.mult[k]=(g.mult[k]||1)*o.mult[k];
+    if(o.costMult) g.costMult*=o.costMult;
+    g.answers[q.id]=o.k;
+  });
+  if(g.answers.tax==='重い') g.flags.push('重税');
+  if(g.answers.tax==='軽い') g.flags.push('軽税');
+  return g;
+}
+function checkSpecials(g){
+  for(const [id,sp] of Object.entries(SPECIALS)) if(!g.specials.includes(id)&&sp.cond(g)) g.specials.push(id);
+  g.specials.sort((a,b)=>TIER_ORDER[SPECIALS[a].tier]-TIER_ORDER[SPECIALS[b].tier]);
+}
+const failChance=g=>g.morale<30?(30-g.morale)*0.025:0;
+
+/* NPCの育成用（プレイヤーは事業カードを使う） */
+const COMMANDS={arms:{stat:'atk',cost:15},fortify:{stat:'def',cost:12},trade:{stat:'mob',cost:8},farm:{stat:'pow',cost:10}};
+function npcCommand(g,key){
+  if(key==='fest'){g.cnt.fest++;add(g,{morale:30,pow:2});return}
+  if(roll(failChance(g))){add(g,{morale:-5});return}
+  const c=COMMANDS[key],m=(g.mult[key]||1)*(g.morale>=80?1.2:1);
+  add(g,{[c.stat]:Math.round((8+Math.random()*3)*m),morale:-Math.round(c.cost*g.costMult)});
+  g.cnt[key]++;
+}
+
+/* 出来事（家臣・宿敵の物語がない年に起きる）。npcOnly はプレイヤーには出さない */
+const EVENTS=[
+ {id:'kanpa',disaster:true,title:'大寒波',text:'例年にない寒さが国を襲った。蔵の備えが試される。',when:g=>has(g,'寒冷')||g.turn>=4,w:g=>has(g,'寒冷')?3:1,choices:[
+  {label:'備蓄を放出して耐える',hint:'国力↓ 民心↑ 苦難を越える',run:g=>{add(g,{pow:-8,morale:6});prog(g,'saigai');return '民は寒さを耐え抜いた。苦難の記憶が国を強くする。'}},
+  {label:'南へ遠征して食料を奪う',hint:'攻め↑ 国力↑ 悪い噂',run:g=>{add(g,{atk:8,pow:5});prog(g,'akumyo');return '遠征は成功したが、近隣に悪い噂が広がった。'}},
+  {label:'何もしない',hint:'運次第',run:g=>{if(roll(.5)){add(g,{pow:-12,morale:-8});return '凍える民が多く出た。'}return '寒波は思ったより早く去った。'}}]},
+ {id:'hosaku',title:'豊作',text:'天候に恵まれ、畑が黄金色に実った。',w:g=>(g.answers.resource==='農作物'||has(g,'温暖')||has(g,'熱帯'))?3:1,choices:[
+  {label:'蔵に蓄える',hint:'国力↑',run:g=>{add(g,{pow:9});return '蔵が満ちた。'}},
+  {label:'収穫祭を開く',hint:'民心↑↑',run:g=>{add(g,{morale:22});return '三日三晩の祭りに、国中が沸いた。'}},
+  {label:'余りを売りさばく',hint:'機動↑ 国力↑',run:g=>{add(g,{mob:7,pow:3});return '商人が行き交い、街道がにぎわった。'}}]},
+ {id:'kiba',title:'流浪の騎馬隊',text:'草原の向こうから、腕利きの騎馬隊が仕官を求めてやって来た。',w:g=>(has(g,'平野')||has(g,'乾燥'))?3:.5,choices:[
+  {label:'雇い入れる',hint:'攻め↑ 民心↓ 騎馬の技',run:g=>{add(g,{atk:9,morale:-5});prog(g,'kiba');return '騎馬隊が国の軍に加わった。'}},
+  {label:'追い返す',hint:'守り↑',run:g=>{add(g,{def:6});return '国境の守りを固めて送り返した。'}},
+  {label:'馬だけ買い取る',hint:'機動↑ 国力↓',run:g=>{add(g,{mob:6,pow:-3});return '良い馬が手に入った。'}}]},
+ {id:'kozan',title:'鉱脈の発見',text:'山あいで、豊かな鉱脈が見つかった。',w:g=>(g.answers.resource==='鉱物'||has(g,'山岳'))?3:.6,choices:[
+  {label:'武器を鍛える',hint:'攻め↑↑',run:g=>{add(g,{atk:11});return '鍛冶場の槌音が鳴りやまない。'}},
+  {label:'貨幣を鋳造する',hint:'国力↑ 機動↑',run:g=>{add(g,{pow:7,mob:4});return '新しい貨幣が国を潤した。'}},
+  {label:'城門を鉄で補強する',hint:'守り↑',run:g=>{add(g,{def:8});return '鉄で補強した城門が完成した。'}}]},
+ {id:'ekibyo',disaster:true,title:'疫病',text:'港町から、正体の分からない病が広がり始めた。',when:g=>g.turn>=3,w:1.2,choices:[
+  {label:'国境を閉ざす',hint:'機動↓ 守り↑ 苦難を越える',run:g=>{add(g,{mob:-7,def:5});prog(g,'saigai');return '人の行き来を止め、病を封じ込めた。'}},
+  {label:'薬師を招く',hint:'国力↓ 民心↑ 苦難を越える',run:g=>{add(g,{pow:-6,morale:8});prog(g,'saigai');return '異国の薬師が民を救った。'}},
+  {label:'祈りを捧げる',hint:'運次第',run:g=>{prog(g,'saigai');if(roll(.5)){add(g,{morale:-18,pow:-8});return '祈りは届かず、多くの命が失われた。'}add(g,{morale:5});return '病はやがて自然に収まった。'}}]},
+ {id:'kozui',disaster:true,title:'大洪水',text:'長雨で川があふれ、低地が水に沈んだ。',when:g=>g.turn>=2,w:g=>(has(g,'平野')||has(g,'熱帯')||has(g,'海'))?2.5:.5,choices:[
+  {label:'堤防を築く',hint:'守り↑ 国力↓ 民心↓ 苦難を越える',run:g=>{add(g,{def:6,pow:-5,morale:-8});prog(g,'saigai');return '民を総出にして、巨大な堤防を築いた。'}},
+  {label:'民を高台へ逃がす',hint:'民心↑ 国力↓ 苦難を越える',run:g=>{add(g,{morale:6,pow:-9});prog(g,'saigai');return '畑は失ったが、民は無事だった。'}}]},
+ {id:'eiyu',npcOnly:true,title:'英雄の出現',text:'辺境の村に、並外れた才を持つ若者が現れた。',when:g=>g.turn>=4,w:1,choices:[
+  {label:'将軍に任命する',hint:'',run:g=>{add(g,{atk:7});prog(g,'meisho');return ''}},
+  {label:'宰相に任命する',hint:'',run:g=>{add(g,{pow:7,mob:4});prog(g,'gaiko');return ''}}]},
+ {id:'shosen',title:'異国の商船',text:'見たことのない旗を掲げた大きな商船が、沖に現れた。',w:g=>(has(g,'海')||has(g,'島')||has(g,'漁業'))?3:.5,choices:[
+  {label:'港を開く',hint:'機動↑ 海の才',run:g=>{add(g,{mob:9});prog(g,'kaiyo');return '異国の品と知恵が流れ込んだ。'}},
+  {label:'関税をかける',hint:'国力↑',run:g=>{add(g,{pow:8});return '関税で国庫が潤った。'}},
+  {label:'船ごと奪う',hint:'攻め↑ 国力↑ 悪い噂',run:g=>{add(g,{atk:6,pow:5});prog(g,'akumyo');return '積み荷は手に入ったが、海の向こうで恨まれた。'}}]},
+ {id:'hanran',npcOnly:true,title:'反乱の兆し',text:'不満を募らせた民が、各地で集まり始めている。',when:g=>g.morale<40,w:4,choices:[
+  {label:'力で鎮める',hint:'攻め↑ 民心↓',run:g=>{add(g,{atk:4,morale:-8});return '反乱は鎮まったが、民の目は冷たい。'}},
+  {label:'要求をのむ',hint:'民心↑↑ 国力↓',run:g=>{add(g,{morale:25,pow:-7});return '税を下げ、民と和解した。'}},
+  {label:'様子を見る',hint:'運次第(内紛の恐れ)',run:g=>{if(roll(.55)){add(g,{morale:-10});prog(g,'naifun');return '不満は内紛に発展した。'}add(g,{morale:5});return '騒ぎは自然に収まった。'}}]},
+ {id:'shijin',title:'吟遊詩人',text:'各地を旅する詩人が、城の前で歌い始めた。',w:g=>has(g,'芸術')?3:.7,choices:[
+  {label:'国の歌を作らせる',hint:'民心↑ 文化の芽',run:g=>{add(g,{morale:18});prog(g,'ogon');return '国の歌が生まれ、民は声を合わせた。'}},
+  {label:'城に召し抱える',hint:'国力↓ 民心↑ 文化の芽',run:g=>{add(g,{pow:-5,morale:8});prog(g,'ogon');return '城に芸術の花が咲き始めた。'}}]},
+ {id:'kanbatsu',disaster:true,title:'干ばつ',text:'雨が降らず、井戸が次々と枯れていく。',w:g=>(has(g,'乾燥')||has(g,'熱帯'))?3:.5,choices:[
+  {label:'井戸を掘る',hint:'国力↓ 守り↑ 民心↑ 苦難を越える',run:g=>{add(g,{pow:-4,def:4,morale:4});prog(g,'saigai');return '深い井戸が、国の命綱になった。'}},
+  {label:'遊牧に切り替える',hint:'機動↑ 国力↓ 苦難を越える',run:g=>{add(g,{mob:8,pow:-6});prog(g,'saigai');return '民は家畜とともに移り住んだ。'}}]},
+ {id:'gakumon',title:'学問の興隆',text:'城下に学者が集まり、夜ごと議論を交わしている。',w:g=>(has(g,'理系')||has(g,'文系'))?3:.8,choices:[
+  {label:'兵法を学ばせる',hint:'攻め↑ 機動↑ 名将の素質',run:g=>{add(g,{atk:4,mob:4});prog(g,'meisho');return '兵法書が書き写され、将たちが学んだ。'}},
+  {label:'農学を学ばせる',hint:'国力↑',run:g=>{add(g,{pow:9});return '新しい農法が広まった。'}},
+  {label:'築城術を学ばせる',hint:'守り↑',run:g=>{add(g,{def:9});return '築城の名人が次々と育った。'}}]},
+ {id:'jishin',disaster:true,title:'大地震',text:'大地が激しく揺れ、城も家も崩れた。',when:g=>g.turn>=3,w:g=>(has(g,'山岳')||has(g,'島'))?2.5:.5,choices:[
+  {label:'新しい城を建てる',hint:'守り↑ 国力↓ 民心↓ 苦難を越える',run:g=>{add(g,{def:8,pow:-6,morale:-10});prog(g,'saigai');return '揺れに強い新しい城が建った。'}},
+  {label:'民の救済を優先する',hint:'民心↑ 国力↓ 苦難を越える',run:g=>{add(g,{morale:10,pow:-9});prog(g,'saigai');return '民は支え合い、国はひとつにまとまった。'}}]},
+ {id:'mittei',title:'密偵の報告',text:'隣国に放っていた密偵が、敵の弱点をつかんで戻った。',w:g=>g.s.mob>=45?2:.4,choices:[
+  {label:'奇襲の策を練る',hint:'機動↑ 奇襲の技',run:g=>{add(g,{mob:5});prog(g,'kishu',2);return '奇襲の策がまとまった。'}},
+  {label:'防諜を固める',hint:'守り↑',run:g=>{add(g,{def:6});return '国内の密偵を洗い出した。'}}]},
+ {id:'meiba',title:'名馬の産地',text:'国の北で、足の速い馬が育つ牧草地が見つかった。',w:g=>(has(g,'平野')||has(g,'体育'))?2.5:.6,choices:[
+  {label:'騎兵を育てる',hint:'攻め↑ 機動↑ 騎馬の技',run:g=>{add(g,{atk:5,mob:5});prog(g,'kiba');return '駿馬にまたがる騎兵隊が生まれた。'}},
+  {label:'交易品にする',hint:'国力↑',run:g=>{add(g,{pow:8});return '名馬は高値で売れた。'}}]},
+];
+const EVENT_BY_ID=Object.fromEntries(EVENTS.map(e=>[e.id,e]));
+function weightedPick(pool,wf){
+  const ws=pool.map(wf);let r=Math.random()*ws.reduce((a,b)=>a+b,0);
+  for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0)return pool[i]}
+  return pool[pool.length-1];
+}
+const evWeight=g=>e=>typeof e.w==='function'?e.w(g):(e.w||1);
+function pickRandomEvent(g,player){
+  const pool=EVENTS.filter(e=>!(player&&e.npcOnly)&&!g.used.includes(e.id)&&(!e.when||e.when(g)));
+  return pool.length?weightedPick(pool,evWeight(g)):null;
+}
+
+/* 禁断の秘術（ダイジョーブ博士枠） */
+function gamble(g,o){
+  const r=Math.random();
+  if(r<o.great){add(g,{atk:12,def:12,mob:12,pow:12});prog(g,'kakusei');return '大成功! 国そのものが覚醒した。'}
+  if(r<o.great+o.ok){const ks=[...STAT_KEYS].sort(()=>Math.random()-.5).slice(0,2);add(g,{[ks[0]]:15,[ks[1]]:15});return `成功。${LABEL[ks[0]]}と${LABEL[ks[1]]}が大きく伸びた。`}
+  if(r<o.great+o.ok+o.fail){add(g,{atk:-8,def:-8,mob:-8,pow:-8,morale:-10});return '失敗……。国中に混乱が広がった。'}
+  add(g,{atk:25,def:-20});prog(g,'boso');return '暴走! 軍勢は猛り狂い、守りを顧みなくなった。';
+}
+const ODDS_GENIUS={great:.2,ok:.35,fail:.25};
+const ODDS_ALCH={great:.12,ok:.28,fail:.32};
+
+function nationScore(g){
+  const tiers=g.specials.map(id=>SPECIALS[id].tier);
+  return STAT_KEYS.reduce((a,k)=>a+g.s[k],0)+tiers.filter(t=>t==='gold').length*15+tiers.filter(t=>t==='blue').length*6-tiers.filter(t=>t==='red').length*5;
+}
+function nationRank(g){
+  const sc=nationScore(g);
+  return sc>=330?'S':sc>=290?'A':sc>=255?'B':sc>=220?'C':sc>=185?'D':sc>=150?'E':'F';
+}
+const goldCount=g=>g.specials.filter(id=>SPECIALS[id].tier==='gold').length;
+function finalize(g){checkSpecials(g);g.type=computeType(g.s);g.rank=nationRank(g);g.done=true}
+
+/* NPCの国（同じ規則で、ランダムに育てる） */
+function genNPC(o={}){
+  const ans=o.ans||QUESTIONS.map(q=>Math.floor(Math.random()*q.opts.length));
+  const g=buildFromAnswers(ans);
+  g.name=o.name||genName(g,o.suffix); g.flag=genFlag(g);
+  const keys=['arms','fortify','trade','farm'],fav=pick(keys),turns=o.turns||10;
+  for(g.turn=1;g.turn<=turns;g.turn++){
+    if(g.morale<35) npcCommand(g,'fest');
+    else {const ws=keys.map(k=>(g.mult[k]||1)*(k===fav?1.5:1)*(.5+Math.random()));npcCommand(g,keys[ws.indexOf(Math.max(...ws))])}
+    checkSpecials(g);
+    if(g.turn===8){if(roll(.4))gamble(g,ODDS_ALCH)}
+    else{const ev=pickRandomEvent(g,false);if(ev){pick(ev.choices).run(g);g.used.push(ev.id)}}
+    checkSpecials(g);
+  }
+  g.turn=turns;
+  for(const k of STAT_KEYS) g.s[k]=clamp(Math.round(g.s[k]*(o.factor||1)),1,100);
+  finalize(g);
+  return g;
+}
+
+/* ===== 選択が物語になる仕組み ===== */
+const yearOf=t=>t*3;
+const LAND={山岳:'山あいの谷',海:'潮風の入り江',平野:'果てしない草原',島:'霧の島'};
+const landPhrase=g=>g.answers.terrain==='山岳'&&has(g,'寒冷')?'雪の谷':(LAND[g.answers.terrain]||'新しい土地');
+const STR_A={atk:'兵は勇猛で',def:'守りは固く',mob:'民は身軽で',pow:'蔵は豊かで'};
+const STR_B={atk:'兵は勇猛だ',def:'守りは固い',mob:'民は身軽だ',pow:'蔵は豊かだ'};
+const WEAK={atk:'攻め出るのは苦手だ',def:'守りに隙がある',mob:'動きは鈍い',pow:'蔵は心もとない'};
+function judgeLine(g){
+  const ks=[...STAT_KEYS].sort((a,b)=>g.s[b]-g.s[a]);
+  return `${landPhrase(g)}の${g.name}。${STR_A[ks[0]]}、${STR_B[ks[1]]}。ただし、${WEAK[ks[3]]}。`;
+}
+
+/* 種：選んだことが国に残り、後で別の出来事として返ってくる */
+const SEED_LABEL={
+ port:'港を拓いた',fort:'北の砦を築いた',wall:'城壁を石で固めた',road:'街道を敷いた',watch:'物見の塔を建てた',
+ knights:'騎士団を設けた',smith:'鍛冶の村を興した',hunt:'狩り場を開いた',farm:'森を拓いて畑にした',mill:'水車を建てた',
+ market:'市を開いた',fest:'収穫祭を催した',school:'学舎を建てた',
+ healer:'異国の薬師を呼び寄せた',foreign:'異国の商人に交易を許した',port_closed:'港を閉ざした',
+ knights_arrogant:'騎士の驕りを見逃した',knights_honor:'驕った騎士を厳しく罰した',granary:'豊作の麦を蔵に蓄えた',
+ gratitude:'飢えた隣国に麦を分け与えた',resentment:'飢えた隣国に麦を高値で売りつけた',song:'旅の吟遊詩人を泊めた',
+ scouted:'敵の動きに先回りして備えた',bandit_ally:'山賊を許して雇い入れた',bandit_war:'山賊討伐の兵を挙げた',
+ bandit_beaten:'山賊団を討ち果たした',bandit_guard:'元山賊を国境の見張りにした',genius:'学者に研究を任せた',
+ fort_vet:'砦の兵が怪しい一団を追い払った',merc:'流れ者の傭兵を招き入れた',castaway:'難破船の生存者を助けた',
+ migrants:'移り住む人々を迎え入れた',
+};
+function plant(g,k){if(!g.seeds[k]) g.seeds[k]={t:g.turn}}
+const causeOf=(g,k)=>`建国${yearOf(g.seeds[k].t)}年に${SEED_LABEL[k]}`;
+
+/* 事業カード。build は挿絵に建つもの、種はカードの id と同じ */
+const CARDS={
+ fort:{title:'北の砦を築く',flavor:'国境の峠に、石を積み上げる。',done:'峠に砦がそびえ立った。',kind:'fortify',d:{def:10},cost:10,w:g=>(has(g,'山岳')||has(g,'寒冷'))?3:1},
+ wall:{title:'城壁を石で固める',flavor:'木の柵を、分厚い石の壁に替える。',done:'城下を石の壁が囲んだ。',kind:'fortify',d:{def:8},cost:8,w:1},
+ port:{title:'港を拓く',flavor:'水辺に桟橋を渡し、船を呼び込む。',done:'港に異国の帆が並ぶようになった。',kind:'trade',d:{mob:9,pow:2},cost:7,w:g=>(has(g,'海')||has(g,'島')||has(g,'漁業'))?3:.4},
+ road:{title:'街道を敷く',flavor:'村と村を、石畳の道で結ぶ。',done:'荷馬車が軽やかに行き交い始めた。',kind:'trade',d:{mob:8},cost:6,w:g=>(has(g,'平野')||has(g,'乾燥'))?3:1},
+ watch:{title:'物見の塔を建てる',flavor:'丘の上から、遠くの土煙まで見渡す。',done:'国境の動きが、すぐ城に届くようになった。',kind:'trade',d:{def:4,mob:5},cost:6,w:1},
+ knights:{title:'騎士団を設ける',flavor:'選び抜いた若者に、馬と槍を与える。',done:'騎士たちの行進に、子どもたちが歓声を上げた。',kind:'arms',d:{atk:10},cost:12,w:g=>(has(g,'体育')||has(g,'平野'))?3:1},
+ smith:{title:'鍛冶の村を興す',flavor:'炉の火が、昼も夜も絶えない村を作る。',done:'鍛え上げた剣が、武器庫を埋めていく。',kind:'arms',d:{atk:8,pow:2},cost:8,w:g=>(g.answers.resource==='鉱物'||has(g,'山岳'))?3:1},
+ hunt:{title:'狩り場を開く',flavor:'森で鍛えた弓の腕は、戦でも役に立つ。',done:'森の奥から、角笛の音が聞こえるようになった。',kind:'arms',d:{atk:5,pow:4},cost:6,w:1},
+ farm:{title:'森を拓いて畑にする',flavor:'切り株を掘り起こし、麦の種をまく。',done:'見渡すかぎりの麦畑が広がった。',kind:'farm',d:{pow:10},cost:8,w:g=>(g.answers.resource==='農作物'||has(g,'温暖'))?3:1},
+ mill:{title:'水車を建てる',flavor:'川の流れで、粉を挽き、鉄を打つ。',done:'川辺で水車がゆっくりと回り始めた。',kind:'farm',d:{pow:7,def:2},cost:5,w:g=>(has(g,'技術')||has(g,'理系'))?3:1},
+ market:{title:'市を開く',flavor:'月に一度、広場に商人が集まる。',done:'市の日には、国中から人が集まるようになった。',kind:'farm',d:{pow:5,mob:4},cost:3,w:g=>(g.answers.motto==='自由'||has(g,'漁業'))?2.5:1},
+ fest:{title:'収穫祭を催す',flavor:'焚き火を囲み、三日三晩歌い明かす。',done:'国中に笑い声が戻った。',kind:'fest',d:{},cost:0,w:g=>g.morale<40?4:1},
+ school:{title:'学舎を建てる',flavor:'子どもたちが、文字と数を学ぶ場所。',done:'城下に、子どもたちの声が響くようになった。',kind:'school',d:{},cost:0,w:g=>(has(g,'文系')||has(g,'芸術')||has(g,'理系'))?2.5:.9},
+};
+const STAT_WORD={atk:'攻め',def:'守り',mob:'機動',pow:'国力'};
+function drawCards(g){
+  const out=[],ids=Object.keys(CARDS),ws=ids.map(id=>{const w=CARDS[id].w;return typeof w==='function'?w(g):w});
+  while(out.length<3){
+    let r=Math.random()*ws.reduce((a,b)=>a+b,0),i=0;
+    for(;i<ids.length-1;i++){r-=ws[i];if(r<=0)break}
+    if(ws[i]>0){out.push(ids[i]);ws[i]=0}
+  }
+  return out;
+}
+function cardHint(g,id){
+  const c=CARDS[id],parts=[];
+  if(c.kind==='fest') parts.push('民心↑↑');
+  else if(c.kind==='school') parts.push('民心↑','人が育つ');
+  else{
+    for(const k in c.d) parts.push(STAT_WORD[k]+(c.d[k]>=9?'↑↑':'↑'));
+    const cost=Math.round(c.cost*g.costMult);
+    parts.push('民の疲れ '+(cost<=3?'小':cost<=7?'中':'大'));
+    if(c.kind===g.lastKind) parts.push('続けると伸びる');
+  }
+  if(g.built.includes(id)) parts.push('増築');
+  return parts.join(' · ');
+}
+function applyCard(g,id){
+  const c=CARDS[id];
+  plant(g,id); if(!g.built.includes(id)) g.built.push(id);
+  if(c.kind==='fest'){g.cnt.fest++;add(g,{morale:28,pow:2});g.lastKind='fest';return {title:c.title,text:c.done}}
+  if(c.kind==='school'){add(g,{morale:8,pow:2});g.lastKind='school';return {title:c.title,text:c.done}}
+  if(roll(failChance(g))){add(g,{morale:-5});g.lastKind=null;return {title:c.title,text:'民が従わず、工事は途中で止まった。'}}
+  const streak=g.lastKind===c.kind,hot=g.morale>=80;
+  const m=(g.mult[c.kind]||1)*(hot?1.2:1)*(streak?1.15:1);
+  const d={};for(const k in c.d) d[k]=Math.max(1,Math.round(c.d[k]*m*(.9+Math.random()*.25)));
+  add(g,d);add(g,{morale:-Math.round(c.cost*g.costMult)-(streak?4:0)});
+  g.cnt[c.kind]++;g.lastKind=c.kind;
+  return {title:c.title,text:(streak?'続けて取り組み、手際が良くなった。':'')+(hot?'民の士気が高く、はかどった。':'')+c.done};
+}
+
+/* 伏線：need の種が植わってから gap ターン以上たつと起きる */
+const CALLBACKS=[
+ {id:'port_plague',need:['port'],gap:2,scene:{prop:'ship',mood:'dark',over:'mist'},title:'港の疫病',
+  text:'異国の船が、見知らぬ病を運んできた。港町で、咳をする者が増えている。',choices:[
+  {label:'港を閉ざす',hint:'機動↓ 病は止まる',run:g=>{add(g,{mob:-8,def:3});plant(g,'port_closed');prog(g,'saigai');return '港は静まり返った。病は広がらなかったが、異国の帆はもう来ない。'}},
+  {label:'異国の薬師を呼び寄せる',hint:'国力↓ 民心↑',run:g=>{add(g,{pow:-6,morale:6});plant(g,'healer');prog(g,'saigai');return '海の向こうから来た薬師が、病を鎮めた。薬師は、この国が気に入ったようだ。'}}]},
+ {id:'healer_school',need:['healer'],gap:2,scene:{prop:'scholar',focus:'school'},title:'薬師の弟子たち',
+  text:'病を鎮めた薬師が、この国の若者に医術を教えたいと言っている。',choices:[
+  {label:'医術所を開く',hint:'国力↓ 兵が倒れにくくなる',run:g=>{add(g,{pow:-4});prog(g,'iryo');return '医術所ができた。傷ついた兵も、すぐに立ち直るようになった。'}},
+  {label:'薬草の畑を作らせる',hint:'国力↑ 民心↑',run:g=>{add(g,{pow:6,morale:4});return '城下に薬草の畑が広がり、民の顔色が良くなった。'}}]},
+ {id:'foreign_trade',need:['port'],block:['port_closed'],gap:1,scene:{prop:'ship'},title:'異国の商人',
+  text:'港に、異国の商人が絹と香辛料を積んでやって来た。',choices:[
+  {label:'交易を許す',hint:'国力↑ 機動↑',run:g=>{add(g,{pow:7,mob:3});plant(g,'foreign');return '異国の品が市にあふれた。'}},
+  {label:'重い関税をかける',hint:'国力↑↑ 民心↓',run:g=>{add(g,{pow:10,morale:-3});return '関税で国庫は潤ったが、商人たちは渋い顔をした。'}}]},
+ {id:'foreign_sail',need:['foreign'],gap:2,scene:{prop:'ship'},title:'三角の帆',
+  text:'異国の船乗りたちが、三角の帆で風上へ進む技を見せてくれた。',choices:[
+  {label:'船大工を招く',hint:'機動↑↑ 海の才',run:g=>{add(g,{mob:8});prog(g,'kaiyo');return '港に、異国式の船が並び始めた。'}},
+  {label:'帆の技を軍に取り入れる',hint:'攻め↑ 機動↑',run:g=>{add(g,{atk:4,mob:4});return '速い船で、兵を運べるようになった。'}}]},
+ {id:'fort_watch',need:['fort'],gap:2,scene:{focus:'fort',prop:'strangers',mood:'dusk'},title:'峠の一団',
+  text:'北の砦の兵が、国境の峠をうろつく武装した一団を見つけた。',choices:[
+  {label:'追い払う',hint:'守り↑',run:g=>{add(g,{def:5});plant(g,'fort_vet');return '砦の兵は一団を峠の向こうへ追い返した。砦の守りに自信がついた。'}},
+  {label:'招き入れて話を聞く',hint:'機動↑ 何かの縁になるかもしれない',run:g=>{add(g,{mob:5});plant(g,'merc');return '一団は、戦を渡り歩く傭兵だった。「いつか、この恩は返しましょう」'}}]},
+ {id:'knights_pride',need:['knights'],gap:2,scene:{prop:'horses',mood:'dark'},title:'騎士の驕り',
+  text:'騎士たちが、村で横暴なふるまいをしていると訴えが届いた。',choices:[
+  {label:'厳しく罰する',hint:'民心↑ 攻め↓',run:g=>{add(g,{morale:8,atk:-4});plant(g,'knights_honor');return '罰を受けた騎士たちは、民の前で頭を下げた。騎士団の規律が引き締まった。'}},
+  {label:'見逃す',hint:'攻め↑ 民心↓',run:g=>{add(g,{morale:-10,atk:3});plant(g,'knights_arrogant');return '騎士たちはますます増長した。民の不満がくすぶっている。'}}]},
+ {id:'knights_revolt',need:['knights_arrogant'],gap:2,w:5,scene:{prop:'army',mood:'war'},title:'騎士の反乱',
+  text:'増長した騎士たちが、自分たちの領地を寄こせと城に詰め寄ってきた。',choices:[
+  {label:'力で鎮める',hint:'攻め↓ 民心↓',run:g=>{add(g,{atk:-5,morale:-5});return '騎士団は鎮まった。だが、多くの騎士が国を去った。'}},
+  {label:'領地を認める',hint:'国力↓ 内紛の恐れ',run:g=>{add(g,{pow:-8});prog(g,'naifun');return '騎士たちは自分の領地に籠もり、王の命に従わなくなった。'}}]},
+ {id:'smith_sword',need:['smith'],gap:2,scene:{focus:'smith',prop:'sword'},title:'名剣の誕生',
+  text:'鍛冶の村で、雷のように光る一振りの剣が打ち上がった。',choices:[
+  {label:'王の剣とする',hint:'民心↑ 攻め↑ 名将の素質',run:g=>{add(g,{morale:6,atk:4});prog(g,'meisho');return '王が剣を掲げると、兵たちから歓声が上がった。'}},
+  {label:'他国に高く売る',hint:'国力↑↑',run:g=>{add(g,{pow:9});return '名剣は、遠い国の王が金貨の山で買っていった。'}}]},
+ {id:'farm_harvest',need:['farm'],gap:1,scene:{focus:'farm',mood:'gold'},title:'黄金の畑',
+  text:'拓いた畑が、見渡すかぎり黄金色に実った。',choices:[
+  {label:'蔵に蓄える',hint:'国力↑ 蓄えが残る',run:g=>{add(g,{pow:8});plant(g,'granary');return '蔵が麦でいっぱいになった。'}},
+  {label:'収穫祭で分け合う',hint:'民心↑↑',run:g=>{add(g,{morale:15});return '民は焚き火を囲んで、遅くまで歌った。'}}]},
+ {id:'neighbor_famine',need:['granary'],gap:2,w:5,scene:{prop:'caravan',mood:'dark'},title:'飢える隣国',
+  text:'隣国が飢饉に苦しんでいる。蓄えた麦を分けてほしいと、痩せた使者が頭を下げた。',choices:[
+  {label:'麦を分け与える',hint:'国力↓ 恩が残る',run:g=>{add(g,{pow:-8});plant(g,'gratitude');return '麦を積んだ荷車の列が、隣国へ向かった。'}},
+  {label:'高値で売りつける',hint:'国力↑↑ 恨みが残る',run:g=>{add(g,{pow:10});plant(g,'resentment');return '麦は金貨に変わった。使者は唇を噛んで帰っていった。'}},
+  {label:'断る',hint:'何も起きない',run:()=> '使者は何も言わずに帰っていった。'}]},
+ {id:'mill_invent',need:['mill'],gap:2,scene:{focus:'mill',prop:'scholar'},title:'水車小屋の少年',
+  text:'水車小屋の少年が、水車の力で動く奇妙な仕掛けを作った。',choices:[
+  {label:'投石機に使う',hint:'攻め↑',run:g=>{add(g,{atk:8});return '水車の仕掛けを応用した投石機が、丘の向こうまで石を飛ばした。'}},
+  {label:'粉挽きを広げる',hint:'国力↑',run:g=>{add(g,{pow:8});return '国中の川に、水車が並び始めた。'}}]},
+ {id:'road_traveler',need:['road'],gap:1,scene:{prop:'caravan'},title:'街道の旅人',
+  text:'敷いた街道を通って、二人の旅人が城下に宿を求めてきた。',choices:[
+  {label:'吟遊詩人を泊める',hint:'民心↑ 文化の芽',run:g=>{add(g,{morale:8});prog(g,'ogon');plant(g,'song');return '詩人は、この国の歌を作ると約束して旅立った。'}},
+  {label:'旅の兵法家を泊める',hint:'攻め↑ 機動↑ 名将の素質',run:g=>{add(g,{atk:3,mob:3});prog(g,'meisho');return '兵法家は、一晩で将たちに戦の極意を説いた。'}}]},
+ {id:'song_return',need:['song'],gap:2,w:4,scene:{prop:'lanterns',mood:'dusk'},title:'帰ってきた詩人',
+  text:'あの吟遊詩人が、約束どおり「この国の歌」を携えて戻ってきた。',choices:[
+  {label:'歌を国中に広める',hint:'民心↑↑ 文化の芽',run:g=>{add(g,{morale:12});prog(g,'ogon');return '国の歌が、畑でも戦場でも歌われるようになった。'}},
+  {label:'城の楽団に迎える',hint:'民心↑ 国力↓ 文化の芽',run:g=>{add(g,{morale:6,pow:-3});prog(g,'ogon');return '詩人は城の楽団を率いることになった。'}}]},
+ {id:'watch_report',need:['watch'],gap:2,scene:{focus:'watch',prop:'army',mood:'night'},title:'遠くの松明',
+  text:'物見の塔から、遠くの丘に軍勢の松明が見えたと知らせが来た。',choices:[
+  {label:'先回りして備える',hint:'守り↑ 戦で先手を取れる',run:g=>{add(g,{def:3});plant(g,'scouted');return '王は兵を伏せ、街道に見張りを増やした。'}},
+  {label:'密偵を放つ',hint:'機動↑ 奇襲の技',run:g=>{add(g,{mob:3});prog(g,'kishu',2);return '密偵が、敵の兵の数と陣の形を持ち帰った。'}}]},
+ {id:'fest_fame',need:['fest'],gap:2,scene:{prop:'crowd',mood:'dusk'},title:'名物になった祭り',
+  text:'この国の祭りの噂が広まり、他国からも見物人が集まり始めた。',choices:[
+  {label:'他国の客を迎える',hint:'国力↑ 機動↑',run:g=>{add(g,{pow:6,mob:4});return '宿屋が足りなくなるほど、城下がにぎわった。'}},
+  {label:'民だけで楽しむ',hint:'民心↑↑',run:g=>{add(g,{morale:12});return '祭りは、民のための祭りであり続けた。'}}]},
+ {id:'school_grad',need:['school'],gap:2,w:4,scene:{focus:'school',prop:'scholar'},title:'学舎の卒業生',
+  text:'学舎で学んだ最初の子どもたちが、大人になった。',choices:[
+  {label:'将として登用する',hint:'攻め↑ 名将の素質',run:g=>{add(g,{atk:5});prog(g,'meisho');return '若い将たちが、新しい戦い方を軍に持ち込んだ。'}},
+  {label:'役人として登用する',hint:'国力↑',run:g=>{add(g,{pow:7});return '若い役人たちが、国の帳簿を見違えるほど整えた。'}},
+  {label:'学者として研究を任せる',hint:'いつか大きな発見をするかもしれない',run:g=>{plant(g,'genius');return '一人の秀才が、学舎の塔に籠もって研究を始めた。'}}]},
+ {id:'market_bustle',need:['market'],gap:1,scene:{focus:'market',prop:'crowd'},title:'大市',
+  text:'月に一度の市が、いつしか大陸中の商人が集まる大市になった。',choices:[
+  {label:'商人の組合に任せる',hint:'国力↑↑ 民心↓',run:g=>{add(g,{pow:9,morale:-4});return '商人たちは自分たちで市を取り仕切り、大いに儲けた。'}},
+  {label:'王が市を仕切る',hint:'国力↑ 民心↑',run:g=>{add(g,{pow:4,morale:5});return '王の役人が秤を見張り、民は安心して買い物ができた。'}}]},
+ {id:'bandit_work',need:['bandit_ally'],gap:1,w:5,scene:{prop:'bandits'},title:'元山賊の仕事',
+  text:'雇い入れた元山賊たちに、仕事を与えなければならない。',choices:[
+  {label:'国境の見張りにする',hint:'守り↑ 戦で役立つかもしれない',run:g=>{add(g,{def:4});plant(g,'bandit_guard');return '元山賊たちは、誰よりも国境の抜け道に詳しかった。'}},
+  {label:'街道の護衛にする',hint:'機動↑ 民心↑',run:g=>{add(g,{mob:5,morale:4});return '山賊が出なくなった街道を、商人たちが行き交い始めた。'}}]},
+ {id:'bandit_treasure',need:['bandit_beaten'],gap:1,w:5,scene:{prop:'chest'},title:'山賊の隠し財宝',
+  text:'討ち果たした山賊団の隠れ家から、奪われた財宝が見つかった。',choices:[
+  {label:'元の持ち主に返す',hint:'民心↑↑',run:g=>{add(g,{morale:14});return '財宝は、元の持ち主たちの手に戻った。'}},
+  {label:'軍資金にする',hint:'攻め↑ 国力↑',run:g=>{add(g,{atk:4,pow:5});return '財宝で、新しい槍と鎧が揃った。'}}]},
+ {id:'wall_refugees',need:['wall'],gap:2,scene:{focus:'wall',prop:'refugees'},title:'城壁を頼る人々',
+  text:'戦に追われた人々が、石の城壁を頼って押し寄せてきた。',choices:[
+  {label:'城壁の内に迎える',hint:'民心↑ 国力↑',run:g=>{add(g,{morale:8,pow:4});plant(g,'migrants');return '城下に新しい家々が建ち始めた。'}},
+  {label:'門を閉ざす',hint:'守り↑ 民心↓',run:g=>{add(g,{def:4,morale:-6});return '門の外で、人々は泣きながら別の国へ向かった。'}}]},
+ {id:'hunt_archers',need:['hunt'],gap:2,scene:{focus:'hunt',prop:'archers'},title:'森の弓取り',
+  text:'狩り場で腕を磨いた若者たちが、王の前で弓の腕前を披露した。',choices:[
+  {label:'弓兵隊を作る',hint:'攻め↑',run:g=>{add(g,{atk:7});return '百歩先の的を射抜く弓兵隊が生まれた。'}},
+  {label:'森の番人にする',hint:'守り↑ 機動↑',run:g=>{add(g,{def:3,mob:3});return '森を知り尽くした番人が、国境の森を守ることになった。'}}]},
+ {id:'migrants_craft',need:['migrants'],gap:2,scene:{prop:'crowd'},title:'新しい民の技',
+  text:'迎え入れた人々が、故郷の技を伝え始めた。',choices:[
+  {label:'織物を広める',hint:'国力↑↑',run:g=>{add(g,{pow:9});return '色鮮やかな織物が、この国の名産になった。'}},
+  {label:'兵に加える',hint:'攻め↑ 守り↑',run:g=>{add(g,{atk:4,def:4});return '恩を感じた人々が、進んで兵になった。'}}]},
+ {id:'castaway_gift',need:['castaway'],gap:2,w:5,scene:{prop:'ship'},title:'恩返しの船団',
+  text:'かつて助けた船乗りたちが、故郷の船団を連れて恩返しに来た。',choices:[
+  {label:'航海の技を学ぶ',hint:'機動↑↑ 海の才',run:g=>{add(g,{mob:8});prog(g,'kaiyo');return 'この国の船は、どの国の船より速くなった。'}},
+  {label:'同盟を結ぶ',hint:'国力↑ 外交の才',run:g=>{add(g,{pow:5});prog(g,'gaiko',2);return '海の向こうに、頼もしい味方ができた。'}}]},
+];
+
+/* その土地ならではの出来事（気候・地形・資源の組み合わせ） */
+const TRAITS=[
+ {id:'frozen_mine',when:g=>has(g,'寒冷')&&g.answers.resource==='鉱物',w:4,scene:{prop:'vein',mood:'cold',over:'snow'},title:'凍った坑道',
+  text:'真冬、鉱山の坑道が凍りつき、鉱夫たちが中に閉じ込められた。',choices:[
+  {label:'総出で掘り出す',hint:'国力↓ 民心↑ 苦難を越える',run:g=>{add(g,{pow:-6,morale:8});prog(g,'saigai');return '三日がかりで、全員が助け出された。鉱夫たちは王のためなら何でもすると誓った。'}},
+  {label:'春まで待つ',hint:'運次第 苦難を越える',run:g=>{prog(g,'saigai');if(roll(.5)){add(g,{pow:-10,morale:-10});return '春、坑道から戻らなかった者もいた。'}return '鉱夫たちは、坑道の奥で冬を越していた。'}}]},
+ {id:'whales',when:g=>(has(g,'海')||has(g,'島'))&&has(g,'漁業'),w:4,scene:{prop:'whale'},title:'鯨の群れ',
+  text:'沖に、見たこともない鯨の群れが現れた。',choices:[
+  {label:'漁に出る',hint:'国力↑↑',run:g=>{add(g,{pow:10});return '鯨の油と肉で、冬の蓄えが一気に増えた。'}},
+  {label:'見守る',hint:'民心↑ 海の才',run:g=>{add(g,{morale:8});prog(g,'kaiyo');return '鯨は、海の守り神として語り継がれるようになった。'}}]},
+ {id:'locusts',when:g=>has(g,'平野'),w:3,scene:{prop:'locust',mood:'dark'},title:'イナゴの大群',
+  text:'地平の向こうから、黒い雲のようなイナゴの大群が押し寄せた。',choices:[
+  {label:'畑を焼いて食い止める',hint:'国力↓ 苦難を越える',run:g=>{add(g,{pow:-8});prog(g,'saigai');return '炎の壁が、イナゴの群れを追い返した。'}},
+  {label:'耐える',hint:'運次第 苦難を越える',run:g=>{prog(g,'saigai');if(roll(.5)){add(g,{pow:-12});return '畑は丸裸になった。'}return '群れは向きを変え、隣国へ去っていった。'}}]},
+ {id:'wreck',when:g=>has(g,'島')||has(g,'海'),w:3,scene:{prop:'wreck',mood:'dark',over:'mist'},title:'霧の難破船',
+  text:'霧の朝、岩礁に異国の船が座礁していた。',choices:[
+  {label:'生存者を助ける',hint:'民心↑ 異国との縁',run:g=>{add(g,{morale:5});plant(g,'castaway');return '助け出された船乗りたちは、深く頭を下げた。'}},
+  {label:'積み荷を拾い集める',hint:'国力↑ 悪い噂',run:g=>{add(g,{pow:8});prog(g,'akumyo');return '積み荷は手に入ったが、海の向こうで悪い噂が立った。'}}]},
+ {id:'sandstorm',when:g=>has(g,'乾燥'),w:3,scene:{over:'sand'},title:'砂嵐',
+  text:'空が黄色く染まり、三日三晩、砂嵐が吹き荒れた。',choices:[
+  {label:'井戸を守る',hint:'守り↑ 国力↓ 苦難を越える',run:g=>{add(g,{def:4,pow:-5});prog(g,'saigai');return '井戸だけは守り抜いた。'}},
+  {label:'隊商を呼び戻す',hint:'機動↓ 民心↑',run:g=>{add(g,{mob:-4,morale:6});return '隊商は全員無事に戻った。'}}]},
+ {id:'rainy_river',when:g=>has(g,'熱帯'),w:3,scene:{over:'flood',mood:'dark'},title:'雨季の大河',
+  text:'雨季の大雨で、大河が茶色く膨れ上がった。',choices:[
+  {label:'川沿いを捨てて高台へ',hint:'国力↓ 苦難を越える',run:g=>{add(g,{pow:-7});prog(g,'saigai');return '民は高台に新しい村を作った。'}},
+  {label:'運河を掘って水を逃がす',hint:'守り↑ 機動↑ 民心↓',run:g=>{add(g,{def:3,mob:3,morale:-6});return '運河は完成し、のちに船の道にもなった。'}}]},
+ {id:'avalanche',when:g=>has(g,'山岳')&&has(g,'寒冷'),w:3,scene:{over:'snow',mood:'cold'},title:'雪崩',
+  text:'春先、山の斜面が崩れ、雪崩が峠の道を埋めた。',choices:[
+  {label:'道を掘り直す',hint:'機動↑ 民心↓',run:g=>{add(g,{mob:4,morale:-6});return '峠の道は、前より広くなった。'}},
+  {label:'峠を閉ざしたままにする',hint:'守り↑ 機動↓',run:g=>{add(g,{def:6,mob:-4});return '雪に閉ざされた峠は、天然の城壁になった。'}}]},
+ {id:'comet',when:g=>has(g,'理系'),w:3,scene:{prop:'comet',mood:'night'},title:'ほうき星',
+  text:'夜空に、長い尾を引くほうき星が現れた。民は不吉の印だと怯えている。',choices:[
+  {label:'星読みに観測させる',hint:'民心↑ いつか大きな発見がある',run:g=>{add(g,{morale:4});plant(g,'genius');return '星読みたちは、ほうき星が戻ってくる年を計算してみせた。民は落ち着きを取り戻した。'}},
+  {label:'祭りで不安を払う',hint:'民心↑↑ 国力↓',run:g=>{add(g,{morale:12,pow:-4});return '人々はほうき星の下で踊り明かした。'}}]},
+ {id:'tourney',when:g=>has(g,'体育'),w:3,scene:{prop:'horses',mood:'gold'},title:'武芸大会',
+  text:'国中の腕自慢が集まる、武芸大会が開かれた。',choices:[
+  {label:'優勝者を将にする',hint:'攻め↑ 名将の素質',run:g=>{add(g,{atk:5});prog(g,'meisho');return '優勝した若者は、のちに国を代表する将になった。'}},
+  {label:'毎年の祭りにする',hint:'民心↑ 国力↑',run:g=>{add(g,{morale:8,pow:3});return '武芸大会は、国いちばんの祭りになった。'}}]},
+ {id:'uprising',when:g=>has(g,'重税')||g.morale<35,w:4,scene:{prop:'crowd',mood:'war'},title:'鍬を手にした村人',
+  text:'重い貢ぎに耐えかねた村々が、鍬を手に城へ押し寄せてきた。',choices:[
+  {label:'貢ぎを軽くする',hint:'民心↑↑ 国力↓',run:g=>{add(g,{morale:22,pow:-8});return '村人たちは鍬を下ろし、歓声を上げた。'}},
+  {label:'力で追い返す',hint:'攻め↑ 民心↓↓ 内紛の恐れ',run:g=>{add(g,{morale:-12,atk:3});if(roll(.5))prog(g,'naifun');return '村人たちは逃げ帰った。だが、恨みは消えていない。'}}]},
+ {id:'settlers',when:g=>has(g,'軽税'),w:3,scene:{prop:'refugees'},title:'移り住む人々',
+  text:'貢ぎの軽い国があると聞いて、遠くの村から人々が移り住んできた。',choices:[
+  {label:'すべて受け入れる',hint:'国力↑ 民心↓',run:g=>{add(g,{pow:7,morale:-3});plant(g,'migrants');return '新しい村がいくつも生まれた。'}},
+  {label:'職人だけを迎える',hint:'国力↑',run:g=>{add(g,{pow:4});return '腕のいい職人たちが、城下に工房を開いた。'}}]},
+ {id:'singer',when:g=>has(g,'芸術'),w:3,scene:{prop:'crowd',mood:'dusk'},title:'広場の歌声',
+  text:'城下の広場で、一人の子どもの歌に人だかりができている。',choices:[
+  {label:'城に招いて歌わせる',hint:'民心↑ 文化の芽',run:g=>{add(g,{morale:8});prog(g,'ogon');return '子どもの歌声は、やがて国の宝と呼ばれるようになった。'}},
+  {label:'そっと見守る',hint:'民心↑ 国力↑',run:g=>{add(g,{morale:5,pow:3});return '広場の歌は、城下の名物になった。'}}]},
+];
+const SCENE_OF={kanpa:{over:'snow',mood:'cold'},hosaku:{focus:'farm',mood:'gold'},kiba:{prop:'horses'},kozan:{prop:'vein'},ekibyo:{over:'mist',mood:'dark'},kozui:{over:'flood',mood:'dark'},shosen:{prop:'ship'},shijin:{prop:'lanterns',mood:'dusk'},kanbatsu:{over:'drought'},gakumon:{prop:'scholar'},jishin:{over:'quake',mood:'dark'},mittei:{prop:'strangers',mood:'night'},meiba:{prop:'horses'}};
+
+/* 決まった時期の出来事 */
+const BANDIT={id:'sanzoku',scene:{prop:'bandits',mood:'dusk'},title:'山賊の横行',
+  text:'街道に山賊団「黒狼」が出没し、商人が次々と襲われている。',choices:[
+  {label:'討伐の兵を挙げる',hint:'数年のうちに戦いになる',run:g=>{plant(g,'bandit_war');return '王は討伐を宣言した。兵たちが槍を研ぎ始めた。'}},
+  {label:'許して雇い入れる',hint:'戦わずに済む。民は不安がる',run:g=>{plant(g,'bandit_ally');add(g,{atk:3,morale:-5});return '山賊たちは武器を置き、王の前にひざまずいた。民は遠巻きに眺めている。'}},
+  {label:'村を守りながら討伐に備える',hint:'守り↑ 数年のうちに戦いになる',run:g=>{plant(g,'bandit_war');add(g,{def:6});return '村々に柵を巡らせ、山賊の襲撃に備えた。'}}]};
+const GENIUS={id:'genius',need:['genius'],gap:0,scene:{prop:'scholar',mood:'night'},title:'禁断の研究',
+  text:'研究を任せた秀才が、国そのものを作り変える方法を見つけたと言う。「ただ、何が起きるかは分かりません」',choices:[
+  {label:'試させる',hint:'成功率 55%。失敗や暴走もある',run:g=>gamble(g,ODDS_GENIUS)},
+  {label:'やめさせる',hint:'何も起きない',run:g=>{add(g,{morale:3});return '秀才は少し寂しそうに笑い、図面を丸めた。'}}]};
+const ALCHEMIST={id:'alchemist',scene:{prop:'scholar',mood:'night'},title:'禁断の秘術',
+  text:'異国の錬金術師が現れた。「一夜で国の力を作り変える秘術がある。ただし、何が起きても責任は持たん」',choices:[
+  {label:'秘術を受ける',hint:'成功率 40%。失敗や暴走もある',run:g=>gamble(g,ODDS_ALCH)},
+  {label:'断る',hint:'何も起きない',run:g=>{add(g,{morale:3});return '錬金術師は肩をすくめて去っていった。'}}]};
+const ALL_EVENTS=Object.fromEntries([...CALLBACKS,...TRAITS,...EVENTS.map(e=>({...e,scene:SCENE_OF[e.id]||{}})),BANDIT,GENIUS,ALCHEMIST].map(e=>[e.id,e]));
+
+function cbReady(g,e){
+  if(g.used.includes(e.id)) return false;
+  if(!e.need.every(k=>g.seeds[k])) return false;
+  if((e.block||[]).some(k=>g.seeds[k])) return false;
+  return g.turn-g.seeds[e.need[0]].t>=e.gap;
+}
+/* そのターンに起きる出来事を1つ決める。伏線が熟していれば、それを最優先にする */
+function nextEvent(g){
+  const t=g.turn;
+  if(t===10) return null;
+  if(t===2) return 'sanzoku';
+  if(t===8) return g.seeds.genius?'genius':'alchemist';
+  const cb=CALLBACKS.filter(e=>cbReady(g,e));
+  if(cb.length){
+    const oldest=Math.min(...cb.map(e=>g.seeds[e.need[0]].t));
+    return weightedPick(cb.filter(e=>g.seeds[e.need[0]].t===oldest),e=>e.w||3).id;
+  }
+  const tr=TRAITS.filter(e=>!g.used.includes(e.id)&&e.when(g));
+  if(tr.length&&roll(.75)) return weightedPick(tr,e=>e.w||3).id;
+  const ge=pickRandomEvent(g,true);
+  return ge?ge.id:null;
+}
+function getEvent(id){return ALL_EVENTS[id]}
+function eventCause(g,ev){return ev.need&&g.seeds[ev.need[0]]?causeOf(g,ev.need[0])+'ことから':null}
+
+function withDelta(g,fn){
+  const b=snap(g),sp=[...g.specials];const r=fn();checkSpecials(g);
+  r.d=diff(b,snap(g));r.got=g.specials.filter(x=>!sp.includes(x));return r;
+}
+const playCard=(g,id)=>withDelta(g,()=>applyCard(g,id));
+function playEvent(g,id,i){
+  return withDelta(g,()=>{
+    const ev=getEvent(id),ch=ev.choices[i],before=Object.keys(g.seeds);
+    const cause=eventCause(g,ev);
+    g.used.push(id);
+    const text=ch.run(g);
+    const planted=Object.keys(g.seeds).filter(k=>!before.includes(k));
+    if(ev.need) g.links.push({from:ev.need[0],y:yearOf(g.turn),title:ev.title,choice:ch.label,planted});
+    return {title:`${ev.title} · ${ch.label}`,text,cause};
+  });
+}
+
+/* 治世の中の戦い */
+function battleKindAt(g){
+  const t=g.turn,done=k=>g.battles.some(b=>b.kind===k);
+  if(t===4&&g.seeds.bandit_war&&!done('bandit')) return 'bandit';
+  if(t===7&&!done('invade')) return 'invade';
+  if(t===10&&!done('final')) return 'final';
+  return null;
+}
+function battleSetup(g,kind){
+  if(kind==='bandit'){
+    const o=genNPC({turns:3,factor:.8,name:'山賊団「黒狼」'});
+    return {kind,opp:o,field:pick(Object.keys(FIELDS)),label:'山賊団の討伐',intro:'山賊団「黒狼」の隠れ家を突き止めた。いよいよ討伐の時だ。'};
+  }
+  if(kind==='invade'){
+    const o=genNPC({turns:6,factor:.95});
+    return {kind,opp:o,field:pick(Object.keys(FIELDS)),label:`${o.name}の侵攻`,intro:`西の${o.name}が、国境を越えて攻め込んできた。`};
+  }
+  const o=genNPC({turns:10,factor:1.07,suffix:'帝国'});
+  const homes=Object.keys(FIELDS).filter(k=>FIELDS[k].home(g));
+  return {kind,opp:o,field:homes.length&&roll(.5)?pick(homes):pick(Object.keys(FIELDS)),label:`${o.name}との決戦`,
+    intro:`大陸の東で膨れ上がった${o.name}が、すべての国に臣従を迫ってきた。国の存亡を賭けた戦いが始まる。`};
+}
+/* これまでの選択が、戦いでどう効くか */
+function battleMods(g,kind){
+  const S=g.seeds,p={all:1,atk:1,def:1,crit:0,surprise:false,notes:[]},e={all:1,notes:[]};
+  const note=(side,k,effect)=>side.notes.push({seed:k,text:`${causeOf(g,k)}ことで、${effect}`,effect});
+  if(S.fort){p.def*=1.12;note(p,'fort','砦が敵の足を止めた')}
+  if(S.wall){p.def*=1.06;note(p,'wall','城下は一度も破られなかった')}
+  if(S.scouted&&kind!=='bandit'){p.surprise=true;note(p,'scouted','先手を取れた')}
+  else if(S.watch&&kind!=='bandit'){p.surprise=true;note(p,'watch','敵の動きが筒抜けだった')}
+  if(kind!=='bandit'){
+    if(S.bandit_guard){p.all*=1.08;note(p,'bandit_guard','元山賊たちが抜け道から敵の背後を突いた')}
+    else if(S.bandit_ally){p.all*=1.05;note(p,'bandit_ally','元山賊たちが駆けつけた')}
+    if(S.knights_honor){p.crit+=.04;note(p,'knights_honor','規律ある騎士団が乱れずに突撃した')}
+    if(S.knights_arrogant){p.all*=.95;note(p,'knights_arrogant','騎士たちは王の命令に従わなかった')}
+  }
+  if(kind==='invade'&&S.fort_vet){p.def*=1.05;note(p,'fort_vet','砦の兵は落ち着いていた')}
+  if(kind==='final'){
+    if(S.merc){p.atk*=1.08;note(p,'merc','あの傭兵たちが約束どおり駆けつけた')}
+    if(S.gratitude){p.all*=1.1;note(p,'gratitude','隣国が恩を返しに援軍を送ってきた')}
+    if(S.resentment){e.all*=1.08;note(e,'resentment','恨みを抱いた隣国が、帝国の側についた')}
+    if(S.migrants){p.def*=1.05;note(p,'migrants','迎え入れた人々が城を守った')}
+    if(S.song){p.all*=1.04;note(p,'song','兵たちは国の歌を歌いながら戦った')}
+  }
+  return {p,e};
+}
+const KIND_LABEL={bandit:'山賊団の討伐',invade:'侵攻',final:'決戦'};
+function battleOutcome(g,kind,win,opp,mods){
+  g.battles.push({kind,win,name:opp.name});
+  for(const n of [...mods.p.notes,...mods.e.notes]) g.links.push({from:n.seed,y:yearOf(g.turn),title:KIND_LABEL[kind],choice:n.effect,planted:[]});
+  if(kind==='bandit'){
+    if(win){plant(g,'bandit_beaten');add(g,{pow:6,morale:6});return {title:'山賊団の討伐 · 勝利',text:'山賊団を討ち果たした。街道に平和が戻った。'}}
+    add(g,{pow:-6,morale:-8});return {title:'山賊団の討伐 · 敗北',text:'山賊団を取り逃がした。街道の商人たちが不安がっている。'};
+  }
+  if(kind==='invade'){
+    if(win){add(g,{atk:4,morale:10});return {title:`${opp.name}の侵攻 · 勝利`,text:`${opp.name}の軍を国境の外へ押し返した。`}}
+    add(g,{pow:-10,morale:-10,def:-4});return {title:`${opp.name}の侵攻 · 敗北`,text:`国境の村々を${opp.name}に奪われた。`};
+  }
+  return {title:win?'決戦 · 勝利':'決戦 · 敗北',text:win?`${opp.name}の軍旗が、ゆっくりと下ろされた。`:'あなたの軍は、ついに崩れた。'};
+}
+const playOutcome=(g,kind,win,opp,mods)=>withDelta(g,()=>battleOutcome(g,kind,win,opp,mods));
+
+/* 結末：国の呼び名は、その国が積み重ねたものから決まる */
+const EPITHET=[['iryo','医術'],['gratitude','慈悲'],['castaway','恩義'],['port','港'],['fort','砦'],['song','歌'],['knights','騎士'],['smith','鋼'],['farm','実り'],['school','学び'],['market','市'],['bandit_ally','寛容'],['mill','水車'],['watch','物見'],['road','街道'],['wall','石壁'],['fest','祭り'],['hunt','弓'],['resentment','商魂']];
+function endingOf(g){
+  const fin=g.battles.find(b=>b.kind==='final'),won=!!(fin&&fin.win);
+  const tagOf=Object.fromEntries(EPITHET),ok=k=>(g.seeds[k]||g.specials.includes(k))&&!(k==='port'&&g.seeds.port_closed);
+  const tags=[...new Set([...chains(g).map(c=>tagOf[c.root]).filter(Boolean),...EPITHET.filter(([k])=>ok(k)).map(x=>x[1])])].slice(0,2);
+  const epithet=tags.length===2?`${tags[0]}と${tags[1]}の国`:tags.length?`${tags[0]}の国`:'名もなき国';
+  let v;
+  if(!won) v={title:'滅びた国',line:'帝国の大軍に飲み込まれ、その名は歴史の陰に消えた'};
+  else if(STAT_KEYS.every(k=>g.s[k]>=80)&&goldCount(g)>=2) v={title:'伝説の国',line:'帝国を打ち破り、大陸の伝説になった'};
+  else if(g.morale<25||g.specials.includes('akumyo')) v={title:'恐れられた国',line:'帝国を退けたが、大陸の国々から恐れられた'};
+  else if(g.morale>=60) v={title:'愛された国',line:'帝国を退け、民に愛される国として栄えた'};
+  else v={title:'不屈の国',line:'帝国を退け、大陸にその名を刻んだ'};
+  return {...v,epithet};
+}
+const closingLine=(g,e)=>`${landPhrase(g)}に生まれた${g.name}は、「${e.epithet}」と呼ばれ、${e.line}。`;
+/* 選択のつながりを、きっかけの選択ごとにまとめる */
+function chains(g){
+  const roots=[...new Set(g.links.map(L=>L.from))].filter(k=>!g.links.some(L=>L.planted.includes(k)));
+  return roots.map(root=>{
+    const seeds=new Set([root]),nodes=[];
+    for(const L of g.links) if(seeds.has(L.from)){nodes.push(L);L.planted.forEach(k=>seeds.add(k))}
+    const seen=new Set(),out=[{y:yearOf(g.seeds[root].t),text:SEED_LABEL[root]}];
+    for(const L of nodes.sort((a,b)=>a.y-b.y)){const t=`${L.title}: ${L.choice}`;if(!seen.has(t)){seen.add(t);out.push({y:L.y,text:t})}}
+    out.root=root;return out;
+  }).sort((a,b)=>b.length-a.length);
+}
+
+/* 国名と国旗 */
+const NAME_HEAD={寒冷:['ノル','ヴァル','スヴェ','フロ','イス','カレ','ユル','オルド'],温暖:['ミラ','セレ','アウ','ルミ','オリ','フィオ','エメ','ソラ'],乾燥:['ザル','カシ','タム','サハ','オア','ハル','ジン','ラザ'],熱帯:['マナ','ココ','タヒ','パル','ルア','キナ','モア','ナル']};
+const NAME_MID=['ン','ラ','ド','ス','リ','ネ','ガ','ト','ヴィ','ル','メ','ロ'];
+const NAME_END=['ア','ス','ン','ド','ル','ナ','ム','タ','リア','ニア'];
+const SUFFIX={自由:'共和国',調和:'連邦',挑戦:'公国',伝統:'王国'};
+function genName(g,suffix){
+  const head=pick(NAME_HEAD[g.answers.climate]||NAME_HEAD['温暖']);
+  const base=head+(roll(.55)?pick(NAME_MID):'')+pick(NAME_END);
+  return base+(suffix||(has(g,'島')?'諸島国':SUFFIX[g.answers.motto]||'王国'));
+}
+const KING_NAMES=['エルン','リアム','セリス','アルド','ユーリ','カイ','ミレア','ロウェン'];
+const PAL={寒冷:{c:['#1F3F73','#F1F4F7','#86AEDD'],team:'#3D6FC8',alt:'#7A5BC0'},温暖:{c:['#2D7A4E','#F2CF55','#F7F6EC'],team:'#2F9763',alt:'#8B9C1C'},乾燥:{c:['#B04F28','#E8C266','#3A2A1F'],team:'#CF6430',alt:'#A2405F'},熱帯:{c:['#0D8686','#F0892A','#FFF4DC'],team:'#13A3A3',alt:'#E07A1F'}};
+function genFlag(g){return {climate:g.answers.climate||'温暖',motto:g.answers.motto||'伝統',res:g.answers.resource||'農作物',big:g.answers.population==='大集団'}}
+function flagSVG(f,w=60,h=40){
+  const [a,b,c]=(PAL[f.climate]||PAL['温暖']).c;
+  let bg,em=b,st='none';
+  if(f.motto==='自由'){bg=`<rect width="20" height="40" fill="${a}"/><rect x="20" width="20" height="40" fill="${c}"/><rect x="40" width="20" height="40" fill="${b}"/>`;em=a}
+  else if(f.motto==='調和'){bg=`<rect width="60" height="20" fill="${a}"/><rect y="20" width="60" height="20" fill="${c}"/>`;st=a}
+  else if(f.motto==='挑戦'){bg=`<rect width="60" height="40" fill="${c}"/><path d="M0 0H60L0 40Z" fill="${a}"/>`;st=a}
+  else {bg=`<rect width="60" height="40" fill="${a}"/><circle cx="30" cy="20" r="13" fill="${c}"/>`;em=a}
+  const s=f.big?9.5:7.5,cx=30,cy=20;let shape;
+  if(f.res==='鉱物') shape=`<path d="M${cx} ${cy-s*1.3}L${cx+s} ${cy}L${cx} ${cy+s*1.3}L${cx-s} ${cy}Z"/>`;
+  else if(f.res==='農作物') shape=`<circle cx="${cx}" cy="${cy}" r="${s}"/>`;
+  else if(f.res==='漁業') shape=`<path d="M${cx+s*.25} ${cy-s}A${s} ${s} 0 1 0 ${cx+s*.25} ${cy+s}A${s*1.25} ${s*1.25} 0 0 1 ${cx+s*.25} ${cy-s}Z"/>`;
+  else {let p='';for(let i=0;i<16;i++){const r=i%2?s*.58:s,an=Math.PI*i/8-Math.PI/2;p+=(i?'L':'M')+(cx+r*Math.cos(an)).toFixed(2)+' '+(cy+r*Math.sin(an)).toFixed(2)}shape=`<path d="${p}Z"/>`}
+  return `<svg class="flag" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="${w}" height="${h}" role="img" aria-label="国旗">${bg}<g fill="${em}" stroke="${st}" stroke-width="1.2">${shape}</g></svg>`;
+}
+
+/* 戦闘（決定的なシミュレーション。乱数の種が同じなら結果も同じ） */
+const FIELDS={
+ plain:{name:'平野',home:g=>has(g,'平野'),c:'f-plain'},
+ mount:{name:'山岳',home:g=>has(g,'山岳'),c:'f-mount'},
+ sea:{name:'海峡',home:g=>has(g,'海')||has(g,'島'),c:'f-sea'},
+ snow:{name:'雪原',home:g=>has(g,'寒冷'),c:'f-snow'},
+ sand:{name:'砂漠',home:g=>has(g,'乾燥'),c:'f-sand'},
+};
+const TACTICS={
+ rush:{name:'速攻',desc:'序盤の攻めが強い。疲れやすい'},
+ guard:{name:'堅守',desc:'守りが固い。攻めは控えめ'},
+ endure:{name:'持久',desc:'疲れにくい。攻めはやや控えめ'},
+};
+const MAX_TICKS=40;
+function simulate(P,E,fieldKey,tP,tE,seed,ext={p:{},e:{}}){
+  const rng=mulberry32(seed),field=FIELDS[fieldKey];
+  const mk=(c,opp,tactic,x={})=>{
+    const sp=c.specials,home=field.home(c);let all=x.all||1;
+    if(home) all*=sp.includes('chinori')?1.22:1.1;
+    if(sp.includes('kakusei')) all*=1.15;
+    const ta=adv(c.type,opp.type); if(ta===1) all*=1.15; else if(ta===-1) all*=.9;
+    let decay=Math.max(.6,3.3-c.s.pow/45);
+    if(sp.includes('heitan')) decay*=.65; if(sp.includes('iryo')) decay*=.8; if(sp.includes('naifun')) decay*=1.3;
+    if(tactic==='rush') decay*=1.3; if(tactic==='endure') decay*=.7;
+    return {c,sp,home,all,ta,tactic,stam:100,decay,
+      crit:Math.max(.01,.04+c.s.mob/650+(sp.includes('meisho')?.08:0)+(sp.includes('kaiyo')&&fieldKey==='sea'?.06:0)+(x.crit||0)),
+      critMult:sp.includes('meisho')?2.1:1.7,rallied:false,tired:false,fired:[],atkM:x.atk||1,defM:x.def||1,surprise:!!x.surprise,notes:x.notes||[]};
+  };
+  const A=mk(P,E,tP,ext.p),B=mk(E,P,tE,ext.e);
+  const logs=[];let t=0;
+  const side=X=>X===A?'p':'e';
+  const fire=(X,id)=>{if(!X.fired.includes(id)){X.fired.push(id);logs.push({t,who:side(X),text:`${X.c.name}: ${SPECIALS[id].battle}`})}};
+  logs.push({t:0,who:'n',text:`開戦。戦場は${field.name}。`});
+  if(A.home) logs.push({t:0,who:'p',text:`${P.name}にとって${field.name}は地元の地形だ`});
+  if(B.home) logs.push({t:0,who:'e',text:`${E.name}にとって${field.name}は地元の地形だ`});
+  for(const X of [A,B]) for(const n of X.notes) logs.push({t:0,who:side(X),text:n.text});
+  let f=0;
+  for(const X of [A,B]){
+    if(X.sp.includes('gaiko')){f+=X===A?12:-12;fire(X,'gaiko')}
+    if(X.sp.includes('chinori')&&X.home) fire(X,'chinori');
+    if(X.sp.includes('kakusei')) fire(X,'kakusei');
+    if(X.sp.includes('boso')) fire(X,'boso');
+  }
+  const ticks=[{f,sp:100,se:100,net:0,crit:null}];
+  let lastCrit=-9,crossP=false,crossE=false,end=null;
+  for(t=0;t<MAX_TICKS;t++){
+    const power=(X,Y)=>{
+      const eff=.45+.55*X.stam/100;
+      let atk=X.c.s.atk*X.all*eff*X.atkM,def=X.c.s.def*X.all*eff*X.defM;
+      if(X.tactic==='rush'&&t<12) atk*=1.25;
+      if(X.tactic==='guard'){def*=1.25;atk*=.9}
+      if(X.tactic==='endure') atk*=.95;
+      if(X.sp.includes('kiba')&&t<5){atk*=1.45;fire(X,'kiba')}
+      if(X.sp.includes('totsugeki')&&t<6){atk*=1.35;fire(X,'totsugeki')}
+      if(X.sp.includes('ogon')&&t>=20){atk*=1.15;def*=1.15;fire(X,'ogon')}
+      if(X.sp.includes('boso')){atk*=1.35;def*=.6}
+      if(Y.sp.includes('akumyo')){atk*=1.1;fire(Y,'akumyo')}
+      if(X.sp.includes('kaiyo')&&fieldKey==='sea'){atk*=1.15;fire(X,'kaiyo')}
+      const pushedBack=X===A?f<-50:f>50;
+      if(X.sp.includes('tekiheki')&&pushedBack){def*=1.4;fire(X,'tekiheki')}
+      if(Y.sp.includes('kishu')&&t<4){def*=.7;fire(Y,'kishu')}
+      if(Y.surprise&&t<4) def*=.78;
+      if(t<3&&X.c.s.mob>Y.c.s.mob) atk*=1+(X.c.s.mob-Y.c.s.mob)/200;
+      return {atk,def};
+    };
+    if(t===15) for(const X of [A,B]) if(X.sp.includes('naifun')) fire(X,'naifun');
+    if(t===20) for(const X of [A,B]){if(X.sp.includes('heitan')) fire(X,'heitan');if(X.sp.includes('iryo')) fire(X,'iryo')}
+    const a=power(A,B),b=power(B,A);
+    let ra=.8+rng()*.4,rb=.8+rng()*.4,crit=null;
+    if(rng()<A.crit){ra*=A.critMult;crit='p'}
+    if(rng()<B.crit){rb*=B.critMult;crit=crit?'both':'e'}
+    if(crit&&t-lastCrit>=4){
+      lastCrit=t;
+      const X=crit==='e'?B:A;
+      if(X.sp.includes('meisho')&&!X.fired.includes('meisho')) fire(X,'meisho');
+      else logs.push({t:t+1,who:side(X),text:`${X.c.name}の会心の一撃!`});
+    }
+    const pa=Math.max(1.5,a.atk*ra-b.def*.55),pb=Math.max(1.5,b.atk*rb-a.def*.55);
+    const net=(pa-pb)*.22; f+=net;
+    A.stam=Math.max(0,A.stam-A.decay);B.stam=Math.max(0,B.stam-B.decay);
+    if(f<=-85&&A.sp.includes('fukutsu')&&!A.rallied){A.rallied=true;f+=28;A.stam=Math.min(100,A.stam+30);t++;fire(A,'fukutsu');t--}
+    if(f>=85&&B.sp.includes('fukutsu')&&!B.rallied){B.rallied=true;f-=28;B.stam=Math.min(100,B.stam+30);t++;fire(B,'fukutsu');t--}
+    f=clamp(f,-100,100);
+    ticks.push({f,sp:A.stam,se:B.stam,net,crit});
+    for(const X of [A,B]) if(!X.tired&&X.stam<25){X.tired=true;logs.push({t:t+1,who:side(X),text:`${X.c.name}の兵が息切れしてきた`})}
+    if(!crossP&&f>=50){crossP=true;logs.push({t:t+1,who:'p',text:`${P.name}が大きく押し込む`})}
+    if(!crossE&&f<=-50){crossE=true;logs.push({t:t+1,who:'e',text:`${E.name}が攻め込んでくる`})}
+    if(f>=100){end={winner:'p',how:'push'};break}
+    if(f<=-100){end={winner:'e',how:'push'};break}
+  }
+  const T=ticks.length-1;
+  if(!end) end={winner:f>0?'p':'e',how:'judge'};
+  const W=end.winner==='p'?P:E;
+  logs.push({t:T,who:'n',text:end.how==='push'?`${W.name}が押し切った!`:`時間切れ。押し込んでいた${W.name}の判定勝ち。`});
+  logs.sort((x,y)=>x.t-y.t);
+
+  /* 勝敗の解説 */
+  const reasons=[];
+  if(A.ta===1) reasons.push(`相性: ${TYPES[P.type].name}は${TYPES[E.type].name}に強い(あなたが有利)`);
+  else if(A.ta===-1) reasons.push(`相性: ${TYPES[E.type].name}は${TYPES[P.type].name}に強い(相手が有利)`);
+  else reasons.push(`相性: どちらも${TYPES[P.type].name}で、相性の差はなし`);
+  if(A.home||B.home) reasons.push(`戦場: ${field.name}は${A.home&&B.home?'両国':A.home?'あなた':'相手'}の地元の地形`);
+  else reasons.push(`戦場: ${field.name}はどちらの地元でもない`);
+  reasons.push(`作戦: あなたは${TACTICS[tP].name}、相手は${TACTICS[tE].name}`);
+  let best=null;
+  for(const k of STAT_KEYS){const d=P.s[k]-E.s[k];if(!best||Math.abs(d)>Math.abs(best.d))best={k,d}}
+  if(best&&Math.abs(best.d)>=8) reasons.push(`能力: ${LABEL[best.k]}が ${rankOf(P.s[best.k])} 対 ${rankOf(E.s[best.k])}`);
+  const last=ticks[T];
+  if(Math.abs(last.sp-last.se)>=20) reasons.push(`持久: ${last.sp>last.se?'あなた':'相手'}の兵が最後まで粘った(国力と作戦の差)`);
+  const firedNames=X=>X.fired.map(id=>SPECIALS[id].name);
+  if(A.fired.length) reasons.push(`あなたの特技: ${firedNames(A).join('、')}`);
+  if(B.fired.length) reasons.push(`相手の特技: ${firedNames(B).join('、')}`);
+  return {ticks,logs,end,reasons,field:fieldKey,tE};
+}
+</script>
+
+<script>
+'use strict';
+/* ===== 挿絵（その国の土地に、選んだ事業の建物が増えていく） ===== */
+let SVG_UID=0;
+const ART={
+ 寒冷:{sky:['#A9C1D6','#E6EDF2'],far:'#7F94AA',far2:'#A4B5C6',ground:'#E2E9ED',ground2:'#C7D3DB',water:'#5A82A4',water2:'#82A4C0',roof:'#3D5672',tree:'#4C6A5C'},
+ 温暖:{sky:['#8CC3E6','#E3F2F9'],far:'#6D9E7B',far2:'#93BE8F',ground:'#A9D085',ground2:'#8DBE6C',water:'#3E8EC2',water2:'#6CACD4',roof:'#B4523B',tree:'#3D784A'},
+ 乾燥:{sky:['#E7C185','#F6E6C4'],far:'#BD8659',far2:'#D6A676',ground:'#E6C98F',ground2:'#D3AE72',water:'#4C9AAE',water2:'#78B7C5',roof:'#8C4A2F',tree:'#7A8A48'},
+ 熱帯:{sky:['#6CC1D5','#DCF3F1'],far:'#2F8B6D',far2:'#4CA97F',ground:'#6EBF6B',ground2:'#52A95C',water:'#1F9EAF',water2:'#4EC1CA',roof:'#CF6A2C',tree:'#226E49'},
+};
+const MOOD_SKY={dark:['#5B626C','#A0A6AD'],dusk:['#3E3966','#E8A270'],night:['#16223B','#3E5078'],war:['#7E5049','#D9B09A'],gold:['#E8B45A','#F8E3B2'],cold:['#B6C6D4','#EEF2F5']};
+const MOOD_SHADE={dark:'rgba(30,34,44,.22)',night:'rgba(8,16,36,.42)',dusk:'rgba(60,30,60,.16)',war:'rgba(110,30,20,.12)',gold:'rgba(255,190,90,.10)'};
+const STONE='#C3BCAF',STONE2='#8E877C',WOOD='#7A5638',INK='#2A2E37',CLOTH='#F4EFE5',ENEMY='#9B2F29',GOLDC='#F2C14E';
+function strHash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
+
+/* 建物の位置（地形で変わるものだけ分ける） */
+function slotOf(g,id){
+  const T=g.answers.terrain,coast=T==='海'||T==='島';
+  const S={castle:[160,108],fort:[48,98],watch:[104,98],smith:[208,118],school:[120,126],market:[194,148],
+    mill:coast?[86,142]:[262,128],hunt:[60,134],farm:[104,160],road:[160,150],wall:[160,100],knights:[160,112],fest:[200,150],
+    port:T==='海'?[238,140]:T==='島'?[278,146]:[276,150]};
+  return S[id];
+}
+const person=(x,y,c=INK,k=1)=>`<g fill="${c}"><circle cx="${x}" cy="${y-9*k}" r="${2.4*k}"/><path d="M${x-3*k} ${y}L${x-2*k} ${y-6*k}L${x+2*k} ${y-6*k}L${x+3*k} ${y}Z"/></g>`;
+function tower(x,y,w,h,c=STONE,c2=STONE2){
+  let s=`<rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" fill="${c}"/><rect x="${x-w/2}" y="${y-h}" width="${w}" height="${h}" fill="none" stroke="${c2}" stroke-width=".8"/>`;
+  for(let i=0;i<3;i++) s+=`<rect x="${x-w/2+i*(w/3)+w/12}" y="${y-h-3}" width="${w/6}" height="3" fill="${c}"/>`;
+  return s;
+}
+function drawBuilding(g,id,P,lit){
+  const [x,y]=slotOf(g,id),win=lit?GOLDC:'#3C3F48';
+  switch(id){
+   case 'fort': return `<path d="M${x-30} ${y+4}Q${x} ${y-14} ${x+30} ${y+4}Z" fill="${P.ground2}"/>${tower(x,y,14,22)}<rect x="${x-2}" y="${y-14}" width="4" height="5" fill="${win}"/><line x1="${x}" y1="${y-25}" x2="${x}" y2="${y-34}" stroke="${INK}" stroke-width="1"/><path d="M${x} ${y-34}L${x+8} ${y-31}L${x} ${y-28}Z" fill="${(PAL[g.answers.climate]||PAL['温暖']).c[0]}"/>`;
+   case 'watch': return `<rect x="${x-3}" y="${y-30}" width="6" height="30" fill="${WOOD}"/><path d="M${x-7} ${y-30}L${x} ${y-38}L${x+7} ${y-30}Z" fill="${P.roof}"/><rect x="${x-5}" y="${y-30}" width="10" height="3" fill="${STONE2}"/><circle cx="${x}" cy="${y-24}" r="1.4" fill="${win}"/>`;
+   case 'smith': return `<rect x="${x-11}" y="${y-10}" width="22" height="10" fill="${WOOD}"/><path d="M${x-13} ${y-10}L${x} ${y-18}L${x+13} ${y-10}Z" fill="${P.roof}"/><rect x="${x+5}" y="${y-22}" width="4" height="8" fill="${STONE2}"/><g fill="#9AA0A8" opacity=".7"><circle cx="${x+8}" cy="${y-26}" r="3"/><circle cx="${x+11}" cy="${y-32}" r="4"/><circle cx="${x+15}" cy="${y-39}" r="5"/></g><rect x="${x-6}" y="${y-6}" width="5" height="6" fill="#E8752F"/>`;
+   case 'school': return `<rect x="${x-12}" y="${y-11}" width="24" height="11" fill="${CLOTH}" stroke="${STONE2}" stroke-width=".8"/><path d="M${x-14} ${y-11}L${x} ${y-19}L${x+14} ${y-11}Z" fill="${P.roof}"/><rect x="${x-2}" y="${y-26}" width="4" height="8" fill="${STONE}"/><path d="M${x-3} ${y-26}L${x} ${y-30}L${x+3} ${y-26}Z" fill="${P.roof}"/><circle cx="${x}" cy="${y-22}" r="1.2" fill="${GOLDC}"/><rect x="${x-7}" y="${y-7}" width="3" height="3" fill="${win}"/><rect x="${x+4}" y="${y-7}" width="3" height="3" fill="${win}"/>`;
+   case 'market': {let s='';[[-14,'#C8473C'],[0,'#E4B33C'],[14,'#3C7DC8']].forEach(([dx,c])=>{s+=`<path d="M${x+dx-7} ${y}L${x+dx-7} ${y-6}L${x+dx} ${y-11}L${x+dx+7} ${y-6}L${x+dx+7} ${y}Z" fill="${c}"/><path d="M${x+dx-7} ${y-6}L${x+dx+7} ${y-6}" stroke="${CLOTH}" stroke-width="1"/>`});return s+person(x-4,y+8)+person(x+9,y+9);}
+   case 'mill': return `<rect x="${x-9}" y="${y-12}" width="14" height="12" fill="${WOOD}"/><path d="M${x-11} ${y-12}L${x-2} ${y-19}L${x+7} ${y-12}Z" fill="${P.roof}"/><circle cx="${x+9}" cy="${y-5}" r="7" fill="none" stroke="${STONE2}" stroke-width="2"/><path d="M${x+2} ${y-5}H${x+16}M${x+9} ${y-12}V${y+2}M${x+4} ${y-10}L${x+14} ${y}M${x+14} ${y-10}L${x+4} ${y}" stroke="${STONE2}" stroke-width="1"/>`;
+   case 'hunt': {let s='';[[-14,2],[0,-2],[13,3],[-5,8]].forEach(([dx,dy])=>{s+=`<rect x="${x+dx-1}" y="${y+dy-4}" width="2" height="6" fill="${WOOD}"/><path d="M${x+dx-7} ${y+dy-3}L${x+dx} ${y+dy-18}L${x+dx+7} ${y+dy-3}Z" fill="${P.tree}"/>`});return s;}
+   case 'farm': {let s='';for(let i=0;i<5;i++){const yy=y-8+i*4.5;s+=`<path d="M${x-44+i*3} ${yy}L${x+40-i*2} ${yy}L${x+42-i*2} ${yy+3.6}L${x-46+i*3} ${yy+3.6}Z" fill="${i%2?'#D9B44A':'#C99A34'}" opacity=".95"/>`}return s+`<path d="M${x-48} ${y-9}L${x+44} ${y-9}" stroke="${WOOD}" stroke-width=".8"/>`;}
+   case 'road': return `<path d="M${x-10} 180Q${x-4} 140 ${x-3} 110L${x+3} 110Q${x+6} 140 ${x+14} 180Z" fill="#CDB892" opacity=".9"/>`;
+   case 'wall': return `<path d="M128 112V92H134V96H140V92H146V96H152V92H168V96H174V92H180V96H186V92H192V112" fill="none" stroke="${STONE2}" stroke-width="3"/>`;
+   case 'knights': {const c=(PAL[g.answers.climate]||PAL['温暖']).c[0];return [130,190].map(bx=>`<line x1="${bx}" y1="${y}" x2="${bx}" y2="${y-24}" stroke="${INK}" stroke-width="1"/><path d="M${bx} ${y-24}L${bx+9} ${y-21}L${bx} ${y-17}Z" fill="${c}"/>`).join('')+person(138,y+10,'#5A6070')+person(182,y+10,'#5A6070');}
+   case 'fest': {let s=`<path d="M172 96Q186 112 ${x+10} ${y-8}" fill="none" stroke="${INK}" stroke-width=".6"/>`;for(let i=0;i<5;i++){const t=i/4,lx=172+(x+10-172)*t,ly=96+(y-8-96)*t+Math.sin(t*3.14)*8;s+=`<circle cx="${lx}" cy="${ly}" r="2" fill="${['#E8752F','#F2C14E','#D64545'][i%3]}"/>`}return s+`<path d="M${x-6} ${y+10}L${x} ${y-2}L${x+6} ${y+10}Z" fill="#E8752F"/><path d="M${x-3} ${y+10}L${x} ${y+3}L${x+3} ${y+10}Z" fill="${GOLDC}"/>`;}
+   case 'port': return `<rect x="${x-4}" y="${y-2}" width="22" height="3" fill="${WOOD}"/><rect x="${x+2}" y="${y+1}" width="2" height="6" fill="${WOOD}"/><rect x="${x+12}" y="${y+1}" width="2" height="6" fill="${WOOD}"/>`+shipAt(x+22,y+4,.8);
+  }
+  return '';
+}
+function shipAt(x,y,k=1){return `<g transform="translate(${x} ${y}) scale(${k})"><path d="M-14 0H14L9 7H-9Z" fill="${WOOD}"/><line x1="0" y1="0" x2="0" y2="-22" stroke="${INK}" stroke-width="1.2"/><path d="M1 -21L13 -4H1Z" fill="${CLOTH}"/><path d="M-1 -18L-11 -4H-1Z" fill="${CLOTH}" opacity=".9"/></g>`}
+function castle(g,P,lit){
+  const c=(PAL[g.answers.climate]||PAL['温暖']).c[0],w=lit?GOLDC:'#3C3F48';
+  return `${tower(144,108,10,22)}${tower(176,108,10,22)}<rect x="148" y="82" width="24" height="26" fill="${STONE}" stroke="${STONE2}" stroke-width=".8"/>
+  <path d="M138 86L144 76L150 86Z" fill="${P.roof}"/><path d="M170 86L176 76L182 86Z" fill="${P.roof}"/><path d="M146 82L160 68L174 82Z" fill="${P.roof}"/>
+  <path d="M156 108V100Q160 95 164 100V108Z" fill="#3C3F48"/><rect x="152" y="88" width="3" height="4" fill="${w}"/><rect x="165" y="88" width="3" height="4" fill="${w}"/>
+  <line x1="160" y1="68" x2="160" y2="58" stroke="${INK}" stroke-width="1"/><path d="M160 58L170 61L160 64Z" fill="${c}"/>`;
+}
+function drawProp(g,prop,P){
+  const T=g.answers.terrain,coast=T==='海'||T==='島',left=T==='海';
+  switch(prop){
+   case 'ship': return T==='海'?shipAt(282,128)+shipAt(304,118,.6):T==='島'?shipAt(302,128)+shipAt(20,118,.6):shipAt(280,156,.7);
+   case 'wreck': return `<g transform="rotate(-18 ${coast?296:280} 148)">${shipAt(coast?296:280,148)}</g><path d="M${coast?280:262} 156L${coast?290:272} 146L${coast?302:284} 158Z" fill="${STONE2}"/>`;
+   case 'whale': return coast?`<path d="M${T==='海'?286:300} 128Q${T==='海'?292:306} 114 ${T==='海'?302:314} 110Q${T==='海'?296:310} 120 ${T==='海'?300:316} 128Z" fill="#33495F"/><path d="M${T==='海'?270:290} 136Q${T==='海'?285:302} 130 ${T==='海'?300:316} 136" stroke="${CLOTH}" stroke-width="1" fill="none"/>`:'';
+   case 'bandits': return `<path d="M30 168L44 148L58 168Z" fill="#4A3F36"/><path d="M58 170L62 160L66 170Z" fill="#E8752F"/><circle cx="62" cy="166" r="7" fill="#F2C14E" opacity=".25"/>`+person(74,170,'#3A2F2A')+person(84,168,'#3A2F2A')+person(48,172,'#3A2F2A');
+   case 'army': {const x0=left?18:246;let s='';for(let r=0;r<3;r++)for(let i=0;i<5;i++){const x=x0+i*12+r*4,y=128+r*12;s+=person(x,y,'#4A2522',.8)+`<line x1="${x+3}" y1="${y}" x2="${x+3}" y2="${y-16}" stroke="${INK}" stroke-width=".7"/>`}return s+`<line x1="${x0+30}" y1="${116}" x2="${x0+30}" y2="${96}" stroke="${INK}" stroke-width="1"/><path d="M${x0+30} 96L${x0+42} 100L${x0+30} 104Z" fill="${ENEMY}"/>`;}
+   case 'strangers': {const x0=left?40:236;return [0,9,18,27].map((d,i)=>person(x0+d,160+(i%2)*3,'#4D4A55')).join('')+`<path d="M${x0-6} 162L${x0+34} 162" stroke="${WOOD}" stroke-width=".6"/>`;}
+   case 'horses': {const x0=left?130:222;let s='';for(let i=0;i<3;i++){const x=x0+i*22,y=160+(i%2)*4;s+=`<g fill="#5B3F2C"><ellipse cx="${x}" cy="${y-8}" rx="8" ry="4"/><path d="M${x+6} ${y-10}L${x+11} ${y-17}L${x+13} ${y-15}L${x+9} ${y-8}Z"/><rect x="${x-6}" y="${y-6}" width="1.6" height="7"/><rect x="${x+4}" y="${y-6}" width="1.6" height="7"/></g>`}return s;}
+   case 'caravan': {const x=left?150:214,y=166;return `<rect x="${x-14}" y="${y-12}" width="22" height="9" fill="${WOOD}"/><path d="M${x-15} ${y-12}Q${x-3} ${y-24} ${x+9} ${y-12}Z" fill="${CLOTH}"/><circle cx="${x-9}" cy="${y-2}" r="3" fill="${INK}"/><circle cx="${x+4}" cy="${y-2}" r="3" fill="${INK}"/><ellipse cx="${x+20}" cy="${y-7}" rx="7" ry="4" fill="#6B5444"/>`+person(x+30,y);}
+   case 'crowd': {let s='';const pts=[[132,156],[142,160],[152,154],[164,160],[176,155],[186,161],[146,168],[170,168],[158,166],[196,166]];pts.forEach(([x,y],i)=>s+=person(x,y,['#3A3F4C','#6B3F3A','#3F5A4C'][i%3]));return s;}
+   case 'refugees': {const x0=left?168:232;let s='';for(let i=0;i<5;i++){const x=x0+i*11,y=164+(i%2)*3;s+=person(x,y,'#55505E')+`<circle cx="${x+3}" cy="${y-7}" r="2.4" fill="#A88C6A"/>`}return s;}
+   case 'scholar': {let s=person(214,164,'#2F3D63',1.2)+`<rect x="218" y="150" width="9" height="6" fill="${CLOTH}" stroke="${STONE2}" stroke-width=".6"/>`;[[40,22],[70,14],[100,30],[250,18],[280,34],[300,12]].forEach(([x,y])=>s+=`<path d="M${x} ${y-3}L${x+1} ${y-1}L${x+3} ${y}L${x+1} ${y+1}L${x} ${y+3}L${x-1} ${y+1}L${x-3} ${y}L${x-1} ${y-1}Z" fill="${GOLDC}"/>`);return s;}
+   case 'vein': {let s='';[[72,112],[88,120],[64,124],[96,110]].forEach(([x,y])=>s+=`<path d="M${x} ${y-4}L${x+1.2} ${y-1}L${x+4} ${y}L${x+1.2} ${y+1}L${x} ${y+4}L${x-1.2} ${y+1}L${x-4} ${y}L${x-1.2} ${y-1}Z" fill="${GOLDC}"/>`);return s+person(84,134,'#3A3F4C')+`<line x1="88" y1="128" x2="94" y2="122" stroke="${WOOD}" stroke-width="1.4"/>`;}
+   case 'locust': {let s='';const r=mulberry32(7);for(let i=0;i<120;i++){const x=r()*320,y=20+r()*120*r();s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="1.6" height="1.1" fill="#2E2A22" opacity=".8"/>`}return s;}
+   case 'chest': return `<rect x="88" y="152" width="18" height="11" fill="${WOOD}"/><path d="M88 152Q97 144 106 152Z" fill="#8A6440"/><rect x="95" y="151" width="4" height="5" fill="${GOLDC}"/><circle cx="97" cy="152" r="12" fill="${GOLDC}" opacity=".18"/>`+person(116,166);
+   case 'sword': return `<circle cx="214" cy="150" r="16" fill="${GOLDC}" opacity=".22"/><rect x="212.8" y="128" width="2.4" height="24" fill="#E6EBF0"/><rect x="207" y="150" width="14" height="2.6" fill="${GOLDC}"/><rect x="212.5" y="152" width="3" height="7" fill="${WOOD}"/>`+person(232,170)+person(196,170);
+   case 'comet': return `<path d="M40 50Q120 30 210 16" stroke="${CLOTH}" stroke-width="5" opacity=".35" fill="none"/><path d="M60 46Q130 28 210 16" stroke="${CLOTH}" stroke-width="2" opacity=".6" fill="none"/><circle cx="212" cy="16" r="4" fill="#FFFFFF"/>`+person(100,168,'#2F3D63')+person(112,168,'#3A3F4C');
+   case 'lanterns': {let s='<path d="M0 40Q80 64 160 44T320 46" fill="none" stroke="#2A2E37" stroke-width=".6"/>';for(let i=0;i<12;i++){const x=12+i*27,y=44+Math.sin(i*1.1)*6+(i%3)*2;s+=`<circle cx="${x}" cy="${y}" r="2.6" fill="${['#E8752F','#F2C14E','#D64545'][i%3]}"/>`}return s+`<circle cx="250" cy="24" r="10" fill="none" stroke="${GOLDC}" stroke-width="1" stroke-dasharray="2 3"/><circle cx="76" cy="20" r="7" fill="none" stroke="#E8752F" stroke-width="1" stroke-dasharray="2 2"/>`;}
+   case 'archers': {let s='';[[226,166],[238,168],[250,166]].forEach(([x,y])=>{s+=person(x,y,'#3F5A4C')+`<path d="M${x+4} ${y-12}Q${x+8} ${y-7} ${x+4} ${y-2}" fill="none" stroke="${WOOD}" stroke-width="1"/>`});return s+`<circle cx="292" cy="150" r="6" fill="${CLOTH}" stroke="${ENEMY}" stroke-width="2"/><circle cx="292" cy="150" r="2" fill="${ENEMY}"/>`;}
+  }
+  return '';
+}
+function drawOver(over,P){
+  switch(over){
+   case 'mist': return `<rect width="320" height="180" fill="#6E6680" opacity=".32"/><path d="M0 120Q80 108 160 122T320 116V140H0Z" fill="#F0EEF4" opacity=".25"/>`;
+   case 'snow': {let s='';const r=mulberry32(3);for(let i=0;i<70;i++)s+=`<circle cx="${(r()*320).toFixed(1)}" cy="${(r()*180).toFixed(1)}" r="${(.6+r()*1.2).toFixed(1)}" fill="#FFFFFF" opacity=".9"/>`;return s;}
+   case 'flood': return `<path d="M0 132Q40 128 80 132T160 132T240 132T320 132V180H0Z" fill="#6A6650" opacity=".75"/><path d="M0 142Q40 138 80 142T160 142T240 142T320 142" stroke="#D8D2BC" stroke-width="1" fill="none" opacity=".7"/>`;
+   case 'quake': return `<path d="M60 180L76 160L70 150L88 132L84 120M220 180L210 162L222 148L214 134" stroke="#2A2E37" stroke-width="1.6" fill="none"/><rect width="320" height="180" fill="#5A4A3A" opacity=".12"/>`;
+   case 'drought': return `<circle cx="262" cy="34" r="20" fill="#FFE9A8" opacity=".85"/><rect width="320" height="180" fill="#E8B060" opacity=".18"/><path d="M40 160L60 150L80 162L100 152M180 170L200 158L216 168L236 160" stroke="#8C6A3A" stroke-width="1" fill="none"/>`;
+   case 'sand': {let s='<rect width="320" height="180" fill="#D7A85E" opacity=".45"/>';for(let i=0;i<9;i++)s+=`<path d="M${-20+i*40} ${30+i*15}Q${30+i*40} ${20+i*15} ${80+i*40} ${32+i*15}" stroke="#F3DDB0" stroke-width="1.4" fill="none" opacity=".7"/>`;return s;}
+  }
+  return '';
+}
+/* sc: {mood, prop, over, focus, preview}  opt: {crop:[x,y,w,h], label} */
+function sceneSVG(g,sc={},opt={}){
+  const P=ART[g.answers.climate]||ART['温暖'],T=g.answers.terrain,id=++SVG_UID;
+  const sky=MOOD_SKY[sc.mood]||P.sky,lit=sc.mood==='night'||sc.mood==='dusk';
+  const r=mulberry32(strHash(g.name||'x'));
+  let s=`<defs><linearGradient id="sk${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs><rect width="320" height="180" fill="url(#sk${id})"/>`;
+  if(sc.mood==='night') s+=`<circle cx="270" cy="30" r="9" fill="#F4F1DE"/>`;
+  else if(sc.mood!=='dark'&&sc.over!=='drought') s+=`<circle cx="${50+r()*40}" cy="${26+r()*10}" r="10" fill="#FFF6D8" opacity=".9"/>`;
+  /* 遠景 */
+  if(T==='山岳'){
+    for(const row of [0,1]){for(let i=0;i<5;i++){const x=-10+i*76+r()*26+row*30,py=26+r()*20+row*14,c=row?P.far:P.far2;
+      s+=`<path d="M${x-58} 98L${x} ${py}L${x+58} 98Z" fill="${c}"/>`;
+      if(has(g,'寒冷')||row===0) s+=`<path d="M${x-12} ${py+(98-py)*.2}L${x} ${py}L${x+12} ${py+(98-py)*.2}L${x+5} ${py+(98-py)*.16}L${x} ${py+(98-py)*.24}L${x-5} ${py+(98-py)*.16}Z" fill="#F4F7F9" opacity=".95"/>`}}
+  } else if(T==='平野'){
+    s+=`<path d="M0 90Q70 72 150 86T320 80V100H0Z" fill="${P.far2}"/><path d="M0 96Q90 84 190 94T320 92V102H0Z" fill="${P.far}"/>`;
+  } else {
+    s+=`<path d="M0 90Q30 80 70 88L90 92H0Z" fill="${P.far2}"/>`;
+  }
+  /* 水と大地 */
+  if(T==='海'){
+    s+=`<rect y="88" width="320" height="18" fill="${P.water2}"/><path d="M0 100L214 104Q236 122 242 180H0Z" fill="${P.ground}"/><path d="M214 104Q236 122 242 180H320V104Z" fill="${P.water}"/>`;
+  } else if(T==='島'){
+    s+=`<rect y="88" width="320" height="92" fill="${P.water}"/><rect y="88" width="320" height="10" fill="${P.water2}"/><path d="M40 138Q55 100 160 98Q265 100 280 138Q270 172 160 174Q50 172 40 138Z" fill="${P.ground}"/>`;
+  } else {
+    s+=`<rect y="96" width="320" height="84" fill="${P.ground}"/><path d="M296 96Q268 122 282 142T262 180H276Q290 150 296 130T310 96Z" fill="${P.water}"/>`;
+  }
+  for(let i=0;i<7;i++){const x=40+r()*240,y=118+r()*50;s+=`<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(10+r()*16).toFixed(0)}" ry="2.4" fill="${P.ground2}" opacity=".8"/>`}
+  if(has(g,'熱帯')) [[22,120],[300,108]].forEach(([x,y])=>{if(T==='島'&&x<40)return;s+=`<path d="M${x} ${y}Q${x+2} ${y-12} ${x} ${y-22}" stroke="${WOOD}" stroke-width="2" fill="none"/><path d="M${x} ${y-22}Q${x-10} ${y-24} ${x-14} ${y-16}M${x} ${y-22}Q${x+10} ${y-24} ${x+14} ${y-16}M${x} ${y-22}Q${x-6} ${y-30} ${x-12} ${y-30}M${x} ${y-22}Q${x+6} ${y-30} ${x+12} ${y-30}" stroke="${P.tree}" stroke-width="2.4" fill="none"/>`});
+  /* 建物 */
+  const ids=[...g.built];if(sc.preview&&!ids.includes(sc.preview)) ids.push(sc.preview);
+  const order=['road','farm','fort','watch','hunt','wall','mill','smith','school','market','knights','fest','port'];
+  const hl=sc.preview||sc.focus;
+  for(const b of order){
+    if(!ids.includes(b)) continue;
+    if(b===hl&&!opt.crop){const [x,y]=slotOf(g,b);s+=`<circle cx="${x}" cy="${y-10}" r="20" fill="#FFF3C4" opacity=".45"/>`}
+    if(b==='wall') continue;
+    s+=drawBuilding(g,b,P,lit);
+  }
+  s+=castle(g,P,lit);
+  if(ids.includes('wall')) s+=drawBuilding(g,'wall',P,lit);
+  if(sc.prop) s+=drawProp(g,sc.prop,P);
+  if(sc.over) s+=drawOver(sc.over,P);
+  if(MOOD_SHADE[sc.mood]&&sc.mood!=='night') s+=`<rect width="320" height="180" fill="${MOOD_SHADE[sc.mood]}"/>`;
+  if(sc.mood==='night') s+=`<rect y="96" width="320" height="84" fill="${MOOD_SHADE.night}"/>`;
+  const vb=opt.crop?opt.crop.join(' '):'0 0 320 180';
+  return `<svg class="scene" xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${opt.label||'国の様子'}">${s}</svg>`;
+}
+function thumbSVG(g,cardId){
+  const sl=slotOf(g,cardId),[x,y]=cardId==='fest'?[180,130]:cardId==='wall'?[160,96]:sl;
+  return sceneSVG(g,{preview:cardId},{crop:[clamp(x-52,0,216),clamp(y-36,0,122),104,58],label:CARDS[cardId].title});
+}
+
+/* ===== 画面 ===== */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const root=$('#app');
+const HALL_KEY='kenkoku.hall.v3';
+const TICK_MS=360;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const freshApp=()=>({ver:3,screen:'title',ans:[],q:0,g:null,phase:'card',cards:[],ev:null,log:[],camp:null,saved:false,lastBuilt:null});
+let APP=freshApp();
+let BATTLE=null;
+
+const EXAMPLE=(()=>{const g=buildFromAnswers([1,1,2,1,1,1,0,1]);g.name='セレナ連邦';g.flag=genFlag(g);g.s={atk:56,def:62,mob:84,pow:77};
+  g.built=['farm','port','market','school','road'];g.specials=['kaiyo','iryo'];g.type='mobile';g.rank='A';g.done=true;return g})();
+const EXAMPLE_CHAIN=[{y:3,text:'港を拓いた'},{y:9,text:'港の疫病: 異国の薬師を呼び寄せる'},{y:15,text:'薬師の弟子たち: 医術所を開く'},{y:30,text:'決戦: 医術所の手当てで、兵がすぐに立ち直る'}];
+
+function loadHall(){try{return JSON.parse(localStorage.getItem(HALL_KEY)||'[]')}catch(e){return []}}
+function saveHall(list){try{localStorage.setItem(HALL_KEY,JSON.stringify(list.slice(0,30)))}catch(e){}}
+function toast(msg){const el=$('#toast');el.textContent=msg;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{el.hidden=true},1800)}
+
+/* 部品 */
+function deltaChips(d){
+  return Object.entries(d||{}).filter(([,v])=>v).map(([k,v])=>
+    `<span class="chip ${v>0?'up':''}" style="--c:var(--${k==='morale'?'good':k})">${SHORT[k]} ${v>0?'+':'−'}${Math.abs(v)}</span>`).join('');
+}
+function statsPanel(g,compact){
+  return `<div class="stats">${STAT_KEYS.map(k=>{const v=g.s[k],r=rankOf(v);return `<div class="srow" style="--c:var(--${k})"><span class="slabel">${compact?SHORT[k]:LABEL[k]}</span><span class="bar"><i style="width:${v}%"></i></span><span class="sval">${v}</span><span class="rk rk-${r}">${r}</span></div>`}).join('')}</div>`;
+}
+const MORALE_STATE=m=>m>=80?['熱狂(事業がはかどる)','good']:m>=60?['良好','good']:m>=40?['普通','muted']:m>=30?['不満','warn']:['危険(事業が失敗しやすい)','bad'];
+function moraleRow(g){const [t,c]=MORALE_STATE(g.morale);return `<div class="morale" style="--c:var(--${c})"><span class="slabel">民心</span><span class="bar"><i style="width:${g.morale}%"></i></span><span class="mstate">${g.morale} ${t}</span></div>`}
+const typeBadge=t=>`<span class="type" style="--c:var(--${TYPES[t].c})">${TYPES[t].name}</span>`;
+const spChip=id=>`<span class="sp ${SPECIALS[id].tier}">${SPECIALS[id].name}</span>`;
+function spList(ids){return ids.length?`<div class="splist">${ids.map(id=>`<div>${spChip(id)}<span class="small muted">${SPECIALS[id].desc}</span></div>`).join('')}</div>`:'<p class="small muted">特技なし</p>'}
+function nationBand(g,sub){return `<div class="nation">${flagSVG(g.flag,54,36)}<div class="stack" style="gap:2px;min-width:0"><h2>${esc(g.name)}</h2>${sub||''}</div>${g.done?`<div class="bigrank rk-${g.rank}">${g.rank}<small>国家ランク</small></div>`:''}</div>`}
+function chronList(items,scroll){return `<ol class="chron ${scroll?'scroll':''}">${items.map(c=>`<li><span class="y">${c.y}年</span><span>${esc(c.t)}</span></li>`).join('')}</ol>`}
+function countryCard(g){
+  return `${nationBand(g,`<div class="row" style="gap:8px">${typeBadge(g.type||computeType(g.s))}<span class="small muted">${esc(landPhrase(g))}</span></div>`)}
+  ${statsPanel(g)}${spList(g.specials)}`;
+}
+const causeTag=c=>c?`<p class="cause">${esc(c)}</p>`:'';
+function resultBlock(r){
+  return `<section class="card res">${causeTag(r.cause)}<p class="eyebrow">${esc(r.title)}</p><p>${esc(r.text)}</p>${Object.keys(r.d||{}).length?`<div class="chips">${deltaChips(r.d)}</div>`:''}
+  ${r.got&&r.got.length?`<div class="got"><p class="eyebrow">特技を身につけた</p>${spList(r.got)}</div>`:''}</section>`;
+}
+function chainList(cs){
+  return cs.map(c=>`<ol class="chain">${c.map((n,i)=>`<li class="${i?'':'root'}"><span class="y">${n.y}年</span><span>${esc(n.text)}</span></li>`).join('')}</ol>`).join('');
+}
+const landMood=g=>g.morale<30?'dark':'';
+
+/* 画面ごとの描画 */
+const VIEWS={
+ title(){
+  const hall=loadHall();
+  return `<header class="hero">
+    <p class="eyebrow">中世の大陸 · 建国から30年</p>
+    <h1 class="logo">建国<span>サクセス</span></h1>
+    <p class="lead">土地を選んで国を建て、3年ごとに事業を選ぶ。選んだことは国の景色に残り、何年か後に思いがけない形で返ってくる。</p>
+    <button class="btn" data-act="start">国を建てる</button>
+  </header>
+  <section class="card"><p class="eyebrow">ある国の30年(例)</p>
+    <div class="frame">${sceneSVG(EXAMPLE,{mood:'dusk'},{label:'セレナ連邦の景色'})}</div>
+    <p class="judge">潮風の入り江のセレナ連邦。「医術と港の国」と呼ばれた。</p>
+    ${chainList([EXAMPLE_CHAIN])}</section>
+  <section class="card"><h3>遊び方</h3><ol class="steps">
+    <li><span><b>8つの問いで、国を建てる</b><span class="small muted">どんな国になるかは、建国の瞬間まで分からない。</span></span></li>
+    <li><span><b>3年ごとに、事業を1つ選ぶ</b><span class="small muted">砦、港、畑、学舎。建てたものは景色に増えていき、何年か後に出来事として返ってくる。</span></span></li>
+    <li><span><b>3度の戦いと、帝国との決戦</b><span class="small muted">過去の選択が戦いで効く。最後に、国の呼び名と、選択のつながりが残る。</span></span></li>
+  </ol></section>
+  ${hall.length?`<section class="card"><h3>これまでの国</h3><ul class="hall">${hall.slice(0,10).map(h=>`<li>${flagSVG(h.flag,36,24)}<span style="min-width:0"><b>${esc(h.name)}</b><span class="small muted"> 「${esc(h.epithet)}」 · ランク${h.rank}</span></span><span class="rec">${esc(h.title)}</span></li>`).join('')}</ul></section>`:''}`;
+ },
+ found(){
+  const q=APP.q,Q=QUESTIONS[q],g=buildFromAnswers(APP.ans.slice(0,q));g.name='preview';
+  return `<div class="qhead"><button class="link" data-act="back">← 戻る</button><span class="eyebrow">建国 ${q+1} / ${QUESTIONS.length}</span></div>
+  <div class="pips" style="--n:${QUESTIONS.length}">${QUESTIONS.map((_,i)=>`<i class="${i<=q?'on':''}"></i>`).join('')}</div>
+  ${q>=1?`<div class="frame">${sceneSVG(g,{mood:q>=2?'':'dusk'},{label:'見つけた土地'})}</div>`:''}
+  <h2 class="q">${Q.q}</h2>
+  <div class="opts">${Q.opts.map((o,i)=>`<button class="opt ${APP.ans[q]===i?'sel':''}" data-act="answer" data-i="${i}"><span class="opt-k">${o.t}</span></button>`).join('')}</div>`;
+ },
+ reveal(){
+  const g=APP.g;
+  return `<p class="eyebrow">国のかたちが決まった</p>
+  <div class="frame">${sceneSVG(g,{mood:'gold'},{label:'建国の地'})}</div>
+  <section class="card reveal">
+    <div class="nation">${flagSVG(g.flag,54,36)}<div class="stack" style="gap:4px;min-width:0"><h2 id="nname">${esc(g.name)}</h2><button class="link" data-act="reroll">別の国名にする</button></div><span></span></div>
+    <p class="judge" id="judge">${esc(judgeLine(g))}</p>
+    <div class="row">${typeBadge(g.type)}<span class="small muted">性格は、戦いの相性を決める</span></div>
+    ${statsPanel(g)}${moraleRow(g)}
+  </section>
+  <button class="btn" data-act="crown">建国する</button>`;
+ },
+ reign(){
+  const g=APP.g,t=g.turn,logHtml=APP.log.map(resultBlock).join('');
+  let action='';
+  if(APP.phase==='card'){
+    action=`<section class="stack"><div class="period"><b>この3年の事業</b><span class="small muted">1つ選ぶ</span></div>
+    <div class="cards">${APP.cards.map((id,i)=>{const c=CARDS[id];return `<button class="pcard" data-act="card" data-i="${i}"><span class="thumb">${thumbSVG(g,id)}</span><span class="ptext"><span class="ck">${c.title}</span><span class="cd">${c.flavor}</span><span class="cg">${esc(cardHint(g,id))}</span></span></button>`}).join('')}</div></section>`;
+  } else if(APP.phase==='story'){
+    const ev=getEvent(APP.ev),cause=eventCause(g,ev);
+    action=`${logHtml}<section class="card ev">${causeTag(cause)}<div class="frame">${sceneSVG(g,ev.scene||{},{label:ev.title})}</div>
+    <p class="eyebrow">建国${yearOf(t)}年の出来事</p><h3>${ev.title}</h3><p>${esc(ev.text)}</p>
+    <div class="choices">${ev.choices.map((c,i)=>`<button class="choice" data-act="choose" data-i="${i}"><b>${c.label}</b><span>${c.hint}</span></button>`).join('')}</div></section>`;
+  } else if(APP.phase==='prebattle'){
+    action=`${logHtml}<button class="btn" data-act="prep">${battleKindAt(g)==='final'?'決戦の地へ':'戦いに備える'}</button>`;
+  } else {
+    action=`${logHtml}<button class="btn" data-act="next">次の3年へ</button>`;
+  }
+  return `${nationBand(g,`<span class="small muted">建国${yearOf(t-1)}〜${yearOf(t)}年 · ${esc(landPhrase(g))}</span>`)}
+  <div class="pips" style="--n:10">${Array.from({length:10},(_,i)=>`<i class="${i<t?'on':''} ${[4,7,10].includes(i+1)?'war':''}"></i>`).join('')}</div>
+  <div class="frame land">${sceneSVG(g,{mood:landMood(g),focus:APP.phase!=='card'?APP.lastBuilt:null},{label:'今の国の景色'})}</div>
+  <section class="card">${statsPanel(g)}${moraleRow(g)}${g.specials.length?`<div class="chips">${g.specials.map(spChip).join('')}</div>`:''}</section>
+  ${action}
+  ${g.chron.length>1?`<section class="quiet"><p class="eyebrow">年代記</p>${chronList(g.chron.slice(-4).reverse())}</section>`:''}`;
+ },
+ campaign(){
+  const g=APP.g,c=APP.camp,o=c.opp,F=FIELDS[c.field];
+  const a=adv(g.type,o.type);
+  const hint=a===1?`あなたの<b style="--c:var(--good)">${TYPES[g.type].name}</b>は相手の${TYPES[o.type].name}に強い`:a===-1?`相手の<b style="--c:var(--bad)">${TYPES[o.type].name}</b>はあなたの${TYPES[g.type].name}に強い`:`どちらも${TYPES[g.type].name}。相性の差はない`;
+  const homeP=F.home(g),homeE=F.home(o);
+  const fhint=homeP&&homeE?'両国の地元の地形':homeP?'あなたの地元の地形':homeE?'相手の地元の地形':'どちらの地元でもない';
+  const notes=[...c.mods.p.notes.map(n=>({...n,me:true})),...c.mods.e.notes];
+  return `<div class="qhead"><span class="eyebrow">建国${yearOf(g.turn)}年 · ${esc(c.label)}</span></div>
+  <div class="frame">${sceneSVG(g,{prop:'army',mood:c.kind==='final'?'war':'dusk'},{label:c.label})}</div>
+  <section class="story"><p>${esc(c.intro)}</p></section>
+  ${notes.length?`<section class="card"><p class="eyebrow">これまでの選択が、この戦いで効く</p><ul class="fates">${notes.map(n=>`<li class="${n.me?'':'bad'}">${esc(n.text)}</li>`).join('')}</ul></section>`:''}
+  <div class="vs">${miniCard(g,'あなた')}${miniCard(o,'相手')}</div>
+  <div class="hint">相性: ${hint}</div>
+  <div class="hint">戦場: <b style="--c:var(--ink)">${F.name}</b> · ${fhint}</div>
+  <section class="stack"><p class="eyebrow">作戦を選ぶ</p><div class="tactics">${Object.entries(TACTICS).map(([k,t])=>`<button class="tac ${c.tactic===k?'sel':''}" data-act="tactic" data-k="${k}" aria-pressed="${c.tactic===k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div></section>
+  <button class="btn" data-act="fight">開戦</button>`;
+ },
+ battle(){
+  const g=APP.g,o=APP.camp.opp,F=FIELDS[APP.camp.field];
+  return `<div class="bhead" style="--cp:${teamColor(g)};--ce:${teamColor(o,g)}">
+    <div class="bside"><b>${esc(g.name)}</b><div class="stam" style="--c:${teamColor(g)}"><i id="stP"></i></div></div>
+    <span class="vsmark">VS</span>
+    <div class="bside r"><b>${esc(o.name)}</b><div class="stam" style="--c:${teamColor(o,g)}"><i id="stE"></i></div></div></div>
+  <div class="arena"><canvas id="cv" aria-label="戦いの様子"></canvas><span class="field-tag">${F.name}</span></div>
+  <div class="row" id="bctl"><button class="btn ghost sm" data-act="speed" id="spd">2倍速</button><button class="btn ghost sm" data-act="skip">結果まで飛ばす</button><span class="small muted">兵の数は残りの体力</span></div>
+  <ol class="blog" id="blog" style="--cp:${teamColor(g)};--ce:${teamColor(o,g)}"></ol>
+  <section class="card" id="bres" hidden></section>`;
+ },
+ ending(){
+  const g=APP.g,e=endingOf(g),cs=chains(g);
+  const kindName={bandit:'山賊団の討伐',invade:'侵攻',final:'決戦'};
+  return `<p class="eyebrow">建国から30年 · 結末</p>
+  <div class="frame">${sceneSVG(g,{mood:e.title==='滅びた国'?'war':'dusk',prop:e.title==='滅びた国'?'army':'lanterns'},{label:'30年後の景色'})}</div>
+  <section class="card ending"><p class="small muted" style="text-align:center">${esc(g.name)}は、こう呼ばれた</p>
+    <div class="title-big">${esc(e.epithet)}</div>
+    <p class="verdict-line">${esc(e.title)}</p>
+    <p class="closing">${esc(closingLine(g,e))}</p></section>
+  <section class="card"><h3>この国の物語</h3><p class="small muted">選んだことが、何年か後に返ってきたつながり</p>
+    ${cs.length?chainList(cs.slice(0,4)):'<p class="small muted">返ってきた選択はなかった。</p>'}</section>
+  <section class="card">${countryCard(g)}
+    <h3>戦い</h3><ul class="fates">${g.battles.map(b=>`<li>${kindName[b.kind]}: ${esc(b.name)} — ${b.win?'勝利':'敗北'}</li>`).join('')}</ul></section>
+  <section class="card"><h3>年代記</h3>${chronList(g.chron,true)}</section>
+  <div class="stack"><button class="btn" data-act="start">新しい国を建てる</button>
+  <div class="row"><button class="btn ghost sm" data-act="copy">記録をコピー</button><button class="btn ghost sm" data-act="home">タイトルへ</button></div></div>`;
+ },
+};
+function miniCard(g,label){
+  return `<section class="card mini"><p class="eyebrow">${label}</p><div class="row" style="gap:8px">${flagSVG(g.flag,36,24)}${typeBadge(g.type)}</div><h3>${esc(g.name)}</h3>${statsPanel(g,true)}
+  <div class="chips">${g.specials.map(spChip).join('')||'<span class="small muted">特技なし</span>'}</div></section>`;
+}
+function teamColor(g,other){const p=PAL[g.flag.climate]||PAL['温暖'];return other&&other.flag.climate===g.flag.climate?p.alt:p.team}
+
+function show(screen){
+  const changed=APP.screen!==screen;
+  APP.screen=screen; root.innerHTML=VIEWS[screen]();
+  if(changed||screen==='found') window.scrollTo(0,0);
+  if(screen==='battle') startBattleView();
+}
+function scrollToAction(){const el=root.querySelector('.ev,[data-act="next"],[data-act="prep"]');if(el)el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:el.classList.contains('ev')?'start':'nearest'})}
+
+/* 進行 */
+function chron(g,text){g.chron.push({y:yearOf(g.turn),t:text})}
+const gotText=r=>r.got&&r.got.length?` 特技「${r.got.map(id=>SPECIALS[id].name).join('」「')}」を身につけた。`:'';
+function startTurn(){const g=APP.g;APP.phase='card';APP.cards=drawCards(g);APP.ev=null;APP.log=[];APP.lastBuilt=null;g.type=computeType(g.s)}
+function afterStory(){APP.phase=battleKindAt(APP.g)?'prebattle':'end'}
+
+root.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const act=el.dataset.act,g=APP.g;
+  switch(act){
+   case 'start': APP=freshApp();show('found');break;
+   case 'home': show('title');break;
+   case 'back': if(APP.q>0){APP.q--;show('found')} else show('title');break;
+   case 'answer':
+     APP.ans[APP.q]=+el.dataset.i; APP.ans.length=APP.q+1;
+     if(APP.q<QUESTIONS.length-1){APP.q++;show('found')}
+     else {const n=buildFromAnswers(APP.ans);n.name=genName(n);n.flag=genFlag(n);n.type=computeType(n.s);APP.g=n;show('reveal')}
+     break;
+   case 'reroll': g.name=genName(g);$('#nname').textContent=g.name;$('#judge').textContent=judgeLine(g);break;
+   case 'crown':
+     g.chron=[{y:0,t:`${landPhrase(g)}に、${g.name}が建国された。`}];
+     g.turn=1;startTurn();show('reign');break;
+   case 'card':{
+     const id=APP.cards[+el.dataset.i],r=playCard(g,id);
+     APP.lastBuilt=id;APP.log=[r];chron(g,`${r.title}。${r.text}${gotText(r)}`);
+     APP.ev=nextEvent(g);
+     if(APP.ev) APP.phase='story'; else afterStory();
+     show('reign');scrollToAction();break;}
+   case 'choose':{
+     const r=playEvent(g,APP.ev,+el.dataset.i);
+     APP.log.push(r);chron(g,`${r.title.split(' · ')[0]}: ${r.text}${gotText(r)}`);
+     APP.ev=null;afterStory();
+     show('reign');scrollToAction();break;}
+   case 'prep':{
+     g.type=computeType(g.s);
+     const kind=battleKindAt(g),b=battleSetup(g,kind);
+     APP.camp={...b,mods:battleMods(g,kind),tactic:'rush',sim:null,applied:false};show('campaign');break;}
+   case 'tactic': APP.camp.tactic=el.dataset.k;show('campaign');break;
+   case 'fight':{
+     const c=APP.camp,seed=(Math.random()*2147483647)|0;
+     c.sim=simulate(g,c.opp,c.field,c.tactic,pick(Object.keys(TACTICS)),seed,c.mods);
+     show('battle');break;}
+   case 'speed': if(BATTLE){BATTLE.speed=BATTLE.speed===1?2:1;el.textContent=BATTLE.speed===1?'2倍速':'等速'}break;
+   case 'skip': if(BATTLE) BATTLE.pos=BATTLE.sim.ticks.length-1;break;
+   case 'back-reign':{
+     const c=APP.camp;
+     if(!c.applied){c.applied=true;const r=playOutcome(g,c.kind,c.sim.end.winner==='p',c.opp,c.mods);APP.log.push(r);chron(g,`${r.title}。${r.text}`)}
+     if(c.kind==='final'){finalize(g);saveToHall();show('ending')}
+     else {APP.phase='end';show('reign');scrollToAction()}
+     break;}
+   case 'next': g.turn++;startTurn();show('reign');break;
+   case 'copy': copyResult();break;
+  }
+});
+
+function saveToHall(){
+  if(APP.saved) return; APP.saved=true;
+  const g=APP.g,e=endingOf(g),list=loadHall();
+  list.unshift({name:g.name,flag:g.flag,rank:g.rank,title:e.title,epithet:e.epithet});
+  saveHall(list);
+}
+function shareText(){
+  const g=APP.g,e=endingOf(g),c=chains(g)[0];
+  return [`【建国サクセス】${g.name}「${e.epithet}」(${e.title})`,
+    `${TYPES[g.type].name} · 国家ランク${g.rank} · `+STAT_KEYS.map(k=>`${SHORT[k]}${rankOf(g.s[k])}`).join(' '),
+    c?c.map(n=>`${n.y}年 ${n.text}`).join(' → '):'',
+    closingLine(g,e)].filter(Boolean).join('\n');
+}
+function copyResult(){
+  const text=shareText();
+  const fallback=()=>{
+    if($('#copybox')) return;
+    const ta=document.createElement('textarea');ta.id='copybox';ta.className='copybox';ta.value=text;ta.readOnly=true;
+    root.appendChild(ta);ta.focus();ta.select();toast('選択した文字をコピーしてください');
+  };
+  try{navigator.clipboard.writeText(text).then(()=>toast('コピーしました'),fallback)}catch(e){fallback()}
+}
+
+/* ===== 観戦 ===== */
+function startBattleView(){
+  const c=APP.camp,g=APP.g,o=c.opp,sim=c.sim;
+  const rng=mulberry32(sim.ticks.length*7919+sim.logs.length);
+  const mkSoldiers=()=>Array.from({length:38},()=>({d:Math.pow(rng(),1.4),y:rng(),ph:rng()*6.28}));
+  const marks=Array.from({length:46},()=>({x:rng(),y:rng(),s:.6+rng()*.8}));
+  const img=f=>{const i=new Image();i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(flagSVG(f,60,40));return i};
+  BATTLE={sim,pos:0,speed:1,last:performance.now(),logIdx:0,done:false,
+    sold:{p:mkSoldiers(),e:mkSoldiers()},marks,sparks:[],shake:0,lastTick:0,
+    cp:teamColor(g),ce:teamColor(o,g),imgP:img(g.flag),imgE:img(o.flag)};
+  requestAnimationFrame(battleFrame);
+}
+function battleFrame(now){
+  const B=BATTLE; if(!B||APP.screen!=='battle') return;
+  const cv=$('#cv'); if(!cv){BATTLE=null;return}
+  const dt=Math.min(64,now-B.last);B.last=now;
+  const n=B.sim.ticks.length-1;
+  if(!B.done){B.pos=Math.min(n,B.pos+dt/(TICK_MS/B.speed))}
+  const ti=Math.floor(B.pos);
+  while(B.lastTick<ti){B.lastTick++;spawnSparks(B,B.sim.ticks[B.lastTick])}
+  drawBattle(cv,B,dt);
+  const lg=$('#blog');
+  while(B.logIdx<B.sim.logs.length&&B.sim.logs[B.logIdx].t<=B.pos){
+    const L=B.sim.logs[B.logIdx++],li=document.createElement('li');li.className=L.who;li.textContent=L.text;lg.appendChild(li);lg.scrollTop=lg.scrollHeight;
+  }
+  if(B.pos>=n&&!B.done){B.done=true;finishBattle()}
+  if(!B.done||B.sparks.length) requestAnimationFrame(battleFrame);
+}
+function frontAt(B){const T=B.sim.ticks,i=Math.floor(B.pos),j=Math.min(T.length-1,i+1),u=B.pos-i;return {f:T[i].f+(T[j].f-T[i].f)*u,sp:T[i].sp+(T[j].sp-T[i].sp)*u,se:T[i].se+(T[j].se-T[i].se)*u}}
+function spawnSparks(B,tk){
+  if(!tk) return;
+  const k=Math.min(14,2+Math.abs(tk.net)*1.4+(tk.crit?10:0));
+  for(let i=0;i<k;i++) B.sparks.push({fx:true,y:Math.random(),vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:.5+Math.random()*.4,gold:!!tk.crit});
+  if(tk.crit&&!reduceMotion) B.shake=.18;
+}
+function drawBattle(cv,B,dt){
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement),tok=v=>cs.getPropertyValue(v).trim();
+  const ink=tok('--ink'),mark=tok('--f-mark');
+  const {f,sp,se}=frontAt(B);
+  $('#stP').style.width=sp+'%';$('#stE').style.width=se+'%';
+  const fx=W/2+(f/100)*(W/2-30),top=44,bot=H-30;
+  ctx.save();
+  if(B.shake>0){B.shake-=dt/1000;ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4)}
+  ctx.fillStyle=tok('--'+FIELDS[B.sim.field].c);ctx.fillRect(-8,-8,W+16,H+16);
+  ctx.strokeStyle=mark;ctx.fillStyle=mark;ctx.lineWidth=1.5;
+  for(const m of B.marks){const x=m.x*W,y=top+m.y*(bot-top),s=m.s*7;ctx.beginPath();
+    switch(B.sim.field){
+     case 'mount':ctx.moveTo(x-s,y+s*.6);ctx.lineTo(x,y-s*.7);ctx.lineTo(x+s,y+s*.6);ctx.closePath();ctx.fill();break;
+     case 'sea':ctx.moveTo(x-s,y);ctx.quadraticCurveTo(x-s/2,y-s*.6,x,y);ctx.quadraticCurveTo(x+s/2,y+s*.6,x+s,y);ctx.stroke();break;
+     case 'snow':ctx.arc(x,y,s*.25,0,6.28);ctx.fill();break;
+     case 'sand':ctx.moveTo(x-s*1.4,y);ctx.quadraticCurveTo(x,y-s*.8,x+s*1.4,y);ctx.stroke();break;
+     default:ctx.moveTo(x-s*.4,y);ctx.lineTo(x-s*.1,y-s*.6);ctx.moveTo(x+s*.1,y);ctx.lineTo(x+s*.4,y-s*.6);ctx.stroke();
+    }}
+  ctx.globalAlpha=.22;ctx.fillStyle=B.cp;ctx.fillRect(0,0,fx,H);ctx.fillStyle=B.ce;ctx.fillRect(fx,0,W-fx,H);ctx.globalAlpha=1;
+  const time=performance.now()/1000;
+  const drawSide=(arr,color,stam,dir)=>{
+    const count=Math.ceil(arr.length*(.25+.75*stam/100));
+    const span=dir<0?fx-22:W-fx-22;
+    ctx.fillStyle=color;ctx.strokeStyle=ink;ctx.lineWidth=.8;
+    for(let i=0;i<count;i++){const s=arr[i];
+      let x=fx+dir*(7+s.d*Math.max(10,span));
+      if(s.d<.25&&!B.done) x+=Math.sin(time*9+s.ph)*2.2;
+      const y=top+s.y*(bot-top);
+      ctx.globalAlpha=.95;ctx.beginPath();ctx.roundRect?ctx.roundRect(x-3,y-3,6,6,1.5):ctx.rect(x-3,y-3,6,6);ctx.fill();ctx.globalAlpha=.35;ctx.stroke();}
+    ctx.globalAlpha=1;
+  };
+  drawSide(B.sold.p,B.cp,sp,-1);drawSide(B.sold.e,B.ce,se,1);
+  ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.globalAlpha=.7;ctx.beginPath();
+  for(let y=top-10,i=0;y<=bot+10;y+=10,i++) ctx.lineTo(fx+(i%2?3:-3),y);
+  ctx.stroke();ctx.globalAlpha=1;
+  const gold=tok('--gold');
+  B.sparks=B.sparks.filter(p=>(p.life-=dt/1000)>0);
+  for(const p of B.sparks){
+    if(p.fx){p.x=fx;p.yy=top+p.y*(bot-top);p.fx=false}
+    p.x+=p.vx*dt/1000;p.yy+=p.vy*dt/1000;
+    ctx.globalAlpha=Math.min(1,p.life*2);ctx.fillStyle=p.gold?gold:ink;ctx.fillRect(p.x-1.5,p.yy-1.5,3,3);
+  }
+  ctx.globalAlpha=1;
+  const fw=36,fh=24;
+  if(B.imgP.complete) ctx.drawImage(B.imgP,10,10,fw,fh);
+  if(B.imgE.complete) ctx.drawImage(B.imgE,W-10-fw,10,fw,fh);
+  ctx.restore();
+}
+function finishBattle(){
+  const c=APP.camp,sim=c.sim,win=sim.end.winner==='p';
+  $('#bctl').hidden=true;
+  const el=$('#bres');el.hidden=false;
+  el.innerHTML=`<div class="verdict ${win?'win':'lose'}">${win?'勝利':'敗北'}</div>
+  <p class="small muted">${sim.end.how==='push'?'押し切って決着':'時間切れの判定'}</p>
+  <p class="eyebrow">勝敗の理由</p><ul class="reasons">${sim.reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+  <button class="btn" data-act="back-reign">${c.kind==='final'?'結末へ':'治世に戻る'}</button>`;
+  el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'nearest'});
+}
+
+/* 起動（公開ページの更新時も状態を引き継ぐ） */
+window.claude?.hot?.snapshot?.(()=>({app:{...APP,camp:APP.camp?{...APP.camp,sim:APP.camp.applied?APP.camp.sim:null}:null}}));
+function boot(data){
+  if(data&&data.app&&data.app.ver===3&&data.app.screen){APP=data.app;if(APP.screen==='battle'){if(APP.camp&&!APP.camp.applied){APP.camp.sim=null;APP.screen='campaign'}else APP.screen='reign'}}
+  try{show(APP.screen)}catch(e){APP=freshApp();show('title')}
+}
+window.claude?.hot?.ready?window.claude.hot.ready(boot):boot(window.claude?.hot?.data??{});
+</script>
