@@ -160,6 +160,18 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .detail .sw{aspect-ratio:1;border-radius:4px;border:1px solid var(--line)}
 .recipe{font-size:14px;line-height:1.9}
 .recipe .step{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin:0 2px;white-space:nowrap}
+.trophies{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.trophy{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.trophy header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.trophy h3{font-size:15px;margin:0}
+.trophy p{margin:0;font-size:12px;color:var(--muted)}
+.tmem{display:flex;flex-wrap:wrap;gap:6px}
+.tmem span{display:inline-flex;align-items:center;gap:4px;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px 1px 3px}
+.tmem i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);background:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 4px)}
+.tmem b{font-weight:700;font-size:10px}
+.medal{font-size:11px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
+.medal.t1{background:#c98a53;color:#1d1d22;border-color:#c98a53}.medal.t2{background:#c9cdd4;color:#1d1d22;border-color:#c9cdd4}.medal.t3{background:#e2b53c;color:#1d1d22;border-color:#e2b53c}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:20;max-width:calc(100% - 32px);text-align:center}
 .badge.strong{background:var(--fg);color:var(--bg);font-weight:700}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -289,6 +301,14 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
     </div>
     <div class="fams" id="grid"></div>
   </section>
+
+  <section>
+    <div class="sechead"><h2>トロフィー</h2><span class="muted" id="trophy-n"></span></div>
+    <p class="note" style="margin:-6px 0 14px">テーマごとに決まった色を揃えるともらえます。全部を「っぽい色」以上で揃えると銅、全部に銀冠以上（しずくでも注ぐでも）で銀、全部に金冠で金。</p>
+    <div class="trophies" id="trophies"></div>
+  </section>
+
+  <div class="toast" id="toast" hidden></div>
 
   <section>
     <h2 style="margin-bottom:6px">色の名前は、いくつあるのか</h2>
@@ -692,7 +712,47 @@ $('tab-free').onclick=()=>setMode('free');
 $('tab-drop').onclick=()=>setMode('drop');
 
 // ---------- 図鑑 ----------
-let filter='all';
+// ---------- トロフィー ----------
+// 絵や景色のイメージに合う色を、この図鑑の色名から選んだもの（絵の正確な色ではない）
+const TROPHIES=[
+  ['光の三原色','画面の光を作る3色',['red','lime','blue']],
+  ['色の三原色','印刷のインクの3色',['aqua / cyan','fuchsia / magenta','yellow']],
+  ['モノクロ写真','白から黒までの階調',['white','silver','gray','dimgray','black']],
+  ['虹','雨上がりの7色',['red','orange','yellow','green','blue','indigo','violet']],
+  ['ゴッホのひまわり','花びらと花瓶と背景のイメージ',['gold','goldenrod','darkgoldenrod','sienna','olivedrab']],
+  ['モネの睡蓮','水面と花と光のイメージ',['cadetblue','darkseagreen','plum','thistle','lavender']],
+  ['北斎の大波','藍の波と白い飛沫と舟のイメージ',['navy','steelblue','lightsteelblue','ivory','tan']],
+  ['夕焼け','沈む太陽から夜の始まりまで',['gold','darkorange','tomato','palevioletred','slateblue']],
+  ['夜空','深い夜と星',['midnightblue','navy','darkslateblue','indigo','gold']],
+  ['桜並木','花びらと幹',['pink','lightpink','mistyrose','lavenderblush','saddlebrown']],
+  ['深い森','木々と土',['darkgreen','forestgreen','darkolivegreen','olivedrab','saddlebrown']],
+  ['南の海','砂浜から沖まで',['wheat','aquamarine','turquoise','deepskyblue','royalblue']],
+  ['紅葉','秋の山',['firebrick','chocolate','darkorange','goldenrod','sienna']],
+  ['宝石箱','ルビー、エメラルド、サファイア、アメジスト、金',['crimson','mediumseagreen','royalblue','mediumorchid','gold']],
+  ['お菓子屋さん','クリームとフルーツとチョコ',['peachpuff','lemonchiffon','pink','papayawhip','chocolate']],
+  ['真っ白な世界','白にもいろいろある',['white','snow','ivory','seashell','ghostwhite']],
+];
+const COLOR_BY=Object.fromEntries(COLORS.map(c=>[c.name,c]));
+const bestCrown=n=>Math.max(crowns.drop[n]||0, crowns.pour[n]||0);
+function trophyTier(names){ if(!names.every(n=>found.has(n))) return 0; if(!names.every(n=>bestCrown(n)>=2)) return 1; return names.every(n=>bestCrown(n)>=3) ? 3 : 2; }
+const TIER_JA={1:'銅',2:'銀',3:'金'};
+const earned=store.get('iro-trophies',{});
+function renderTrophies(announce){
+  let got=0; const news=[];
+  $('trophies').innerHTML=TROPHIES.map(([title,desc,names])=>{ const t=trophyTier(names); if(t) got++;
+    if(t>(earned[title]||0)){ if(announce) news.push(`トロフィー「${title}」${TIER_JA[t]}`); earned[title]=t; }
+    const mem=names.map(n=>{ const c=COLOR_BY[n], has=found.has(n), b=bestCrown(n);
+      return `<span><i style="${has?'background:'+c.hex:''}"></i>${c.kana}${b>=2?`<b>${b===3?'金':'銀'}</b>`:''}</span>`; }).join('');
+    const done=names.filter(n=>found.has(n)).length;
+    return `<div class="trophy"><header><h3>${title}</h3><span class="medal ${t?'t'+t:''}">${t?TIER_JA[t]:done+' / '+names.length}</span></header><p>${desc}</p><div class="tmem">${mem}</div></div>`; }).join('');
+  $('trophy-n').textContent=`${got} / ${TROPHIES.length} 獲得`;
+  store.set('iro-trophies',earned);
+  if(news.length) toast(news.join('　'));
+}
+let toastTimer=null;
+function toast(msg){ const t=$('toast'); t.textContent=msg+' を獲得'; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,3500); }
+
+let filter='all', trophiesReady=false;
 function passFilter(c){
   if(filter==='all') return true;
   if(filter==='yes'||filter==='no') return (filter==='yes')===found.has(c.name);
@@ -746,6 +806,7 @@ function renderGrid(flashName){
     if(!list.length) return '';
     return `<div class="fam"><h3><i style="background:${sw}"></i>${f}<span>${got} / ${all.length}</span></h3><div class="grid">${list.map(card).join('')}</div></div>`; }).join('');
   if(!$('grid').innerHTML) $('grid').innerHTML='<p class="muted">まだこの条件に当てはまる色はありません。</p>';
+  renderTrophies(trophiesReady);
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
   if(!found.has(c.name)) return; showDetail(c); };
@@ -765,6 +826,6 @@ document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
 Object.values(K).forEach(k=>k.addEventListener('input',update));
-renderGrid(); newQuiz(); paintCup(); renderDrop(); renderCups(); renderStarts(); update();
+renderGrid(); trophiesReady=true; newQuiz(); paintCup(); renderDrop(); renderCups(); renderStarts(); update();
 })();
 </script>
