@@ -21,6 +21,7 @@
   --good:#5fd197; --warn:#e6a35a; color-scheme:dark}
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
 .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
@@ -99,6 +100,30 @@ th{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:500}
 td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:600}
 tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .note{max-width:66ch;color:var(--muted);font-size:14px}
+/* ---- 調合モード ---- */
+.pour{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:760px){.pour{grid-template-columns:minmax(0,1fr)}}
+.stage{display:flex;align-items:flex-end;justify-content:center;gap:20px;flex-wrap:wrap;padding-top:46px;position:relative}
+.cupwrap{position:relative;width:min(210px,62vw)}
+.cup{aspect-ratio:5/6;max-width:100%;border:3px solid var(--fg);border-top:0;border-radius:6px 6px 46% 46% / 6px 6px 22% 22%;
+  background:#000;overflow:hidden;position:relative;transition:background-color .08s}
+.cup::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,rgba(255,255,255,.18),transparent 30%,transparent 75%,rgba(255,255,255,.08));pointer-events:none}
+.rim{height:10px;border:3px solid var(--fg);border-radius:50%;margin:0 -6px -5px;position:relative;z-index:1;background:var(--bg)}
+.stream{position:absolute;left:50%;top:-46px;width:10px;margin-left:-5px;height:60px;border-radius:5px;opacity:0;transition:opacity .1s;z-index:2}
+.stream.on{opacity:1;animation:drip .25s linear infinite}
+@keyframes drip{0%{transform:scaleY(.92)}50%{transform:scaleY(1.04)}100%{transform:scaleY(.92)}}
+.sample{width:92px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.sample i{display:block;aspect-ratio:1;border-radius:4px;border:1px solid var(--line)}
+.spouts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.spouts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.spout{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 6px 10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:6px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.spout .dot{width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1px solid rgba(0,0,0,.2)}
+.spout b{font-size:15px}
+.spout small{font-size:11px;color:var(--muted)}
+.spout.on{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.spout:disabled{opacity:.4;cursor:not-allowed}
+.spout:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -106,15 +131,15 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
   <header>
     <div>
       <h1>色名あつめ</h1>
-      <p>赤・緑・青の光と彩度、4つのつまみで色を調合します。数値は出ません。目だけを頼りに混ぜて、名前のある色を探し、図鑑を埋めてください。</p>
+      <p>赤・緑・青の光と彩度で色を作り、名前のある色を集めます。数値は出ません。お題モードはつまみで合わせ、調合モードは光を注いで、何ができるか試します。</p>
     </div>
     <div class="tabs" role="group" aria-label="モード">
       <button id="tab-quiz" aria-pressed="true">お題モード</button>
-      <button id="tab-free" aria-pressed="false">図鑑モード</button>
+      <button id="tab-free" aria-pressed="false">調合モード</button>
     </div>
   </header>
 
-  <section class="bench">
+  <section class="bench" id="bench-quiz">
     <div>
       <div class="chip">
         <div class="swrow" id="target-row"><div class="sw" id="sw-target"></div><span class="corner">お題</span></div>
@@ -144,11 +169,31 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         </div>
       </div>
 
-      <div class="panel" id="free-panel" hidden>
-        <div class="status" id="f-status">好きに混ぜて、これだと思ったら「名前を調べる」を押してください。名前のある色に十分近ければ図鑑に載ります。</div>
+    </div>
+  </section>
+
+  <section class="pour" id="bench-pour" hidden>
+    <div class="stage">
+      <div class="cupwrap">
+        <div class="stream" id="stream"></div>
+        <div class="rim"></div>
+        <div class="cup" id="cup"></div>
+      </div>
+      <div class="sample" id="sample" hidden><i id="sample-sw"></i><span><b id="sample-name"></b><br><span class="muted" id="sample-sub"></span></span></div>
+    </div>
+    <div class="knobs">
+      <div class="spouts">
+        <button class="spout" data-ch="r" id="sp-r"><span class="dot" style="background:#ff0000"></span><b>赤</b><small>長押しで注ぐ</small></button>
+        <button class="spout" data-ch="g" id="sp-g"><span class="dot" style="background:#00ff00"></span><b>緑</b><small>長押しで注ぐ</small></button>
+        <button class="spout" data-ch="b" id="sp-b"><span class="dot" style="background:#0000ff"></span><b>青</b><small>長押しで注ぐ</small></button>
+        <button class="spout" data-ch="s" id="sp-s"><span class="dot" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span><b>彩度</b><small>長押しで注ぐ</small></button>
+      </div>
+      <div class="panel">
+        <div class="status" id="p-status">真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。</div>
         <div class="actions">
-          <button class="btn" id="f-add">名前を調べる</button>
-          <button class="btn ghost" id="f-rand">ランダムに混ぜる</button>
+          <button class="btn" id="p-done">仕上げる</button>
+          <button class="btn ghost" id="p-empty">器を空ける</button>
+          <span class="muted" id="p-cups"></span>
         </div>
       </div>
     </div>
@@ -168,7 +213,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります</span>
+      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。見つけた色をタップすると調合モードに見本を出します</span>
     </div>
     <div class="grid" id="grid"></div>
   </section>
@@ -385,6 +430,7 @@ function paintTracks(){
 }
 
 function update(){
+  if(mode!=='quiz') return;
   $('sw-mine').style.backgroundColor=rgb2hex(current());
   paintTracks();
 }
@@ -431,26 +477,58 @@ $('q-next').onclick=()=>{
   $('q-status').className='status'; $('q-status').textContent='お題の色に合わせて、つまみを動かしてください。';
 };
 
-// ---------- 図鑑モード ----------
+// ---------- 調合モード ----------
+// 光は足し算。器は真っ暗から始まり、赤・緑・青を注ぐほど明るくなる。彩度は今の色をより鮮やかにする。どれも戻せない。
 function saveFound(){ store.set('iro-found',[...found]); }
-$('f-add').onclick=()=>{ const [n,d]=nearest(current()), st=$('f-status');
-  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); showFound(n);
-    st.className='status good'; st.textContent=`「${n.kana}」を見つけました。図鑑に載せました。`; }
-  else if(d<6){ showFound(n); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
-  else if(d<12){ hideFound(); st.className='status warn'; st.textContent='名前のある色の近くまで来ているようです。'; }
-  else { hideFound(); st.className='status'; st.textContent='この色には、まだ名前が見つかりません。'; } };
-$('f-rand').onclick=()=>{ const r=()=>Math.floor(Math.random()*256); setKnobs(r(),r(),r(),100); };
-function showFound(c){ $('target-row').hidden=false; $('sw-target').style.backgroundColor=c.hex;
-  $('target-row').querySelector('.corner').textContent='見つけた色'; $('chip-tag').textContent='図鑑モード'; $('chip-name').textContent=c.kana; $('chip-kana').textContent=c.name; }
-function hideFound(){ $('target-row').hidden=true; $('chip-tag').textContent='図鑑モード'; $('chip-name').textContent='自由に調合'; $('chip-kana').textContent=''; }
-function renderFreeChip(){ hideFound(); }
+let cupC=[0,0,0], pouring=null, finished=false, cups=store.get('iro-cups',0);
+const SPOUT_COLOR={r:'#ff0000',g:'#00ff00',b:'#0000ff',s:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'};
+function hslF(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); return [0,8,4].map(n=>255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)))); }
+const cupRGB=()=>cupC.map(v=>Math.round(Math.min(255,Math.max(0,v))));
+function paintCup(){ $('cup').style.backgroundColor=rgb2hex(cupRGB()); }
+function pourStep(dt,held){
+  // 押し始めはちょろちょろ、押し続けるほど勢いが増す
+  const rate=14+190*Math.min(1,held/1.6);
+  if(pouring.ch==='s'){ const [h,S,l]=rgb2hsl(cupRGB()); if(S>0){ const ns=S+(1-S)*Math.min(1,rate/160*dt); cupC=hslF(h,ns,l); } }
+  else { const i='rgb'.indexOf(pouring.ch); cupC[i]=Math.min(255,cupC[i]+rate*dt); }
+  paintCup();
+}
+function tick(t){ if(!pouring) return; const dt=Math.min(.05,(t-pouring.last)/1000); pouring.last=t; pourStep(dt,(t-pouring.t0)/1000); requestAnimationFrame(tick); }
+function startPour(ch){ if(finished||pouring) return; const now=performance.now(); pouring={ch,t0:now,last:now};
+  $('sp-'+ch).classList.add('on'); const st=$('stream'); st.style.background=SPOUT_COLOR[ch]; st.classList.add('on');
+  pourStep(.03,0); requestAnimationFrame(tick); }
+function stopPour(){ if(!pouring) return; $('sp-'+pouring.ch).classList.remove('on'); $('stream').classList.remove('on'); pouring=null; }
+document.querySelectorAll('.spout').forEach(b=>{
+  b.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ b.setPointerCapture(e.pointerId); }catch(_){} startPour(b.dataset.ch); });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>b.addEventListener(ev,stopPour));
+  b.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter')&&!e.repeat){ e.preventDefault(); startPour(b.dataset.ch); } });
+  b.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter') stopPour(); });
+  b.addEventListener('contextmenu',e=>e.preventDefault());
+});
+window.addEventListener('blur',stopPour);
+function setSpouts(on){ document.querySelectorAll('.spout').forEach(b=>b.disabled=!on); }
+function showSample(c,sub){ $('sample').hidden=false; $('sample-sw').style.background=c.hex; $('sample-name').textContent=c.kana; $('sample-sub').textContent=sub; }
+function renderCups(){ $('p-cups').textContent = cups ? `これまでに ${cups} 杯` : ''; }
+$('p-done').onclick=()=>{
+  if(finished) return; stopPour(); finished=true; setSpouts(false); $('p-done').disabled=true;
+  cups++; store.set('iro-cups',cups); renderCups();
+  const [n,d]=nearest(cupRGB()), st=$('p-status');
+  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); showSample(n,'新しく見つけた色');
+    st.className='status good'; st.textContent=`「${n.kana}」ができました。図鑑に載せました。`; }
+  else if(d<6){ showSample(n,'図鑑に載っている色'); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
+  else if(d<12){ $('sample').hidden=true; st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
+  else { $('sample').hidden=true; st.className='status'; st.textContent='名前のない色ができました。'; }
+  $('p-empty').textContent='次の器へ';
+};
+function emptyCup(){ stopPour(); cupC=[0,0,0]; finished=false; setSpouts(true); $('p-done').disabled=false; paintCup();
+  $('p-empty').textContent='器を空ける'; $('sample').hidden=true;
+  $('p-status').className='status'; $('p-status').textContent='真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。'; }
+$('p-empty').onclick=emptyCup;
 
 function setMode(m){
-  mode=m;
+  mode=m; stopPour();
   $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-free').setAttribute('aria-pressed',m==='free');
-  $('quiz-panel').hidden=m!=='quiz'; $('free-panel').hidden=m!=='free';
-  $('target-row').querySelector('.corner').textContent='お題';
-  if(m==='quiz') renderQuiz(); else renderFreeChip();
+  $('bench-quiz').hidden=m!=='quiz'; $('bench-pour').hidden=m!=='free';
+  if(m==='quiz') renderQuiz();
   update();
 }
 $('tab-quiz').onclick=()=>setMode('quiz');
@@ -467,12 +545,12 @@ function renderGrid(flashName){
       <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div></button>`; }).join('');
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
-  if(!found.has(c.name)) return; setMode('free'); showFound(c); $('f-status').className='status'; $('f-status').textContent=`「${c.kana}」を見本に出しました。`;
-  document.querySelector('.bench').scrollIntoView({behavior:'smooth',block:'start'}); };
+  if(!found.has(c.name)) return; setMode('free'); showSample(c,'見本');
+  $('bench-pour').scrollIntoView({behavior:'smooth',block:'start'}); };
 document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b.dataset.f;
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
 Object.values(K).forEach(k=>k.addEventListener('input',update));
-renderGrid(); newQuiz(); update();
+renderGrid(); newQuiz(); paintCup(); renderCups(); update();
 })();
 </script>
