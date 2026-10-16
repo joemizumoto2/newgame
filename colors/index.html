@@ -1,0 +1,494 @@
+<title>色名あつめ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: 色見本帳。左に大きな色票（上=お題／下=自分の色）、右に4本の調合つまみ。下に図鑑の色票グリッドと「色名はいくつあるか」。
+   背景はほぼ無彩色にして、色の見え方を狂わせない。 */
+:root{
+  --bg:#f3f3f1; --surface:#ffffff; --fg:#1d1d22; --muted:#6c6c74; --line:#dcdcd8; --accent:#2b2f8f; --accent-fg:#ffffff;
+  --good:#1f7a4a; --warn:#a2611a;
+  --display:"Dela Gothic One","Hiragino Sans","Yu Gothic",sans-serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1b1b1e; --surface:#26262a; --fg:#ededea; --muted:#9d9da5; --line:#3a3a40; --accent:#9da3ff; --accent-fg:#14152e;
+  --good:#5fd197; --warn:#e6a35a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b1b1e; --surface:#26262a; --fg:#ededea; --muted:#9d9da5; --line:#3a3a40; --accent:#9da3ff; --accent-fg:#14152e;
+  --good:#5fd197; --warn:#e6a35a; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:36px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.02em}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1}
+h2{font-size:22px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 24px}
+header p{margin:6px 0 0;max-width:58ch;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.tabs button{border:0;background:none;color:var(--fg);font:inherit;font-weight:700;padding:6px 16px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+/* ---- 調合台 ---- */
+.bench{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;align-items:start}
+@media (max-width:760px){.bench{grid-template-columns:minmax(0,1fr)}}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 10px 0;box-shadow:0 1px 0 var(--line)}
+.chip .sw{height:150px;border-radius:2px;transition:background-color .15s}
+.chip .sw + .sw{margin-top:2px}
+.chip .label{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 4px 12px;flex-wrap:wrap}
+.chip .label b{font-size:17px}
+.chip .tag{font-size:11px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.swrow{position:relative}
+.swrow .corner{position:absolute;left:10px;top:8px;font-size:11px;letter-spacing:.12em;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.82);color:#1d1d22}
+.near{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:14px}
+.near i{width:22px;height:22px;border-radius:3px;border:1px solid var(--line);flex:none}
+
+.knobs{display:flex;flex-direction:column;gap:18px}
+.knob{display:grid;grid-template-columns:4.5em minmax(0,1fr) 4.2em;gap:12px;align-items:center}
+.knob label{font-weight:700}
+.knob label small{display:block;font-weight:400;font-size:11px;color:var(--muted);letter-spacing:.08em}
+.knob output{text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:30px;border-radius:15px;border:1px solid var(--line);margin:0;cursor:pointer;background:#888}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:transparent;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.4)}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:transparent;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.4)}
+input[type=range]:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.readout{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{font:inherit;font-weight:700;border-radius:6px;padding:10px 18px;cursor:pointer;border:1px solid var(--fg);background:var(--fg);color:var(--bg)}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--line)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible,.tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.status{min-height:1.6em;font-weight:500}
+.status.good{color:var(--good)} .status.warn{color:var(--warn)}
+.rounds{display:flex;gap:6px}
+.rounds span{width:30px;height:30px;border-radius:4px;border:1px dashed var(--line);display:grid;place-items:center;font-size:11px;font-family:var(--mono)}
+.rounds span.done{border-style:solid;color:#fff;text-shadow:0 0 3px rgba(0,0,0,.7)}
+.rounds span.now{border:2px solid var(--fg)}
+.score{font-family:var(--display);font-size:34px;line-height:1}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+
+/* ---- 図鑑 ---- */
+.sechead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px 20px;margin-bottom:14px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;width:min(260px,100%)}
+.bar i{display:block;height:100%;background:var(--fg);transition:width .3s}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:5px 5px 7px;min-width:0;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.card .c{height:44px;border-radius:2px}
+.card.no .c{background:repeating-linear-gradient(135deg,transparent 0 6px,var(--line) 6px 7px);}
+.card .n{font-size:12px;font-weight:700;margin-top:5px;line-height:1.3;overflow-wrap:anywhere}
+.card .k{font-size:11px;color:var(--muted);line-height:1.3;overflow-wrap:anywhere}
+.card.no .n,.card.no .k{opacity:.55}
+.card.flash{animation:flash .9s}
+@keyframes flash{0%{transform:scale(1.08);box-shadow:0 0 0 3px var(--fg)}100%{transform:none;box-shadow:none}}
+.card:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:3px 12px;border-radius:999px;cursor:pointer}
+.filters button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+
+/* ---- 色名の数 ---- */
+.counts{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;font-weight:600}
+tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.note{max-width:66ch;color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>色名あつめ</h1>
+      <p>赤・緑・青の光と彩度、4つのつまみで色を調合します。名前のある色に近づけるほど高得点。作った色は図鑑に登録できます。</p>
+    </div>
+    <div class="tabs" role="group" aria-label="モード">
+      <button id="tab-quiz" aria-pressed="true">お題モード</button>
+      <button id="tab-free" aria-pressed="false">図鑑モード</button>
+    </div>
+  </header>
+
+  <section class="bench">
+    <div>
+      <div class="chip">
+        <div class="swrow" id="target-row"><div class="sw" id="sw-target"></div><span class="corner">お題</span></div>
+        <div class="swrow"><div class="sw" id="sw-mine"></div><span class="corner">あなたの色</span></div>
+        <div class="label">
+          <div><span class="tag" id="chip-tag">Round 1 / 5</span><br><b id="chip-name">—</b> <span class="muted" id="chip-kana"></span></div>
+          <span class="mono muted" id="chip-hex"></span>
+        </div>
+      </div>
+      <div class="near"><i id="near-sw"></i><span>いちばん近い色名：<b id="near-name">—</b> <span class="mono muted" id="near-de"></span></span></div>
+    </div>
+
+    <div class="knobs">
+      <div class="knob"><label for="k-r">赤<small>RED</small></label><input type="range" id="k-r" min="0" max="255" value="128"><output class="mono" id="o-r" for="k-r">128</output></div>
+      <div class="knob"><label for="k-g">緑<small>GREEN</small></label><input type="range" id="k-g" min="0" max="255" value="128"><output class="mono" id="o-g" for="k-g">128</output></div>
+      <div class="knob"><label for="k-b">青<small>BLUE</small></label><input type="range" id="k-b" min="0" max="255" value="128"><output class="mono" id="o-b" for="k-b">128</output></div>
+      <div class="knob"><label for="k-s">彩度<small>SATURATION</small></label><input type="range" id="k-s" min="0" max="200" value="100"><output class="mono" id="o-s" for="k-s">100%</output></div>
+      <div class="readout mono"><span>仕上がり <b id="ro-hex">#808080</b></span><span id="ro-rgb">rgb(128,128,128)</span><span id="ro-hsl">H0 S0% L50%</span></div>
+
+      <div class="panel" id="quiz-panel">
+        <div class="actions" style="justify-content:space-between">
+          <div class="rounds" id="rounds"></div>
+          <div><span class="tag muted" style="font-size:11px;letter-spacing:.12em">SCORE</span> <span class="score mono" id="total">0</span><span class="muted"> / 500</span></div>
+        </div>
+        <div class="status" id="q-status">お題の色に合わせて、つまみを動かしてください。</div>
+        <div class="actions">
+          <button class="btn" id="q-go">これで決定</button>
+          <button class="btn ghost" id="q-next" hidden>次のお題へ</button>
+          <span class="muted" id="best"></span>
+        </div>
+      </div>
+
+      <div class="panel" id="free-panel" hidden>
+        <div class="status" id="f-status">好きに混ぜてみてください。色名に十分近づくと登録できます（色差 ΔE 6 未満）。</div>
+        <div class="actions">
+          <button class="btn" id="f-add" disabled>この色を図鑑に登録</button>
+          <button class="btn ghost" id="f-rand">ランダムに混ぜる</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>色名図鑑</h2>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span class="mono"><b id="found-n">0</b> / <span id="all-n">0</span> 色</span>
+        <div class="bar"><i id="found-bar" style="width:0"></i></div>
+      </div>
+    </div>
+    <div class="actions" style="justify-content:space-between;margin-bottom:12px">
+      <div class="filters" role="group" aria-label="表示">
+        <button data-f="all" aria-pressed="true">すべて</button>
+        <button data-f="yes" aria-pressed="false">登録済み</button>
+        <button data-f="no" aria-pressed="false">未登録</button>
+      </div>
+      <span class="muted" style="font-size:13px">未登録の色をタップすると、図鑑モードでその色を狙えます</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section>
+    <h2 style="margin-bottom:6px">色の名前は、いくつあるのか</h2>
+    <p class="note">「名前のついた色」の数は、どの名簿を数えるかで桁が変わります。一つの言語で誰もが使う基本の色名は十前後、規格や業界の名簿で数百〜数千、ネットで集めた名前まで含めると数万です。</p>
+    <div class="counts">
+      <table>
+        <thead><tr><th>名簿</th><th style="text-align:right">数</th><th>中身</th></tr></thead>
+        <tbody>
+          <tr><td>基本色彩語（バーリン＆ケイ）</td><td class="num">11</td><td>英語で誰もが使う色名。白・黒・赤・緑・黄・青・茶・紫・桃・橙・灰</td></tr>
+          <tr class="here"><td>CSS／HTML の色名（このゲーム）</td><td class="num">148</td><td>ウェブで使える英語の色名。gray/grey の綴り違いなどを除くと 139 色</td></tr>
+          <tr><td>ISCC-NBS 色名</td><td class="num">267</td><td>米国の系統色名。「明るい灰みの赤」のように色空間を区切って名づける</td></tr>
+          <tr><td>JIS 慣用色名（JIS Z 8102）</td><td class="num">269</td><td>日本の規格。和名 147、外来語名 122（桜色、群青、マゼンタなど）</td></tr>
+          <tr><td>日本の伝統色</td><td class="num">数百</td><td>本や辞典ごとに違い、よく引かれる「和色大辞典」では 465 色</td></tr>
+          <tr><td>xkcd 色名調査</td><td class="num">954</td><td>約22万人のアンケートで多く使われた英語の色名</td></tr>
+          <tr><td>パントン（PANTONE）</td><td class="num">数千</td><td>印刷・繊維などの色見本。名簿ごとに約2,000〜3,000色前後</td></tr>
+          <tr><td>オープンな色名データベース</td><td class="num">3万超</td><td>ネット上で集められた色名を全部まとめたもの（meodai/color-names など）</td></tr>
+          <tr><td>人が見分けられる色</td><td class="num">約100万〜</td><td>名前がなくても目で区別できる色。推定は100万〜1000万</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">このゲームでは、仕上がりの色と色名との差を、人の見え方に近い CIE Lab 色空間の距離（ΔE）で測っています。ΔE が 2 前後で「やっと違いが分かる」くらい、10 を超えると別の色に見えます。</p>
+  </section>
+</div>
+
+<script>
+(() => {
+// [英名, カタカナ, hex]。aqua=cyan, fuchsia=magenta は同じ色なので1枚にまとめた。gray は grey と綴り違いのみ。
+const RAW = `aliceblue,アリスブルー,F0F8FF
+antiquewhite,アンティークホワイト,FAEBD7
+aqua / cyan,アクア／シアン,00FFFF
+aquamarine,アクアマリン,7FFFD4
+azure,アジュール,F0FFFF
+beige,ベージュ,F5F5DC
+bisque,ビスク,FFE4C4
+black,ブラック,000000
+blanchedalmond,ブランチドアーモンド,FFEBCD
+blue,ブルー,0000FF
+blueviolet,ブルーバイオレット,8A2BE2
+brown,ブラウン,A52A2A
+burlywood,バーリーウッド,DEB887
+cadetblue,カデットブルー,5F9EA0
+chartreuse,シャルトルーズ,7FFF00
+chocolate,チョコレート,D2691E
+coral,コーラル,FF7F50
+cornflowerblue,コーンフラワーブルー,6495ED
+cornsilk,コーンシルク,FFF8DC
+crimson,クリムゾン,DC143C
+darkblue,ダークブルー,00008B
+darkcyan,ダークシアン,008B8B
+darkgoldenrod,ダークゴールデンロッド,B8860B
+darkgray,ダークグレー,A9A9A9
+darkgreen,ダークグリーン,006400
+darkkhaki,ダークカーキ,BDB76B
+darkmagenta,ダークマゼンタ,8B008B
+darkolivegreen,ダークオリーブグリーン,556B2F
+darkorange,ダークオレンジ,FF8C00
+darkorchid,ダークオーキッド,9932CC
+darkred,ダークレッド,8B0000
+darksalmon,ダークサーモン,E9967A
+darkseagreen,ダークシーグリーン,8FBC8F
+darkslateblue,ダークスレートブルー,483D8B
+darkslategray,ダークスレートグレー,2F4F4F
+darkturquoise,ダークターコイズ,00CED1
+darkviolet,ダークバイオレット,9400D3
+deeppink,ディープピンク,FF1493
+deepskyblue,ディープスカイブルー,00BFFF
+dimgray,ディムグレー,696969
+dodgerblue,ドジャーブルー,1E90FF
+firebrick,ファイアブリック,B22222
+floralwhite,フローラルホワイト,FFFAF0
+forestgreen,フォレストグリーン,228B22
+fuchsia / magenta,フクシア／マゼンタ,FF00FF
+gainsboro,ゲインズボロ,DCDCDC
+ghostwhite,ゴーストホワイト,F8F8FF
+gold,ゴールド,FFD700
+goldenrod,ゴールデンロッド,DAA520
+gray,グレー,808080
+green,グリーン,008000
+greenyellow,グリーンイエロー,ADFF2F
+honeydew,ハニーデュー,F0FFF0
+hotpink,ホットピンク,FF69B4
+indianred,インディアンレッド,CD5C5C
+indigo,インディゴ,4B0082
+ivory,アイボリー,FFFFF0
+khaki,カーキ,F0E68C
+lavender,ラベンダー,E6E6FA
+lavenderblush,ラベンダーブラッシュ,FFF0F5
+lawngreen,ローングリーン,7CFC00
+lemonchiffon,レモンシフォン,FFFACD
+lightblue,ライトブルー,ADD8E6
+lightcoral,ライトコーラル,F08080
+lightcyan,ライトシアン,E0FFFF
+lightgoldenrodyellow,ライトゴールデンロッドイエロー,FAFAD2
+lightgray,ライトグレー,D3D3D3
+lightgreen,ライトグリーン,90EE90
+lightpink,ライトピンク,FFB6C1
+lightsalmon,ライトサーモン,FFA07A
+lightseagreen,ライトシーグリーン,20B2AA
+lightskyblue,ライトスカイブルー,87CEFA
+lightslategray,ライトスレートグレー,778899
+lightsteelblue,ライトスチールブルー,B0C4DE
+lightyellow,ライトイエロー,FFFFE0
+lime,ライム,00FF00
+limegreen,ライムグリーン,32CD32
+linen,リネン,FAF0E6
+maroon,マルーン,800000
+mediumaquamarine,ミディアムアクアマリン,66CDAA
+mediumblue,ミディアムブルー,0000CD
+mediumorchid,ミディアムオーキッド,BA55D3
+mediumpurple,ミディアムパープル,9370DB
+mediumseagreen,ミディアムシーグリーン,3CB371
+mediumslateblue,ミディアムスレートブルー,7B68EE
+mediumspringgreen,ミディアムスプリンググリーン,00FA9A
+mediumturquoise,ミディアムターコイズ,48D1CC
+mediumvioletred,ミディアムバイオレットレッド,C71585
+midnightblue,ミッドナイトブルー,191970
+mintcream,ミントクリーム,F5FFFA
+mistyrose,ミスティローズ,FFE4E1
+moccasin,モカシン,FFE4B5
+navajowhite,ナバホホワイト,FFDEAD
+navy,ネイビー,000080
+oldlace,オールドレース,FDF5E6
+olive,オリーブ,808000
+olivedrab,オリーブドラブ,6B8E23
+orange,オレンジ,FFA500
+orangered,オレンジレッド,FF4500
+orchid,オーキッド,DA70D6
+palegoldenrod,ペールゴールデンロッド,EEE8AA
+palegreen,ペールグリーン,98FB98
+paleturquoise,ペールターコイズ,AFEEEE
+palevioletred,ペールバイオレットレッド,DB7093
+papayawhip,パパイヤホイップ,FFEFD5
+peachpuff,ピーチパフ,FFDAB9
+peru,ペルー,CD853F
+pink,ピンク,FFC0CB
+plum,プラム,DDA0DD
+powderblue,パウダーブルー,B0E0E6
+purple,パープル,800080
+rebeccapurple,レベッカパープル,663399
+red,レッド,FF0000
+rosybrown,ロージーブラウン,BC8F8F
+royalblue,ロイヤルブルー,4169E1
+saddlebrown,サドルブラウン,8B4513
+salmon,サーモン,FA8072
+sandybrown,サンディブラウン,F4A460
+seagreen,シーグリーン,2E8B57
+seashell,シーシェル,FFF5EE
+sienna,シエナ,A0522D
+silver,シルバー,C0C0C0
+skyblue,スカイブルー,87CEEB
+slateblue,スレートブルー,6A5ACD
+slategray,スレートグレー,708090
+snow,スノー,FFFAFA
+springgreen,スプリンググリーン,00FF7F
+steelblue,スチールブルー,4682B4
+tan,タン,D2B48C
+teal,ティール,008080
+thistle,シスル,D8BFD8
+tomato,トマト,FF6347
+turquoise,ターコイズ,40E0D0
+violet,バイオレット,EE82EE
+wheat,ウィート,F5DEB3
+white,ホワイト,FFFFFF
+whitesmoke,ホワイトスモーク,F5F5F5
+yellow,イエロー,FFFF00
+yellowgreen,イエローグリーン,9ACD32`;
+
+const hex2rgb = h => [0,2,4].map(i => parseInt(h.slice(i,i+2),16));
+const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
+function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
+    h = mx===r ? (g-b)/d+(g<b?6:0) : mx===g ? (b-r)/d+2 : (r-g)/d+4; h*=60; }
+  return [h,s,l]; }
+function hsl2rgb(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));
+  return [f(0),f(8),f(4)].map(v=>Math.round(v*255)); }
+function rgb2lab(c){ const lin=c.map(v=>{v/=255; return v<=.04045 ? v/12.92 : ((v+.055)/1.055)**2.4;});
+  const X=(lin[0]*.4124+lin[1]*.3576+lin[2]*.1805)/.95047, Y=lin[0]*.2126+lin[1]*.7152+lin[2]*.0722, Z=(lin[0]*.0193+lin[1]*.1192+lin[2]*.9505)/1.08883;
+  const f=t=>t>.008856 ? Math.cbrt(t) : 7.787*t+16/116;
+  return [116*f(Y)-16, 500*(f(X)-f(Y)), 200*(f(Y)-f(Z))]; }
+const dE = (a,b) => Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
+
+const COLORS = RAW.split('\n').map(line => { const [name,kana,hex]=line.split(','); const rgb=hex2rgb(hex);
+  return {name,kana,hex:'#'+hex,rgb,lab:rgb2lab(rgb)}; });
+
+// 三原色を混ぜてから、HSL の彩度を倍率で動かす（0%で灰色、200%で最大まで鮮やかに）
+function mix(r,g,b,sPct){ const [h,s,l]=rgb2hsl([r,g,b]); return hsl2rgb(h,Math.min(1,s*sPct/100),l); }
+function nearest(rgb){ const lab=rgb2lab(rgb); let best=null, bd=Infinity;
+  for(const c of COLORS){ const d=dE(lab,c.lab); if(d<bd){bd=d;best=c;} } return [best,bd]; }
+const points = d => Math.max(0, Math.round(100*Math.exp(-d/22)));
+
+const $ = id => document.getElementById(id);
+const K = {r:$('k-r'),g:$('k-g'),b:$('k-b'),s:$('k-s')};
+const store = { get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+                set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+const found = new Set(store.get('iro-found',[]));
+let best = store.get('iro-best',0);
+let mode = 'quiz';
+let quiz = null;
+let aim = null; // 図鑑モードで狙っている色
+
+const val = () => ({r:+K.r.value,g:+K.g.value,b:+K.b.value,s:+K.s.value});
+const current = () => { const v=val(); return mix(v.r,v.g,v.b,v.s); };
+
+function paintTracks(){
+  const v=val(), N=9, stops=(fn)=>Array.from({length:N},(_,i)=>rgb2hex(fn(i/(N-1)))).join(',');
+  K.r.style.background=`linear-gradient(90deg,${stops(t=>mix(Math.round(t*255),v.g,v.b,v.s))})`;
+  K.g.style.background=`linear-gradient(90deg,${stops(t=>mix(v.r,Math.round(t*255),v.b,v.s))})`;
+  K.b.style.background=`linear-gradient(90deg,${stops(t=>mix(v.r,v.g,Math.round(t*255),v.s))})`;
+  K.s.style.background=`linear-gradient(90deg,${stops(t=>mix(v.r,v.g,v.b,t*200))})`;
+}
+
+function update(){
+  const v=val(), rgb=current(), hex=rgb2hex(rgb);
+  $('o-r').textContent=v.r; $('o-g').textContent=v.g; $('o-b').textContent=v.b; $('o-s').textContent=v.s+'%';
+  $('sw-mine').style.backgroundColor=hex;
+  $('ro-hex').textContent=hex; $('ro-rgb').textContent=`rgb(${rgb.join(',')})`;
+  const [h,s,l]=rgb2hsl(rgb); $('ro-hsl').textContent=`H${Math.round(h)} S${Math.round(s*100)}% L${Math.round(l*100)}%`;
+  const [n,d]=nearest(rgb);
+  $('near-sw').style.backgroundColor=n.hex; $('near-name').textContent=`${n.kana}（${n.name}）`; $('near-de').textContent=`ΔE ${d.toFixed(1)}`;
+  paintTracks();
+  if(mode==='free'){
+    const ok = d<6 && !found.has(n.name);
+    $('f-add').disabled=!ok;
+    const fs=$('f-status');
+    if(aim){ const da=dE(rgb2lab(rgb),aim.lab); fs.className='status'+(da<6?' good':'');
+      fs.textContent = da<6 ? `${aim.kana} に届きました（ΔE ${da.toFixed(1)}）。` : `狙い：${aim.kana}（${aim.name}）まで あと ΔE ${da.toFixed(1)}`; }
+    else if(found.has(n.name) && d<6){ fs.className='status'; fs.textContent=`${n.kana} は登録済みです。別の色を探しましょう。`; }
+    else if(ok){ fs.className='status good'; fs.textContent=`${n.kana} に近い色です。登録できます。`; }
+    else { fs.className='status'; fs.textContent=`いちばん近い ${n.kana} まで ΔE ${d.toFixed(1)}。6 未満で登録できます。`; }
+  }
+}
+
+function setKnobs(r,g,b,s){ K.r.value=r; K.g.value=g; K.b.value=b; K.s.value=s; update(); }
+
+// ---------- お題モード ----------
+function newQuiz(){
+  const pool=[...COLORS].sort(()=>Math.random()-.5);
+  // 白っぽい色ばかりにならないよう、明るさのばらけた5色を選ぶ
+  const picks=[]; for(const c of pool){ if(picks.every(p=>dE(p.lab,c.lab)>25)) picks.push(c); if(picks.length===5) break; }
+  quiz={targets:picks, i:0, scores:[], done:false, revealed:false};
+  setKnobs(128,128,128,100); renderQuiz();
+}
+function renderQuiz(){
+  const t=quiz.targets[quiz.i];
+  $('target-row').hidden=false;
+  $('sw-target').style.backgroundColor=t.hex;
+  $('chip-tag').textContent=quiz.done ? '結果' : `Round ${quiz.i+1} / 5`;
+  $('chip-name').textContent=t.kana; $('chip-kana').textContent=t.name;
+  $('chip-hex').textContent= quiz.revealed ? t.hex : '#??????';
+  $('rounds').innerHTML=quiz.targets.map((c,i)=>{
+    const sc=quiz.scores[i];
+    return sc!=null ? `<span class="done" style="background:${c.hex}">${sc}</span>` : `<span class="${i===quiz.i?'now':''}">${i+1}</span>`;
+  }).join('');
+  $('total').textContent=quiz.scores.reduce((a,b)=>a+b,0);
+  $('best').textContent= best ? `ベスト ${best}` : '';
+  $('q-go').hidden=quiz.revealed; $('q-next').hidden=!quiz.revealed;
+  $('q-next').textContent = quiz.done ? 'もう一度遊ぶ' : '次のお題へ';
+}
+$('q-go').onclick=()=>{
+  const t=quiz.targets[quiz.i], rgb=current(), d=dE(rgb2lab(rgb),t.lab), p=points(d);
+  quiz.scores[quiz.i]=p; quiz.revealed=true;
+  const word = d<2.3 ? 'ほぼ見分けがつきません' : d<6 ? 'かなり近い' : d<12 ? '惜しい' : d<25 ? '方向は合っています' : 'だいぶ違う色です';
+  const st=$('q-status'); st.className='status '+(d<6?'good':d>=25?'warn':'');
+  st.textContent=`ΔE ${d.toFixed(1)}：${word}。${p} 点。正解は rgb(${t.rgb.join(',')})`;
+  if(d<6 && !found.has(t.name)){ found.add(t.name); saveFound(); renderGrid(t.name); st.textContent+='　図鑑に登録しました'; }
+  if(quiz.i===4){ quiz.done=true; const tot=quiz.scores.reduce((a,b)=>a+b,0);
+    if(tot>best){ best=tot; store.set('iro-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
+  renderQuiz();
+};
+$('q-next').onclick=()=>{
+  if(quiz.done){ newQuiz(); }
+  else { quiz.i++; quiz.revealed=false; setKnobs(128,128,128,100); renderQuiz(); }
+  $('q-status').className='status'; $('q-status').textContent='お題の色に合わせて、つまみを動かしてください。';
+};
+
+// ---------- 図鑑モード ----------
+function saveFound(){ store.set('iro-found',[...found]); }
+$('f-add').onclick=()=>{ const [n,d]=nearest(current()); if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name);
+  if(aim && aim.name===n.name) aim=null; renderFreeChip(); update(); $('f-status').className='status good'; $('f-status').textContent=`${n.kana} を図鑑に登録しました。`; } };
+$('f-rand').onclick=()=>{ const r=()=>Math.floor(Math.random()*256); setKnobs(r(),r(),r(),100); };
+function renderFreeChip(){
+  $('target-row').hidden = !aim;
+  if(aim){ $('sw-target').style.backgroundColor=aim.hex; $('chip-tag').textContent='狙い'; $('chip-name').textContent=aim.kana; $('chip-kana').textContent=aim.name; $('chip-hex').textContent='#??????'; }
+  else { $('chip-tag').textContent='自由に調合'; $('chip-name').textContent='図鑑モード'; $('chip-kana').textContent=''; $('chip-hex').textContent=''; }
+}
+
+function setMode(m){
+  mode=m;
+  $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-free').setAttribute('aria-pressed',m==='free');
+  $('quiz-panel').hidden=m!=='quiz'; $('free-panel').hidden=m!=='free';
+  if(m==='quiz') renderQuiz(); else renderFreeChip();
+  update();
+}
+$('tab-quiz').onclick=()=>setMode('quiz');
+$('tab-free').onclick=()=>{ aim=null; setMode('free'); };
+
+// ---------- 図鑑 ----------
+let filter='all';
+function renderGrid(flashName){
+  $('found-n').textContent=found.size; $('all-n').textContent=COLORS.length;
+  $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
+  const list = COLORS.filter(c => filter==='all' || (filter==='yes') === found.has(c.name));
+  $('grid').innerHTML = list.map(c=>{ const has=found.has(c.name);
+    return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${c.kana}${has?'（登録済み）':'（未登録）'}">
+      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${c.kana}</div><div class="k">${c.name}${has?' · '+c.hex:''}</div></button>`; }).join('');
+}
+$('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
+  aim=c; setMode('free'); document.querySelector('.bench').scrollIntoView({behavior:'smooth',block:'start'}); };
+document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b.dataset.f;
+  document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
+
+Object.values(K).forEach(k=>k.addEventListener('input',update));
+renderGrid(); newQuiz(); update();
+})();
+</script>
