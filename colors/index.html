@@ -152,6 +152,14 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .mark.silver{fill:#c9cdd4;stroke:#6b7079}
 .crown.gold{background:#e2b53c}.crown.silver{background:#c3c7cf}
 .chal{border:1px dashed var(--fg);border-radius:6px;padding:8px 12px;font-size:14px}
+.starts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.starts button{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:3px 10px 3px 6px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.starts button i{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15)}
+.starts button[aria-pressed="true"]{border-color:var(--fg);font-weight:700}
+.detail{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;align-items:start}
+.detail .sw{aspect-ratio:1;border-radius:4px;border:1px solid var(--line)}
+.recipe{font-size:14px;line-height:1.9}
+.recipe .step{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin:0 2px;white-space:nowrap}
 .badge.strong{background:var(--fg);color:var(--bg);font-weight:700}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -239,6 +247,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
       <div class="sample" id="sample" hidden><i id="sample-sw"></i><span><b id="sample-name"></b><br><span class="muted" id="sample-sub"></span></span></div>
     </div>
     <div class="knobs">
+      <div class="starts" id="starts"><span class="muted">ここから注ぐ：</span></div>
       <div class="spouts">
         <button class="spout" data-ch="r" id="sp-r"><span class="dot" style="background:#ff0000"></span><b>赤</b><small>長押しで注ぐ</small></button>
         <button class="spout" data-ch="g" id="sp-g"><span class="dot" style="background:#00ff00"></span><b>緑</b><small>長押しで注ぐ</small></button>
@@ -264,6 +273,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <div class="bar"><i id="found-bar" style="width:0"></i></div>
       </div>
     </div>
+    <div class="panel" id="detail" hidden style="margin-bottom:14px"></div>
     <div class="actions" style="justify-content:space-between;margin-bottom:12px">
       <div class="filters" role="group" aria-label="表示">
         <button data-f="all" aria-pressed="true">すべて</button>
@@ -275,7 +285,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="pour3" aria-pressed="false">注ぐ金</button>
         <button data-f="pour2" aria-pressed="false">注ぐ銀</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色は名前を伏せて、色の方向だけ出しています。っぽい色で図鑑に載ります。一発で誤差3%未満に作ると金冠、1色だけ継ぎ足して誤差5%未満に仕上げると銀冠。冠はしずくと注ぐで別々です。見つけた色をタップすると注ぐモードに見本を出します</span>
+      <span class="muted" style="font-size:13px">未登録の色は名前を伏せて、色の方向だけ出しています。っぽい色で図鑑に載ります。一発で誤差3%未満に作ると金冠、1色だけ継ぎ足して誤差5%未満に仕上げると銀冠。冠はしずくと注ぐで別々です。見つけた色をタップすると、冠やしずく金冠のレシピを見られます</span>
     </div>
     <div class="fams" id="grid"></div>
   </section>
@@ -546,7 +556,7 @@ $('q-next').onclick=()=>{
 // ---------- 調合モード ----------
 // 光は足し算。器は真っ暗から始まり、赤・緑・青を注ぐほど明るくなる。彩度は今の色をより鮮やかにする。どれも戻せない。
 function saveFound(){ store.set('iro-found',[...found]); store.set('iro-crowns',crowns); }
-let cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro-cups',0);
+let pourStart=[0,0,0], pourStartName='black', cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro-cups',0);
 const SPOUT_COLOR={r:'#ff0000',g:'#00ff00',b:'#0000ff',s:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'};
 function hslF(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); return [0,8,4].map(n=>255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)))); }
 const cupRGB=()=>cupC.map(v=>Math.round(Math.min(255,Math.max(0,v))));
@@ -584,15 +594,15 @@ $('p-done').onclick=()=>{
   if(t){ pChal={target:t,ch:null}; setSpouts(true); $('p-done').disabled=true; $('p-done').textContent='もう一度仕上げる'; $('p-empty').textContent='見送って次の器へ'; }
   else { $('p-done').disabled=true; $('p-empty').textContent='次の器へ'; }
 };
-function emptyCup(){ stopPour(); cupC=[0,0,0]; finished=false; pChal=null; $('p-done').textContent='仕上げる'; setSpouts(true); $('p-done').disabled=false; paintCup();
+function emptyCup(){ stopPour(); cupC=pourStart.slice(); finished=false; pChal=null; $('p-done').textContent='仕上げる'; setSpouts(true); $('p-done').disabled=false; paintCup();
   $('p-empty').textContent='器を空ける'; $('sample').hidden=true;
-  $('p-status').className='status'; $('p-status').textContent='真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。'; }
+  $('p-status').className='status'; $('p-status').textContent=(pourStartName==='black'?'真っ暗な器':'選んだ系統の手前まで光が入った器')+'に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。'; }
 $('p-empty').onclick=emptyCup;
 
 // ---------- しずくモード ----------
 // 大きいしずく＝1/4、小さいしずく＝1/16、彩度のしずく＝今の色の鮮やかさを3割ほど上げる。器は12滴まで。
 const DROP_CAP=12, DROP_SAT=0.35;
-let dropC=[0,0,0], dropUsed=0, dropDone=false, dChal=null; // dChal={target, ch}: 継ぎ足しチャレンジ中
+let dropC=[0,0,0], dropUsed=0, dropDone=false, dChal=null, dropLog=[]; // dChal={target, ch}: 継ぎ足しチャレンジ中
 function satDrop(c){ const [h,s,l]=rgb2hsl(c); return s ? hsl2rgb(h,s+(1-s)*DROP_SAT,l) : c; }
 function renderDrop(){
   $('cup-d').style.backgroundColor=rgb2hex(dropC);
@@ -603,6 +613,7 @@ function renderDrop(){
 document.querySelectorAll('.dropbtn').forEach(b=>b.onclick=()=>{
   if(dChal){ if(dChal.ch!=null && dChal.ch!==b.dataset.ch) return; dChal.ch=b.dataset.ch; }
   else if(dropDone||dropUsed>=DROP_CAP) return;
+  if(!dChal) dropLog.push(b.dataset.ch==='s' ? 's' : b.dataset.ch+(b.dataset.a==='64'?'L':'S'));
   if(b.dataset.ch==='s') dropC=satDrop(dropC); else { const i=+b.dataset.ch; dropC=dropC.slice(); dropC[i]=Math.min(255,dropC[i]+ +b.dataset.a); }
   if(!dChal) dropUsed++; const cup=$('cup-d'); cup.classList.remove('bump'); void cup.offsetWidth; cup.classList.add('bump');
   if(!dChal && dropUsed>=DROP_CAP){ $('d-status').className='status'; $('d-status').textContent='器がいっぱいになりました。「仕上げる」を押してください。'; }
@@ -616,11 +627,20 @@ function record(c,level,mode){ const isNew=!found.has(c.name), before=mode?(crow
   return {isNew,up}; }
 const MODE_JA={pour:'注ぐ',drop:'しずく'};
 // 1杯目の判定。冠はモード（'pour' / 'drop'）ごと。っぽい色で、そのモードの冠がまだなければ継ぎ足しチャレンジに進める
+// しずく金冠のレシピ（落とした順）。短いものが見つかったら差し替える
+const recipes=store.get('iro-recipes',{});
+const STEP_JA={'0L':'赤・大','0S':'赤・小','1L':'緑・大','1S':'緑・小','2L':'青・大','2S':'青・小','s':'彩度'};
+function saveRecipe(c){ if(!recipes[c.name] || dropLog.length<recipes[c.name].length){ recipes[c.name]=dropLog.slice(); store.set('iro-recipes',recipes); } }
+function recipeText(r){ if(!r||!r.length) return '何も落とさない'; const runs=[];
+  for(const t of r){ const last=runs[runs.length-1]; if(last&&last[0]===t) last[1]++; else runs.push([t,1]); }
+  return runs.map(([t,n])=>STEP_JA[t]+(n>1?'×'+n:'')).join(' → '); }
+function recipeHTML(r){ return recipeText(r).split(' → ').map(x=>`<span class="step">${x}</span>`).join('→'); }
 function judgeCup(rgb, st, show, hide, mode, canTopUp){
   cups++; store.set('iro-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
   if(d<EXACT_TH){ const {isNew,up}=record(n,3,mode); show(n,MODE_JA[mode]+'金冠');
-    st.className='status good'; st.textContent=`「${n.kana}」ぴったり。一発で作ったので${MODE_JA[mode]}金冠です。`+(isNew?'図鑑に載せました。':up?'':'もう持っています。'); return null; }
+    if(mode==='drop') saveRecipe(n);
+    st.className='status good'; st.textContent=`「${n.kana}」ぴったり。一発で作ったので${MODE_JA[mode]}金冠です。`+(isNew?'図鑑に載せました。':up?'':'もう持っています。')+(mode==='drop'?`　レシピ：${recipeText(recipes[n.name])}`:''); return null; }
   if(d<NAME_TH){ const {isNew}=record(n,1,mode); show(n,'っぽい色');
     st.className='status'+(isNew?' good':''); st.textContent=`「${n.kana}」っぽい色ができました。`+(isNew?'図鑑に載せました。':'もう図鑑に載っています。');
     if((crowns[mode][n.name]||0)<2){
@@ -657,7 +677,7 @@ $('d-done').onclick=()=>{
   if(t){ dChal={target:t,ch:null}; $('d-done').textContent='もう一度仕上げる'; $('d-empty').textContent='見送って次の器へ'; }
   else $('d-empty').textContent='次の器へ';
   renderDrop(); };
-$('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropDone=false; dChal=null; $('d-done').textContent='仕上げる'; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
+$('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropLog=[]; dropDone=false; dChal=null; $('d-done').textContent='仕上げる'; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
   $('d-status').className='status'; $('d-status').textContent='真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。'; renderDrop(); };
 
 function setMode(m){
@@ -687,6 +707,15 @@ function family(c){ const [h,s,l]=rgb2hsl(c.rgb), d=Math.max(...c.rgb)-Math.min(
   const tone = l<0.3 ? '暗い' : l>0.75 ? '淡い' : s<0.35 ? 'くすんだ' : l>0.6 ? '明るい' : '';
   return [hue, `${tone}${hue}系`]; }
 COLORS.forEach(c=>{ [c.fam,c.hint]=family(c); });
+// 注ぐモードの開始点。系統の色の、赤・緑・青それぞれの最小値から始める（足すだけでその系統の全色に届く）
+const minOf=list=>[0,1,2].map(i=>Math.min(...list.map(c=>c.rgb[i])));
+const STARTS=[['black','真っ暗',[0,0,0],'#000']].concat(
+  FAMS.filter(([f])=>f!=='白・灰・黒').map(([f,sw])=>[f,f,minOf(COLORS.filter(c=>c.fam===f)),sw]),
+  [['lightgray','明るい灰・白',minOf(COLORS.filter(c=>c.fam==='白・灰・黒'&&rgb2hsl(c.rgb)[2]>0.6)),'#d6d6d6']]);
+function renderStarts(){
+  $('starts').innerHTML='<span class="muted">ここから注ぐ：</span>'+STARTS.map(([k,label,,sw])=>`<button data-k="${k}" aria-pressed="${k===pourStartName}"><i style="background:${sw}"></i>${label}</button>`).join('');
+  $('starts').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const st=STARTS.find(x=>x[0]===b.dataset.k); pourStart=st[2].slice(); pourStartName=st[0]; renderStarts(); emptyCup(); });
+}
 // 冠のマーク。しずくモードは雫、注ぐモードはポット。金冠は金色、銀冠は銀色。
 const ICON={
   drop:'<path d="M9 1.6C9 1.6 3.6 7.6 3.6 11a5.4 5.4 0 0 0 10.8 0C14.4 7.6 9 1.6 9 1.6z"/>',
@@ -719,12 +748,23 @@ function renderGrid(flashName){
   if(!$('grid').innerHTML) $('grid').innerHTML='<p class="muted">まだこの条件に当てはまる色はありません。</p>';
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
-  if(!found.has(c.name)) return; setMode('free'); showSample(c,'見本');
-  $('bench-pour').scrollIntoView({behavior:'smooth',block:'start'}); };
+  if(!found.has(c.name)) return; showDetail(c); };
+function showDetail(c){
+  const cr=['drop','pour'].map(m=>{ const v=crowns[m][c.name]; return `${MODE_JA[m]}：${v===3?'金冠':v===2?'銀冠':'まだ冠なし'}`; }).join('　');
+  const r=recipes[c.name];
+  $('detail').innerHTML=`<div class="detail"><div class="sw" style="background:${c.hex}"></div><div>
+    <b style="font-size:17px">${c.kana}</b> <span class="muted">${c.name}・${c.hex}</span><div class="muted" style="font-size:13px">${cr}</div>
+    <div class="recipe">${r ? 'しずく金冠のレシピ：'+recipeHTML(r) : (crowns.drop[c.name]===3 ? 'しずく金冠のレシピは記録されていません（記録を始める前に取った冠です）' : 'しずくで金冠を取ると、ここにレシピが残ります。')}</div>
+    <div class="actions" style="margin-top:6px"><button class="btn ghost" id="det-pour">注ぐモードの見本にする</button><button class="btn ghost" id="det-close">閉じる</button></div></div></div>`;
+  $('detail').hidden=false;
+  $('det-close').onclick=()=>$('detail').hidden=true;
+  $('det-pour').onclick=()=>{ setMode('free'); showSample(c,'見本'); $('bench-pour').scrollIntoView({behavior:'smooth',block:'start'}); };
+  $('detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
 document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b.dataset.f;
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
 Object.values(K).forEach(k=>k.addEventListener('input',update));
-renderGrid(); newQuiz(); paintCup(); renderDrop(); renderCups(); update();
+renderGrid(); newQuiz(); paintCup(); renderDrop(); renderCups(); renderStarts(); update();
 })();
 </script>
