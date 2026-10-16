@@ -152,6 +152,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .mark.silver{fill:#c9cdd4;stroke:#6b7079}
 .crown.gold{background:#e2b53c}.crown.silver{background:#c3c7cf}
 .chal{border:1px dashed var(--fg);border-radius:6px;padding:8px 12px;font-size:14px}
+.badge.strong{background:var(--fg);color:var(--bg);font-weight:700}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -268,6 +269,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="all" aria-pressed="true">すべて</button>
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
+        <button data-f="pouronly" aria-pressed="false">注ぐ専用</button>
         <button data-f="drop3" aria-pressed="false">しずく金</button>
         <button data-f="drop2" aria-pressed="false">しずく銀</button>
         <button data-f="pour3" aria-pressed="false">注ぐ金</button>
@@ -674,6 +676,7 @@ let filter='all';
 function passFilter(c){
   if(filter==='all') return true;
   if(filter==='yes'||filter==='no') return (filter==='yes')===found.has(c.name);
+  if(filter==='pouronly') return POUR_ONLY.has(c.name);
   const m=filter.slice(0,-1), v=+filter.slice(-1); return crowns[m][c.name]===v; }
 // 色の系統とヒント。未発見の色は名前を伏せたまま「暗い青系」のように方向だけ見せる
 const FAMS=[['赤','#d8323c'],['橙','#ee8a2a'],['茶','#8b5a2b'],['黄','#e6c619'],['緑','#3fa34d'],['青緑','#1fa6a6'],['青','#3a63c9'],['紫','#7d45c2'],['桃・赤紫','#d94f9e'],['白っぽい色','#efe9df'],['白・灰・黒','#8a8a8a']];
@@ -693,6 +696,14 @@ function crownChips(c){ const chips=['drop','pour'].filter(m=>crowns[m][c.name]>
   return chips ? `<div class="chips">${chips}</div>` : ''; }
 // しずくモードの12滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
 const POUR_ONLY=new Set(["aliceblue","azure","cornsilk","floralwhite","ghostwhite","ivory","lavenderblush","lightyellow","mintcream","oldlace","papayawhip","seashell","snow","whitesmoke"]);
+// しずくの12滴では金冠（差3%未満）に届かない色、銀冠（継ぎ足しで差5%未満）に届かない色。これも総当たりで調べた
+const DROP_NO_GOLD=new Set(["aliceblue", "azure", "beige", "blanchedalmond", "cornsilk", "floralwhite", "gainsboro", "ghostwhite", "honeydew", "ivory", "lavender", "lavenderblush", "lightcyan", "lightgoldenrodyellow", "lightyellow", "linen", "mintcream", "mistyrose", "moccasin", "oldlace", "papayawhip", "seashell", "snow", "whitesmoke"]);
+const DROP_NO_SILVER=new Set(["aliceblue", "azure", "blanchedalmond", "cornsilk", "floralwhite", "ghostwhite", "ivory", "lavenderblush", "lightyellow", "mintcream", "moccasin", "oldlace", "papayawhip", "seashell", "snow", "white", "whitesmoke"]);
+function limitTag(c){
+  if(POUR_ONLY.has(c.name)) return '<span class="badge strong">注ぐ専用</span>';
+  const g=DROP_NO_GOLD.has(c.name), sv=DROP_NO_SILVER.has(c.name);
+  const t = g&&sv ? 'しずくは冠なし' : g ? 'しずくは銀まで' : sv ? 'しずくは金だけ' : '';
+  return t ? `<span class="badge">${t}</span>` : ''; }
 function renderGrid(flashName){
   $('found-n').textContent=found.size; $('all-n').textContent=COLORS.length;
   const cnt=(m,v)=>Object.values(crowns[m]).filter(x=>x===v).length;
@@ -700,7 +711,7 @@ function renderGrid(flashName){
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const card=c=>{ const has=found.has(c.name);
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色、'+c.hint}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:c.hint}</div>${POUR_ONLY.has(c.name)?'<span class="badge">注ぐ限定</span>':''}</button>`; };
+      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:c.hint}</div>${limitTag(c)}</button>`; };
   $('grid').innerHTML = FAMS.map(([f,sw])=>{ const all=COLORS.filter(c=>c.fam===f), got=all.filter(c=>found.has(c.name)).length;
     const list=all.filter(passFilter);
     if(!list.length) return '';
