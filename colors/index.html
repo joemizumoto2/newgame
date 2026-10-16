@@ -257,7 +257,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。見つけた色をタップすると注ぐモードに見本を出します</span>
+      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。★はぴったり作れた色。見つけた色をタップすると注ぐモードに見本を出します</span>
     </div>
     <div class="grid" id="grid"></div>
   </section>
@@ -510,7 +510,7 @@ $('q-go').onclick=()=>{
   const word = d<2.3 ? 'ほぼ見分けがつきません' : d<6 ? 'かなり近い' : d<12 ? '惜しい' : d<25 ? '方向は合っています' : 'だいぶ違う色です';
   const st=$('q-status'); st.className='status '+(d<6?'good':d>=25?'warn':'');
   st.textContent=`${word}。${p} 点`;
-  if(d<6 && !found.has(t.name)){ found.add(t.name); saveFound(); renderGrid(t.name); st.textContent+='　図鑑に登録しました'; }
+  if(d<NAME_TH){ const {isNew,newExact}=record(t,d); if(isNew) st.textContent+='　図鑑に載せました'; else if(newExact) st.textContent+='　図鑑に★が付きました'; }
   if(quiz.i===4){ quiz.done=true; const tot=quiz.scores.reduce((a,b)=>a+b,0);
     if(tot>best){ best=tot; store.set('iro-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
   renderQuiz();
@@ -580,13 +580,21 @@ document.querySelectorAll('.dropbtn').forEach(b=>b.onclick=()=>{
   if(dropUsed>=DROP_CAP){ $('d-status').className='status'; $('d-status').textContent='器がいっぱいになりました。「仕上げる」を押してください。'; }
   renderDrop();
 });
+// 色の差15未満で「◯◯っぽい色」として図鑑に載る。6未満なら「ぴったり」で、図鑑に★が付く。
+const NAME_TH=15, EXACT_TH=6;
+const exact=new Set(store.get('iro-exact',[]));
+function record(c,d){ const isNew=!found.has(c.name), newExact=d<EXACT_TH && !exact.has(c.name);
+  found.add(c.name); if(d<EXACT_TH) exact.add(c.name); saveFound(); store.set('iro-exact',[...exact]);
+  if(isNew||newExact) renderGrid(c.name); return {isNew,newExact}; }
 function judgeCup(rgb, st, show, hide){
   cups++; store.set('iro-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
-  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); show(n,'新しく見つけた色');
-    st.className='status good'; st.textContent=`「${n.kana}」ができました。図鑑に載せました。`; }
-  else if(d<6){ show(n,'図鑑に載っている色'); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
-  else if(d<12){ hide(); st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
+  if(d<NAME_TH){ const {isNew,newExact}=record(n,d), pt=d<EXACT_TH;
+    show(n, pt ? 'ぴったり' : 'っぽい色');
+    st.className='status'+(isNew||newExact?' good':'');
+    st.textContent = pt ? `「${n.kana}」ぴったりです。` : `「${n.kana}」っぽい色ができました。`;
+    st.textContent += isNew ? '図鑑に載せました。' : newExact ? '図鑑に★が付きました。' : (pt||exact.has(n.name)) ? 'もう図鑑に載っています。' : 'もう図鑑に載っています。ぴったりを作ると★が付きます。'; }
+  else if(d<22){ hide(); st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
   else { hide(); st.className='status'; st.textContent='名前のない色ができました。'; }
 }
 function showSampleD(c,sub){ $('sample-d').hidden=false; $('sample-d-sw').style.background=c.hex; $('sample-d-name').textContent=c.kana; $('sample-d-sub').textContent=sub; }
@@ -609,14 +617,14 @@ $('tab-drop').onclick=()=>setMode('drop');
 // ---------- 図鑑 ----------
 let filter='all';
 // しずくモードの12滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
-const POUR_ONLY=new Set(["aliceblue","azure","blanchedalmond","cornsilk","floralwhite","ghostwhite","honeydew","ivory","lavenderblush","lightgoldenrodyellow","lightyellow","mintcream","oldlace","papayawhip","seashell","snow","whitesmoke"]);
+const POUR_ONLY=new Set(["aliceblue","azure","cornsilk","floralwhite","ghostwhite","ivory","lavenderblush","lightyellow","mintcream","oldlace","papayawhip","seashell","snow","whitesmoke"]);
 function renderGrid(flashName){
   $('found-n').textContent=found.size; $('all-n').textContent=COLORS.length;
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const list = COLORS.filter(c => filter==='all' || (filter==='yes') === found.has(c.name));
   $('grid').innerHTML = list.map(c=>{ const has=found.has(c.name);
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色'}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div>${POUR_ONLY.has(c.name)?'<span class="badge">注ぐ限定</span>':''}</button>`; }).join('');
+      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?(exact.has(c.name)?'★ ':'')+c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div>${POUR_ONLY.has(c.name)?'<span class="badge">注ぐ限定</span>':''}</button>`; }).join('');
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
   if(!found.has(c.name)) return; setMode('free'); showSample(c,'見本');
