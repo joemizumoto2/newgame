@@ -50,7 +50,7 @@ header p{margin:6px 0 0;max-width:58ch;color:var(--muted)}
 .near i{width:22px;height:22px;border-radius:3px;border:1px solid var(--line);flex:none}
 
 .knobs{display:flex;flex-direction:column;gap:18px}
-.knob{display:grid;grid-template-columns:4.5em minmax(0,1fr) 4.2em;gap:12px;align-items:center}
+.knob{display:grid;grid-template-columns:4.5em minmax(0,1fr);gap:12px;align-items:center}
 .knob label{font-weight:700}
 .knob label small{display:block;font-weight:400;font-size:11px;color:var(--muted);letter-spacing:.08em}
 .knob output{text-align:right}
@@ -106,7 +106,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
   <header>
     <div>
       <h1>色名あつめ</h1>
-      <p>赤・緑・青の光と彩度、4つのつまみで色を調合します。名前のある色に近づけるほど高得点。作った色は図鑑に登録できます。</p>
+      <p>赤・緑・青の光と彩度、4つのつまみで色を調合します。数値は出ません。目だけを頼りに混ぜて、名前のある色を探し、図鑑を埋めてください。</p>
     </div>
     <div class="tabs" role="group" aria-label="モード">
       <button id="tab-quiz" aria-pressed="true">お題モード</button>
@@ -121,18 +121,15 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <div class="swrow"><div class="sw" id="sw-mine"></div><span class="corner">あなたの色</span></div>
         <div class="label">
           <div><span class="tag" id="chip-tag">Round 1 / 5</span><br><b id="chip-name">—</b> <span class="muted" id="chip-kana"></span></div>
-          <span class="mono muted" id="chip-hex"></span>
         </div>
       </div>
-      <div class="near"><i id="near-sw"></i><span>いちばん近い色名：<b id="near-name">—</b> <span class="mono muted" id="near-de"></span></span></div>
     </div>
 
     <div class="knobs">
-      <div class="knob"><label for="k-r">赤<small>RED</small></label><input type="range" id="k-r" min="0" max="255" value="128"><output class="mono" id="o-r" for="k-r">128</output></div>
-      <div class="knob"><label for="k-g">緑<small>GREEN</small></label><input type="range" id="k-g" min="0" max="255" value="128"><output class="mono" id="o-g" for="k-g">128</output></div>
-      <div class="knob"><label for="k-b">青<small>BLUE</small></label><input type="range" id="k-b" min="0" max="255" value="128"><output class="mono" id="o-b" for="k-b">128</output></div>
-      <div class="knob"><label for="k-s">彩度<small>SATURATION</small></label><input type="range" id="k-s" min="0" max="200" value="100"><output class="mono" id="o-s" for="k-s">100%</output></div>
-      <div class="readout mono"><span>仕上がり <b id="ro-hex">#808080</b></span><span id="ro-rgb">rgb(128,128,128)</span><span id="ro-hsl">H0 S0% L50%</span></div>
+      <div class="knob"><label for="k-r">赤<small>RED</small></label><input type="range" id="k-r" min="0" max="255" value="128"></div>
+      <div class="knob"><label for="k-g">緑<small>GREEN</small></label><input type="range" id="k-g" min="0" max="255" value="128"></div>
+      <div class="knob"><label for="k-b">青<small>BLUE</small></label><input type="range" id="k-b" min="0" max="255" value="128"></div>
+      <div class="knob"><label for="k-s">彩度<small>SATURATION</small></label><input type="range" id="k-s" min="0" max="200" value="100"></div>
 
       <div class="panel" id="quiz-panel">
         <div class="actions" style="justify-content:space-between">
@@ -148,9 +145,9 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
       </div>
 
       <div class="panel" id="free-panel" hidden>
-        <div class="status" id="f-status">好きに混ぜてみてください。色名に十分近づくと登録できます（色差 ΔE 6 未満）。</div>
+        <div class="status" id="f-status">好きに混ぜて、これだと思ったら「名前を調べる」を押してください。名前のある色に十分近ければ図鑑に載ります。</div>
         <div class="actions">
-          <button class="btn" id="f-add" disabled>この色を図鑑に登録</button>
+          <button class="btn" id="f-add">名前を調べる</button>
           <button class="btn ghost" id="f-rand">ランダムに混ぜる</button>
         </div>
       </div>
@@ -171,7 +168,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色をタップすると、図鑑モードでその色を狙えます</span>
+      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります</span>
     </div>
     <div class="grid" id="grid"></div>
   </section>
@@ -195,7 +192,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         </tbody>
       </table>
     </div>
-    <p class="note">このゲームでは、仕上がりの色と色名との差を、人の見え方に近い CIE Lab 色空間の距離（ΔE）で測っています。ΔE が 2 前後で「やっと違いが分かる」くらい、10 を超えると別の色に見えます。</p>
+    <p class="note">このゲームでは、仕上がりの色と色名との近さを、人の見え方に近い CIE Lab 色空間の距離で裏で測っています。画面には出しません。</p>
   </section>
 </div>
 
@@ -375,7 +372,6 @@ const found = new Set(store.get('iro-found',[]));
 let best = store.get('iro-best',0);
 let mode = 'quiz';
 let quiz = null;
-let aim = null; // 図鑑モードで狙っている色
 
 const val = () => ({r:+K.r.value,g:+K.g.value,b:+K.b.value,s:+K.s.value});
 const current = () => { const v=val(); return mix(v.r,v.g,v.b,v.s); };
@@ -389,24 +385,8 @@ function paintTracks(){
 }
 
 function update(){
-  const v=val(), rgb=current(), hex=rgb2hex(rgb);
-  $('o-r').textContent=v.r; $('o-g').textContent=v.g; $('o-b').textContent=v.b; $('o-s').textContent=v.s+'%';
-  $('sw-mine').style.backgroundColor=hex;
-  $('ro-hex').textContent=hex; $('ro-rgb').textContent=`rgb(${rgb.join(',')})`;
-  const [h,s,l]=rgb2hsl(rgb); $('ro-hsl').textContent=`H${Math.round(h)} S${Math.round(s*100)}% L${Math.round(l*100)}%`;
-  const [n,d]=nearest(rgb);
-  $('near-sw').style.backgroundColor=n.hex; $('near-name').textContent=`${n.kana}（${n.name}）`; $('near-de').textContent=`ΔE ${d.toFixed(1)}`;
+  $('sw-mine').style.backgroundColor=rgb2hex(current());
   paintTracks();
-  if(mode==='free'){
-    const ok = d<6 && !found.has(n.name);
-    $('f-add').disabled=!ok;
-    const fs=$('f-status');
-    if(aim){ const da=dE(rgb2lab(rgb),aim.lab); fs.className='status'+(da<6?' good':'');
-      fs.textContent = da<6 ? `${aim.kana} に届きました（ΔE ${da.toFixed(1)}）。` : `狙い：${aim.kana}（${aim.name}）まで あと ΔE ${da.toFixed(1)}`; }
-    else if(found.has(n.name) && d<6){ fs.className='status'; fs.textContent=`${n.kana} は登録済みです。別の色を探しましょう。`; }
-    else if(ok){ fs.className='status good'; fs.textContent=`${n.kana} に近い色です。登録できます。`; }
-    else { fs.className='status'; fs.textContent=`いちばん近い ${n.kana} まで ΔE ${d.toFixed(1)}。6 未満で登録できます。`; }
-  }
 }
 
 function setKnobs(r,g,b,s){ K.r.value=r; K.g.value=g; K.b.value=b; K.s.value=s; update(); }
@@ -425,7 +405,6 @@ function renderQuiz(){
   $('sw-target').style.backgroundColor=t.hex;
   $('chip-tag').textContent=quiz.done ? '結果' : `Round ${quiz.i+1} / 5`;
   $('chip-name').textContent=t.kana; $('chip-kana').textContent=t.name;
-  $('chip-hex').textContent= quiz.revealed ? t.hex : '#??????';
   $('rounds').innerHTML=quiz.targets.map((c,i)=>{
     const sc=quiz.scores[i];
     return sc!=null ? `<span class="done" style="background:${c.hex}">${sc}</span>` : `<span class="${i===quiz.i?'now':''}">${i+1}</span>`;
@@ -440,7 +419,7 @@ $('q-go').onclick=()=>{
   quiz.scores[quiz.i]=p; quiz.revealed=true;
   const word = d<2.3 ? 'ほぼ見分けがつきません' : d<6 ? 'かなり近い' : d<12 ? '惜しい' : d<25 ? '方向は合っています' : 'だいぶ違う色です';
   const st=$('q-status'); st.className='status '+(d<6?'good':d>=25?'warn':'');
-  st.textContent=`ΔE ${d.toFixed(1)}：${word}。${p} 点。正解は rgb(${t.rgb.join(',')})`;
+  st.textContent=`${word}。${p} 点`;
   if(d<6 && !found.has(t.name)){ found.add(t.name); saveFound(); renderGrid(t.name); st.textContent+='　図鑑に登録しました'; }
   if(quiz.i===4){ quiz.done=true; const tot=quiz.scores.reduce((a,b)=>a+b,0);
     if(tot>best){ best=tot; store.set('iro-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
@@ -454,24 +433,28 @@ $('q-next').onclick=()=>{
 
 // ---------- 図鑑モード ----------
 function saveFound(){ store.set('iro-found',[...found]); }
-$('f-add').onclick=()=>{ const [n,d]=nearest(current()); if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name);
-  if(aim && aim.name===n.name) aim=null; renderFreeChip(); update(); $('f-status').className='status good'; $('f-status').textContent=`${n.kana} を図鑑に登録しました。`; } };
+$('f-add').onclick=()=>{ const [n,d]=nearest(current()), st=$('f-status');
+  if(d<6 && !found.has(n.name)){ found.add(n.name); saveFound(); renderGrid(n.name); showFound(n);
+    st.className='status good'; st.textContent=`「${n.kana}」を見つけました。図鑑に載せました。`; }
+  else if(d<6){ showFound(n); st.className='status'; st.textContent=`これは「${n.kana}」。もう図鑑に載っています。`; }
+  else if(d<12){ hideFound(); st.className='status warn'; st.textContent='名前のある色の近くまで来ているようです。'; }
+  else { hideFound(); st.className='status'; st.textContent='この色には、まだ名前が見つかりません。'; } };
 $('f-rand').onclick=()=>{ const r=()=>Math.floor(Math.random()*256); setKnobs(r(),r(),r(),100); };
-function renderFreeChip(){
-  $('target-row').hidden = !aim;
-  if(aim){ $('sw-target').style.backgroundColor=aim.hex; $('chip-tag').textContent='狙い'; $('chip-name').textContent=aim.kana; $('chip-kana').textContent=aim.name; $('chip-hex').textContent='#??????'; }
-  else { $('chip-tag').textContent='自由に調合'; $('chip-name').textContent='図鑑モード'; $('chip-kana').textContent=''; $('chip-hex').textContent=''; }
-}
+function showFound(c){ $('target-row').hidden=false; $('sw-target').style.backgroundColor=c.hex;
+  $('target-row').querySelector('.corner').textContent='見つけた色'; $('chip-tag').textContent='図鑑モード'; $('chip-name').textContent=c.kana; $('chip-kana').textContent=c.name; }
+function hideFound(){ $('target-row').hidden=true; $('chip-tag').textContent='図鑑モード'; $('chip-name').textContent='自由に調合'; $('chip-kana').textContent=''; }
+function renderFreeChip(){ hideFound(); }
 
 function setMode(m){
   mode=m;
   $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-free').setAttribute('aria-pressed',m==='free');
   $('quiz-panel').hidden=m!=='quiz'; $('free-panel').hidden=m!=='free';
+  $('target-row').querySelector('.corner').textContent='お題';
   if(m==='quiz') renderQuiz(); else renderFreeChip();
   update();
 }
 $('tab-quiz').onclick=()=>setMode('quiz');
-$('tab-free').onclick=()=>{ aim=null; setMode('free'); };
+$('tab-free').onclick=()=>setMode('free');
 
 // ---------- 図鑑 ----------
 let filter='all';
@@ -480,11 +463,12 @@ function renderGrid(flashName){
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const list = COLORS.filter(c => filter==='all' || (filter==='yes') === found.has(c.name));
   $('grid').innerHTML = list.map(c=>{ const has=found.has(c.name);
-    return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${c.kana}${has?'（登録済み）':'（未登録）'}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${c.kana}</div><div class="k">${c.name}${has?' · '+c.hex:''}</div></button>`; }).join('');
+    return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色'}">
+      <div class="c" style="${has?'background:'+c.hex:''}"></div><div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:'未発見'}</div></button>`; }).join('');
 }
 $('grid').onclick=e=>{ const b=e.target.closest('.card'); if(!b) return; const c=COLORS.find(x=>x.name===b.dataset.n);
-  aim=c; setMode('free'); document.querySelector('.bench').scrollIntoView({behavior:'smooth',block:'start'}); };
+  if(!found.has(c.name)) return; setMode('free'); showFound(c); $('f-status').className='status'; $('f-status').textContent=`「${c.kana}」を見本に出しました。`;
+  document.querySelector('.bench').scrollIntoView({behavior:'smooth',block:'start'}); };
 document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b.dataset.f;
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
