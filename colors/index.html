@@ -165,6 +165,8 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .trophy header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .trophy h3{font-size:15px;margin:0}
 .trophy p{margin:0;font-size:12px;color:var(--muted)}
+.trophy.locked{border-style:dashed;background:transparent}
+.trophy.locked h3{color:var(--muted);letter-spacing:.2em}
 .tmem{display:flex;flex-wrap:wrap;gap:6px}
 .tmem span{display:inline-flex;align-items:center;gap:4px;font-size:11px;border:1px solid var(--line);border-radius:999px;padding:1px 8px 1px 3px}
 .tmem i{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);background:repeating-linear-gradient(135deg,transparent 0 3px,var(--line) 3px 4px)}
@@ -304,7 +306,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 
   <section>
     <div class="sechead"><h2>トロフィー</h2><span class="muted" id="trophy-n"></span></div>
-    <p class="note" style="margin:-6px 0 14px">テーマごとに決まった色を揃えるともらえます。全部を「っぽい色」以上で揃えると銅、全部に銀冠以上（しずくでも注ぐでも）で銀、全部に金冠で金。</p>
+    <p class="note" style="margin:-6px 0 14px">決まった色の組み合わせを揃えると、突然もらえます。どの色の組み合わせかは、獲得するまで分かりません。獲得したあとは中身が見えて、全部に銀冠以上（しずくでも注ぐでも）で銀、全部に金冠で金に上がります。</p>
     <div class="trophies" id="trophies"></div>
   </section>
 
@@ -743,14 +745,15 @@ function renderTrophies(announce){
     if(t>(earned[title]||0)){ if(announce) news.push(`トロフィー「${title}」${TIER_JA[t]}`); earned[title]=t; }
     const mem=names.map(n=>{ const c=COLOR_BY[n], has=found.has(n), b=bestCrown(n);
       return `<span><i style="${has?'background:'+c.hex:''}"></i>${c.kana}${b>=2?`<b>${b===3?'金':'銀'}</b>`:''}</span>`; }).join('');
-    const done=names.filter(n=>found.has(n)).length;
-    return `<div class="trophy"><header><h3>${title}</h3><span class="medal ${t?'t'+t:''}">${t?TIER_JA[t]:done+' / '+names.length}</span></header><p>${desc}</p><div class="tmem">${mem}</div></div>`; }).join('');
+    // 獲得するまでは、名前も中身の色も伏せる
+    if(!t) return `<div class="trophy locked"><header><h3>？？？</h3><span class="medal">未獲得</span></header><p>ある色の組み合わせを揃えると、ここに現れます。</p></div>`;
+    return `<div class="trophy"><header><h3>${title}</h3><span class="medal t${t}">${TIER_JA[t]}</span></header><p>${desc}</p><div class="tmem">${mem}</div></div>`; }).join('');
   $('trophy-n').textContent=`${got} / ${TROPHIES.length} 獲得`;
   store.set('iro-trophies',earned);
   if(news.length) toast(news.join('　'));
 }
 let toastTimer=null;
-function toast(msg){ const t=$('toast'); t.textContent=msg+' を獲得'; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,3500); }
+function toast(msg){ const t=$('toast'); t.textContent=msg+' を獲得！'; t.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.hidden=true,3500); }
 
 let filter='all', trophiesReady=false;
 function passFilter(c){
