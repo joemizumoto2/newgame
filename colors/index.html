@@ -636,7 +636,8 @@ function reachPour(c0,target){ const ok=rgb=>dE(rgb2lab(rgb),target.lab)<SILVER_
   const [h,S,l]=rgb2hsl(rd(c0)); if(S>0) for(let ns=S;ns<=1;ns+=0.002) if(ok(rd(hslF(h,ns,l)))) return true;
   return false; }
 function reachDrop(c0,target){ const ok=rgb=>dE(rgb2lab(rgb),target.lab)<SILVER_TH;
-  for(let i=0;i<3;i++) for(let v=c0[i];;v+=16){ const c=c0.slice(); c[i]=Math.min(255,v); if(ok(c)) return true; if(v>=255) break; }
+  // 少なくとも1滴は足す（何も足さないのはチャレンジにならない）
+  for(let i=0;i<3;i++) for(let v=c0[i]+16;c0[i]<255;v+=16){ const c=c0.slice(); c[i]=Math.min(255,v); if(ok(c)) return true; if(v>=255) break; }
   let c=c0; for(let k=0;k<30;k++){ const n=satDrop(c); if(n.join()===c.join()) break; c=n; if(ok(c)) return true; }
   return false; }
 // 継ぎ足しチャレンジの判定
