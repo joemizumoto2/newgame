@@ -260,7 +260,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button data-f="yes" aria-pressed="false">登録済み</button>
         <button data-f="no" aria-pressed="false">未登録</button>
       </div>
-      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。っぽい色で図鑑に載ります。誤差1%のぴったりを一発で作ると金冠、1色だけの継ぎ足しで仕上げると銀冠。見つけた色をタップすると注ぐモードに見本を出します</span>
+      <span class="muted" style="font-size:13px">未登録の色は、見つけるまで名前も伏せてあります。っぽい色で図鑑に載ります。注ぐモードで誤差1%のぴったりを一発で作ると金冠、1色だけの継ぎ足しで仕上げると銀冠。見つけた色をタップすると注ぐモードに見本を出します</span>
     </div>
     <div class="grid" id="grid"></div>
   </section>
@@ -515,7 +515,7 @@ $('q-go').onclick=()=>{
   const word = d<2.3 ? 'ほぼ見分けがつきません' : d<6 ? 'かなり近い' : d<12 ? '惜しい' : d<25 ? '方向は合っています' : 'だいぶ違う色です';
   const st=$('q-status'); st.className='status '+(d<6?'good':d>=25?'warn':'');
   st.textContent=`${word}。${p} 点`;
-  if(d<NAME_TH){ const {isNew,up}=record(t, d<EXACT_TH?3:1); if(d<EXACT_TH) st.textContent+='　ぴったり、金冠'; if(isNew) st.textContent+='　図鑑に載せました'; else if(up) st.textContent+='　図鑑の冠が金になりました'; }
+  if(d<NAME_TH){ const {isNew}=record(t,1); if(isNew) st.textContent+='　図鑑に載せました'; }
   if(quiz.i===4){ quiz.done=true; const tot=quiz.scores.reduce((a,b)=>a+b,0);
     if(tot>best){ best=tot; store.set('iro-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
   renderQuiz();
@@ -563,7 +563,7 @@ $('p-done').onclick=()=>{
   stopPour();
   if(pChal){ judgeChallenge(cupRGB(),pChal.target,$('p-status')); pChal=null; setSpouts(false); $('p-done').disabled=true; $('p-done').textContent='仕上げる'; $('p-empty').textContent='次の器へ'; return; }
   if(finished) return; finished=true; setSpouts(false);
-  const t=judgeCup(cupRGB(),$('p-status'),showSample,()=>$('sample').hidden=true);
+  const t=judgeCup(cupRGB(),$('p-status'),showSample,()=>$('sample').hidden=true,true);
   if(t){ pChal={target:t,ch:null}; setSpouts(true); $('p-done').textContent='もう一度仕上げる'; $('p-empty').textContent='見送って次の器へ'; }
   else { $('p-done').disabled=true; $('p-empty').textContent='次の器へ'; }
 };
@@ -596,15 +596,15 @@ const NAME_TH=15, EXACT_TH=1;
 const CROWN={2:'銀冠',3:'金冠'};
 function record(c,level){ const before=rank[c.name]||0; if(level>before){ rank[c.name]=level; found.add(c.name); saveFound(); renderGrid(c.name); }
   return {isNew:!before, up:level>before}; }
-// 1杯目の判定。っぽい色で、まだ冠がなければ継ぎ足しチャレンジに進める
-function judgeCup(rgb, st, show, hide){
+// 1杯目の判定。冠と継ぎ足しチャレンジは注ぐモードだけ（crowns=true）。っぽい色で、まだ冠がなければチャレンジに進める
+function judgeCup(rgb, st, show, hide, crowns){
   cups++; store.set('iro-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
-  if(d<EXACT_TH){ const {isNew,up}=record(n,3); show(n,'金冠');
+  if(crowns && d<EXACT_TH){ const {isNew,up}=record(n,3); show(n,'金冠');
     st.className='status good'; st.textContent=`「${n.kana}」ぴったり。一発で作ったので金冠です。`+(isNew?'図鑑に載せました。':up?'図鑑の冠が金になりました。':''); return null; }
   if(d<NAME_TH){ const {isNew}=record(n,1); show(n,'っぽい色');
     st.className='status'+(isNew?' good':''); st.textContent=`「${n.kana}」っぽい色ができました。`+(isNew?'図鑑に載せました。':'もう図鑑に載っています。');
-    if((rank[n.name]||0)<2){ st.textContent+='　1色だけ継ぎ足して、ぴったりにできれば銀冠です。'; return n; }
+    if(crowns && (rank[n.name]||0)<2){ st.textContent+='　1色だけ継ぎ足して、ぴったりにできれば銀冠です。'; return n; }
     return null; }
   hide();
   if(d<22){ st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
@@ -621,7 +621,7 @@ function showSampleD(c,sub){ $('sample-d').hidden=false; $('sample-d-sw').style.
 $('d-done').onclick=()=>{
   if(dChal){ judgeChallenge(dropC,dChal.target,$('d-status')); dChal=null; dropDone=true; $('d-done').textContent='仕上げる'; $('d-empty').textContent='次の器へ'; renderDrop(); return; }
   if(dropDone) return; dropDone=true;
-  const t=judgeCup(dropC,$('d-status'),showSampleD,()=>$('sample-d').hidden=true);
+  const t=judgeCup(dropC,$('d-status'),showSampleD,()=>$('sample-d').hidden=true,false);
   if(t){ dChal={target:t,ch:null}; $('d-done').textContent='もう一度仕上げる'; $('d-empty').textContent='見送って次の器へ'; }
   else $('d-empty').textContent='次の器へ';
   renderDrop(); };
