@@ -5,7 +5,11 @@
 遊べるページ: https://claude.ai/artifact/SBiQpEYof3u7KPHrs6X6qK
 
 - `index.html` … Artifact 用のページ本体（`<!doctype>` などの外枠は公開時に付く）
+- `CLAUDE.md` … Claude Code のセッションが最初に読む、作業の前提
+- `docs/design-notes.md` … 企画会話のまとめ（ユーザーの反応、却下した案、次の課題）
 - `docs/story-v2.md` … v2（王と家臣の版）の物語の骨組み。v3 では使っていない
+- `tools/balance.js` … 自動プレイで勝率などを確かめる（`node tools/balance.js 2000`）
+- `tools/smoke.js` … ブラウザで最初から結末まで通す（Playwright）
 
 ## 版
 
