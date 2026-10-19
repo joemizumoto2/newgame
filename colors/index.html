@@ -320,7 +320,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <thead><tr><th>名簿</th><th style="text-align:right">数</th><th>中身</th></tr></thead>
         <tbody>
           <tr><td>基本色彩語（バーリン＆ケイ）</td><td class="num">11</td><td>英語で誰もが使う色名。白・黒・赤・緑・黄・青・茶・紫・桃・橙・灰</td></tr>
-          <tr class="here"><td>CSS／HTML の色名（このゲーム）</td><td class="num">148</td><td>ウェブで使える英語の色名。gray/grey の綴り違いなどを除くと 139 色</td></tr>
+          <tr class="here"><td>CSS／HTML の色名（このゲームの色のもと）</td><td class="num">148</td><td>ウェブで使える英語の色名。gray/grey の綴り違いなどを除くと 139 色</td></tr>
           <tr><td>ISCC-NBS 色名</td><td class="num">267</td><td>米国の系統色名。「明るい灰みの赤」のように色空間を区切って名づける</td></tr>
           <tr><td>JIS 慣用色名（JIS Z 8102）</td><td class="num">269</td><td>日本の規格。和名 147、外来語名 122（桜色、群青、マゼンタなど）</td></tr>
           <tr><td>日本の伝統色</td><td class="num">数百</td><td>本や辞典ごとに違い、よく引かれる「和色大辞典」では 465 色</td></tr>
@@ -478,6 +478,8 @@ whitesmoke,ホワイトスモーク,F5F5F5
 yellow,イエロー,FFFF00
 yellowgreen,イエローグリーン,9ACD32`;
 
+// ゲームでの正式な色名（すべてオリジナル）。もとのウェブの色名は「◯◯とほぼ同じ」として添える
+const POEM={"aliceblue": "冬の朝の吐く息", "antiquewhite": "古書店の文庫本のページ", "aqua / cyan": "プールの底のゆらめき", "aquamarine": "ラムネ瓶のビー玉", "azure": "雪山のてっぺんの空気", "beige": "焼く前のクッキー生地", "bisque": "湯上がりの頬", "black": "停電の夜", "blanchedalmond": "牛乳寒天", "blue": "青いセロハン越しの空", "blueviolet": "夜店の光る腕輪", "brown": "使いこんだランドセル", "burlywood": "新しい木のまな板", "cadetblue": "曇り空の港", "chartreuse": "雨の日のアマガエル", "chocolate": "バレンタイン前夜の湯せん", "coral": "金魚すくいの金魚", "cornflowerblue": "矢車草の野原", "cornsilk": "ひだまりのカーテン", "crimson": "舞台の緞帳", "darkblue": "深夜の海", "darkcyan": "苔むした井戸の水", "darkgoldenrod": "古いお寺の金箔", "darkgray": "雨雲のおなか", "darkgreen": "深い山の影", "darkkhaki": "枯れはじめた芝生", "darkmagenta": "熟れすぎたぶどう", "darkolivegreen": "漬物石の苔", "darkorange": "夕方の柿", "darkorchid": "魔女の帽子", "darkred": "古いワインの染み", "darksalmon": "焼き鮭の身", "darkseagreen": "抹茶ラテの泡", "darkslateblue": "嵐の前の空", "darkslategray": "雨に濡れた瓦", "darkturquoise": "熱帯魚の水槽", "darkviolet": "夜明け前の朝顔", "deeppink": "縁日のヨーヨー", "deepskyblue": "飛行機雲の向こう", "dimgray": "火を落としたあとの炭", "dodgerblue": "新品の水筒", "firebrick": "れんが倉庫", "floralwhite": "和紙のちょうちん", "forestgreen": "雨上がりの杉林", "fuchsia / magenta": "蛍光ペンのピンク", "gainsboro": "曇りガラス", "ghostwhite": "白いシャツの襟", "gold": "優勝カップのふち", "goldenrod": "稲刈り前の田んぼ", "gray": "雨の日の歩道橋", "green": "非常口の看板", "greenyellow": "蛍光ペンの黄緑", "honeydew": "メロンの皮のすぐ内側", "hotpink": "縁日のわたあめの袋", "indianred": "梅干しのしそ", "indigo": "藍染めののれん", "ivory": "古いピアノの白鍵", "khaki": "祖父の古い登山帽", "lavender": "眠る前の窓辺", "lavenderblush": "桜もちの皮", "lawngreen": "刈ったばかりの芝生", "lemonchiffon": "レモンクリームパン", "lightblue": "曇りのち晴れの空", "lightcoral": "いちごミルク", "lightcyan": "氷の角", "lightgoldenrodyellow": "バニラアイスのふた", "lightgray": "冬の曇り空", "lightgreen": "枝豆のさや", "lightpink": "ひな祭りのあられ", "lightsalmon": "夕焼けのはじまり", "lightseagreen": "珊瑚礁の浅瀬", "lightskyblue": "五月の朝の空", "lightslategray": "古い鉄橋", "lightsteelblue": "冬の湖", "lightyellow": "卵ボーロ", "lime": "炭酸がはじける音", "limegreen": "メロンソーダ", "linen": "洗いざらしのシーツ", "maroon": "あずき色のジャージ", "mediumaquamarine": "ミントアイス", "mediumblue": "夜の水族館", "mediumorchid": "すみれの砂糖づけ", "mediumpurple": "ラベンダー畑の夕暮れ", "mediumseagreen": "新茶の湯のみ", "mediumslateblue": "星座早見盤", "mediumspringgreen": "春の田んぼの苗", "mediumturquoise": "夏の川の淵", "mediumvioletred": "ガーネットの指輪", "midnightblue": "終電のあとの空", "mintcream": "歯みがき粉の泡", "mistyrose": "朝もやのバラ", "moccasin": "カスタードプリン", "navajowhite": "ホットケーキの生地", "navy": "真夜中の制服", "oldlace": "祖母のレースのハンカチ", "olive": "梅雨どきの池", "olivedrab": "夏草の土手", "orange": "運動会の玉入れの玉", "orangered": "炎の芯", "orchid": "雨上がりのあじさい", "palegoldenrod": "麦わら帽子", "palegreen": "春キャベツの葉", "paleturquoise": "風鈴のガラス", "palevioletred": "しおれかけたカーネーション", "papayawhip": "あんにんどうふ", "peachpuff": "桃のうぶ毛", "peru": "焼きいもの皮", "pink": "桜でんぶ", "plum": "藤棚の下", "powderblue": "赤ちゃんの肌着", "purple": "紫いもモンブラン", "rebeccapurple": "宵の明星を待つ空", "red": "郵便ポストの赤", "rosybrown": "古いバラの押し花", "royalblue": "王子さまのマント", "saddlebrown": "革のグローブ", "salmon": "サーモンの握り", "sandybrown": "夕方の砂浜", "seagreen": "竹林の奥", "seashell": "貝殻の内側", "sienna": "放課後の校庭の土", "silver": "銀紙のチョコ", "skyblue": "夏休み初日の空", "slateblue": "夕立のあとの夜空", "slategray": "昔の黒板消し", "snow": "誰も踏んでいない朝の雪", "springgreen": "メロンゼリーのきらめき", "steelblue": "ジーンズの膝", "tan": "ミルクコーヒー", "teal": "古い港の銅屋根", "thistle": "藤色の便せん", "tomato": "縁側で冷やしたトマト", "turquoise": "南の島の浅瀬", "violet": "夢の中の金平糖", "wheat": "実った麦畑", "white": "ノートの一ページ目", "whitesmoke": "冬の窓の結露", "yellow": "黄色い通学帽", "yellowgreen": "初夏の稲"};
 const hex2rgb = h => [0,2,4].map(i => parseInt(h.slice(i,i+2),16));
 const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
 function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255;
@@ -495,7 +497,7 @@ function rgb2lab(c){ const lin=c.map(v=>{v/=255; return v<=.04045 ? v/12.92 : ((
 const dE = (a,b) => Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 
 const COLORS = RAW.split('\n').map(line => { const [name,kana,hex]=line.split(','); const rgb=hex2rgb(hex);
-  return {name,kana,hex:'#'+hex,rgb,lab:rgb2lab(rgb)}; });
+  return {name,kana:POEM[name],std:kana,hex:'#'+hex,rgb,lab:rgb2lab(rgb)}; });
 
 // 三原色を混ぜてから、HSL の彩度を倍率で動かす（0%で灰色、200%で最大まで鮮やかに）
 function mix(r,g,b,sPct){ const [h,s,l]=rgb2hsl([r,g,b]); return hsl2rgb(h,Math.min(1,s*sPct/100),l); }
@@ -548,7 +550,7 @@ function renderQuiz(){
   $('target-row').hidden=false;
   $('sw-target').style.backgroundColor=t.hex;
   $('chip-tag').textContent=quiz.done ? '結果' : `Round ${quiz.i+1} / 5`;
-  $('chip-name').textContent=t.kana; $('chip-kana').textContent=t.name;
+  $('chip-name').textContent=t.kana; $('chip-kana').textContent=quiz.revealed?`${t.std}とほぼ同じ`:'';
   $('rounds').innerHTML=quiz.targets.map((c,i)=>{
     const sc=quiz.scores[i];
     return sc!=null ? `<span class="done" style="background:${c.hex}">${sc}</span>` : `<span class="${i===quiz.i?'now':''}">${i+1}</span>`;
@@ -803,7 +805,7 @@ function renderGrid(flashName){
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const card=c=>{ const has=found.has(c.name);
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色、'+c.hint}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.name:c.hint}</div>${limitTag(c)}</button>`; };
+      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.std+'とほぼ同じ':c.hint}</div>${limitTag(c)}</button>`; };
   $('grid').innerHTML = FAMS.map(([f,sw])=>{ const all=COLORS.filter(c=>c.fam===f), got=all.filter(c=>found.has(c.name)).length;
     const list=all.filter(passFilter);
     if(!list.length) return '';
@@ -817,7 +819,7 @@ function showDetail(c){
   const cr=['drop','pour'].map(m=>{ const v=crowns[m][c.name]; return `${MODE_JA[m]}：${v===3?'金冠':v===2?'銀冠':'まだ冠なし'}`; }).join('　');
   const r=recipes[c.name];
   $('detail').innerHTML=`<div class="detail"><div class="sw" style="background:${c.hex}"></div><div>
-    <b style="font-size:17px">${c.kana}</b> <span class="muted">${c.name}・${c.hex}</span><div class="muted" style="font-size:13px">${cr}</div>
+    <b style="font-size:17px">${c.kana}</b> <span class="muted">${c.std}（${c.name}）とほぼ同じ・${c.hex}</span><div class="muted" style="font-size:13px">${cr}</div>
     <div class="recipe">${r ? 'しずく金冠のレシピ：'+recipeHTML(r) : (crowns.drop[c.name]===3 ? 'しずく金冠のレシピは記録されていません（記録を始める前に取った冠です）' : 'しずくで金冠を取ると、ここにレシピが残ります。')}</div>
     <div class="actions" style="margin-top:6px"><button class="btn ghost" id="det-pour">注ぐモードの見本にする</button><button class="btn ghost" id="det-close">閉じる</button></div></div></div>`;
   $('detail').hidden=false;
