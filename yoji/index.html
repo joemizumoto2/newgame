@@ -46,17 +46,20 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 }
 
 /* ── 得点 ── */
-.scorebar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.scorebar { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 8px; }
 .side { display: flex; flex-direction: column; gap: 2px; }
 .side.cpu { align-items: flex-end; text-align: right; }
 .side .who { font-size: 12px; color: var(--muted); letter-spacing: .08em; }
 .side .pts { font-family: var(--font-brush); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
-.pips { display: flex; gap: 6px; }
+.pips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .pip {
   min-width: 46px; padding: 4px 6px; border-radius: 6px; text-align: center;
   border: 1px solid var(--line); font-size: 11px; color: var(--muted); line-height: 1.25;
 }
-.pip b { display: block; font-size: 12px; color: var(--fg); font-weight: 700; }
+.pip b { display: block; font-size: 11px; color: var(--muted); font-weight: 700; }
+.pip .cn { display: block; font-size: 13px; color: var(--fg); font-weight: 700; }
+.pip.hide .cn { visibility: hidden; }
+.pip.pop { animation: brushIn .45s cubic-bezier(.2,.9,.3,1.2); }
 .pip.now { border-color: var(--kin); color: var(--kin); }
 .pip.win { background: color-mix(in srgb, var(--kin) 22%, transparent); border-color: var(--kin); }
 .pip.lose { background: color-mix(in srgb, var(--shu) 18%, transparent); border-color: color-mix(in srgb, var(--shu) 60%, transparent); }
@@ -229,9 +232,9 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 <div class="app" id="app">
   <div class="scorebar">
     <div class="side"><span class="who">あなた</span><span class="pts" id="myPts">0</span></div>
-    <div class="pips" id="pips"></div>
     <div class="side cpu"><span class="who">CPU</span><span class="pts" id="cpuPts">0</span></div>
   </div>
+  <div class="pips" id="pips"></div>
   <div class="cpu-hand" id="cpuHand" aria-label="CPUの札（型だけ見える）"></div>
 
   <div class="arena" id="arena">
@@ -274,7 +277,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
     <h1>四文字熟語バトル</h1>
     <ol class="rules">
       <li>熟語の札が5枚配られ、CPUと<b>3本勝負</b>。使うのは3枚です。</li>
-      <li>一本目・二本目は、その場で<b>勝負の基準</b>が発表されます。<b>10秒</b>以内に1枚出してください。<br><span class="muted">画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ など</span></li>
+      <li>最初に<b>三本の基準</b>がまとめて発表されます。そのあと一本ごとに<b>15秒</b>以内で1枚出してください。<br><span class="muted">画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ など</span></li>
       <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
       <li>相手の札は、型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
     </ol>
@@ -304,7 +307,7 @@ const TYPES = ["攻", "守", "策"];
 const BEATS = { 守: "攻", 攻: "策", 策: "守" };
 const ROUND_NAMES = ["一本目", "二本目", "三本目"];
 const ROUND_POINTS = [1, 1, 2];
-const TIME_LIMIT = 10;
+const TIME_LIMIT = 15;
 
 const sum = a => a.reduce((x, y) => x + y, 0);
 const strokes = c => sum(c.s);
@@ -351,14 +354,32 @@ function newGame() {
 }
 
 /* ── 描画 ── */
-function renderScore() {
+const critLabel = i => i < 2 ? S.crits[i].name : "総合力";
+function renderScore(shown = 3) {
   $("myPts").textContent = S.score[0];
   $("cpuPts").textContent = S.score[1];
   $("pips").innerHTML = ROUND_NAMES.map((n, i) => {
     const r = S.results[i];
-    const cls = r ? r.res : (i === S.round ? "now" : "");
-    return `<div class="pip ${cls}"><b>${n}</b>${ROUND_POINTS[i]}点</div>`;
+    const cls = r ? r.res : (i === S.round && S.started ? "now" : "");
+    return `<div class="pip ${cls} ${i < shown ? "" : "hide"}"><b>${n}・${ROUND_POINTS[i]}点</b><span class="cn">${critLabel(i)}</span></div>`;
   }).join("");
+}
+
+// 対局の最初に三本の基準をまとめて発表する
+async function announce() {
+  $("critRound").textContent = "今回の三本";
+  $("critName").textContent = "基準を発表";
+  $("critDesc").textContent = "一本ごとに15秒で札を出します";
+  $("triangle").hidden = true;
+  renderScore(0); renderHand(true); renderDetail();
+  await wait(700);
+  for (let i = 0; i < 3; i++) {
+    renderScore(i + 1);
+    $("pips").children[i].classList.add("pop");
+    await wait(650);
+  }
+  await wait(900);
+  S.started = true;
 }
 function renderCpuHand() {
   $("cpuHand").innerHTML = S.cpu.map(c => `<div class="back ${c.used ? "used" : ""}"><span class="type ${c.t}">${c.t}</span></div>`).join("");
@@ -407,6 +428,7 @@ function setFaceDown(id) {
 async function startRound() {
   const r = S.round;
   S.sel = null;
+  if (r === 0) { renderCpuHand(); await announce(); }
   renderScore(); renderCpuHand();
   setSlot("mySlot", null); setSlot("cpuSlot", null);
   $("myVal").innerHTML = ""; $("cpuVal").innerHTML = ""; $("verdict").textContent = ""; $("verdict").className = "verdict";
@@ -415,11 +437,7 @@ async function startRound() {
   crit.classList.remove("reveal");
   $("critRound").textContent = `${ROUND_NAMES[r]}（${ROUND_POINTS[r]}点）`;
   if (r < 2) {
-    $("critName").textContent = "？";
-    $("critDesc").textContent = "基準を発表します";
     $("triangle").hidden = true;
-    renderHand(r === 0); renderDetail();
-    await wait(r === 0 ? 900 : 600);
     const c = S.crits[r];
     $("critName").textContent = c.name;
     $("critDesc").textContent = c.desc;
@@ -592,5 +610,5 @@ $("againBtn").onclick = begin;
 
 // 開始画面の後ろに、配られた状態の盤面を見せておく
 newGame();
-renderScore(); renderCpuHand(); renderHand(); renderDetail();
+renderScore(0); renderCpuHand(); renderHand(); renderDetail();
 </script>
