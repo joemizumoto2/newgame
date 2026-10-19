@@ -957,6 +957,7 @@ function judgeCup(rgb, st, show, hide, mode, canTopUp){
     st.className='status good'; st.textContent=`「${n.kana}」${MODE_JA[mode]}銀冠です（ズレ ${d.toFixed(1)}%）。`+(isNew?'図鑑に載せました。':'');
     histPush(mode,rgb,`${n.kana}（銀冠・${pct}）`);
     if(canTopUp(n,d)){ st.textContent+=`　1色だけ継ぎ足して、ズレを減らすチャレンジができます`+(canTopUp(n,EXACT_TH)?'（うまくいけば3%未満まで縮みます）。':'。'); return {target:n,base:d,kind:'improve'}; }
+    st.textContent+='　この器からは、1色の継ぎ足しではこれ以上ズレを減らせません。';
     return null; }
   if(d<NAME_TH){ const {isNew}=record(n,1,mode); show(n,'っぽい色');
     st.className='status'+(isNew?' good':''); st.textContent=`「${n.kana}」っぽい色ができました。`+(isNew?'図鑑に載せました。':'もう図鑑に載っています。'); histPush(mode,rgb,`${n.kana}っぽい`);
