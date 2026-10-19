@@ -106,7 +106,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .timer .num { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
 .timer.hurry .num { color: var(--shu); }
 
-/* 残り5秒：画面のふちが赤く脈打ち、真ん中に大きな秒数が出る */
+/* 残り数秒（手札勝負3秒・一枚勝負5秒）：画面のふちが赤く脈打ち、真ん中に大きな秒数が出る */
 .danger {
   position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s;
   --heat: 0;
@@ -333,7 +333,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
       <li>CPUと<b>3本勝負</b>。最初に<b>三本の基準</b>がまとめて発表されます。<br><span class="muted">一本目・二本目は 画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ などからランダム</span></li>
       <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
       <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>7秒</b>で出す。<br><b>一枚勝負</b>：三本すべてを戦う四字熟語を<b>自分で考えて</b>、<b>15秒</b>で入力する。読みのひらがなでも入力できます。</li>
-      <li>残り5秒になると、画面のふちが赤くなります。</li>
+      <li>残り時間が少なくなると（手札勝負は3秒、一枚勝負は5秒）、画面のふちが赤く点滅します。</li>
       <li>手札勝負では、相手の札は型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
     </ol>
     <div class="modes">
@@ -372,7 +372,7 @@ const BEATS = { 守: "攻", 攻: "策", 策: "守" };
 const ROUND_NAMES = ["一本目", "二本目", "三本目"];
 const ROUND_POINTS = [1, 1, 2];
 const TIME_LIMITS = { hand: 7, one: 15 };
-const DANGER_AT = 5;
+const DANGER_AT = { hand: 3, one: 5 };
 
 const sum = a => a.reduce((x, y) => x + y, 0);
 const strokes = c => sum(c.s);
@@ -651,10 +651,10 @@ function startTimer() {
     const sec = Math.ceil(left);
     num.textContent = sec;
     bar.setAttribute("stroke-dashoffset", (119.4 * (1 - left / limit)).toFixed(1));
-    const hurry = left <= DANGER_AT;
+    const hurry = left <= DANGER_AT[S.mode];
     box.classList.toggle("hurry", hurry);
     danger.classList.toggle("on", hurry);
-    danger.style.setProperty("--heat", hurry ? (1 - left / DANGER_AT).toFixed(2) : 0);
+    danger.style.setProperty("--heat", hurry ? (1 - left / DANGER_AT[S.mode]).toFixed(2) : 0);
     if (hurry && sec !== lastSec && sec > 0) {
       const big = $("bignum");
       big.textContent = sec;
