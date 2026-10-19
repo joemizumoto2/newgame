@@ -320,10 +320,10 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <thead><tr><th>名簿</th><th style="text-align:right">数</th><th>中身</th></tr></thead>
         <tbody>
           <tr><td>基本色彩語（バーリン＆ケイ）</td><td class="num">11</td><td>英語で誰もが使う色名。白・黒・赤・緑・黄・青・茶・紫・桃・橙・灰</td></tr>
-          <tr class="here"><td>CSS／HTML の色名（このゲームの色のもと）</td><td class="num">148</td><td>ウェブで使える英語の色名。gray/grey の綴り違いなどを除くと 139 色</td></tr>
+          <tr><td>CSS／HTML の色名</td><td class="num">148</td><td>ウェブで使える英語の色名。gray/grey の綴り違いなどを除くと 139 色</td></tr>
           <tr><td>ISCC-NBS 色名</td><td class="num">267</td><td>米国の系統色名。「明るい灰みの赤」のように色空間を区切って名づける</td></tr>
           <tr><td>JIS 慣用色名（JIS Z 8102）</td><td class="num">269</td><td>日本の規格。和名 147、外来語名 122（桜色、群青、マゼンタなど）</td></tr>
-          <tr><td>日本の伝統色</td><td class="num">数百</td><td>本や辞典ごとに違い、よく引かれる「和色大辞典」では 465 色</td></tr>
+          <tr class="here"><td>日本の伝統色（このゲーム）</td><td class="num">数百</td><td>本や辞典ごとに違い、よく引かれる「和色大辞典」では 465 色。このゲームではそのうち 250 色を使っています</td></tr>
           <tr><td>xkcd 色名調査</td><td class="num">954</td><td>約22万人のアンケートで多く使われた英語の色名</td></tr>
           <tr><td>パントン（PANTONE）</td><td class="num">数千</td><td>印刷・繊維などの色見本。名簿ごとに約2,000〜3,000色前後</td></tr>
           <tr><td>オープンな色名データベース</td><td class="num">3万超</td><td>ネット上で集められた色名を全部まとめたもの（meodai/color-names など）</td></tr>
@@ -337,149 +337,258 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 
 <script>
 (() => {
-// [英名, カタカナ, hex]。aqua=cyan, fuchsia=magenta は同じ色なので1枚にまとめた。gray は grey と綴り違いのみ。
-const RAW = `aliceblue,アリスブルー,F0F8FF
-antiquewhite,アンティークホワイト,FAEBD7
-aqua / cyan,アクア／シアン,00FFFF
-aquamarine,アクアマリン,7FFFD4
-azure,アジュール,F0FFFF
-beige,ベージュ,F5F5DC
-bisque,ビスク,FFE4C4
-black,ブラック,000000
-blanchedalmond,ブランチドアーモンド,FFEBCD
-blue,ブルー,0000FF
-blueviolet,ブルーバイオレット,8A2BE2
-brown,ブラウン,A52A2A
-burlywood,バーリーウッド,DEB887
-cadetblue,カデットブルー,5F9EA0
-chartreuse,シャルトルーズ,7FFF00
-chocolate,チョコレート,D2691E
-coral,コーラル,FF7F50
-cornflowerblue,コーンフラワーブルー,6495ED
-cornsilk,コーンシルク,FFF8DC
-crimson,クリムゾン,DC143C
-darkblue,ダークブルー,00008B
-darkcyan,ダークシアン,008B8B
-darkgoldenrod,ダークゴールデンロッド,B8860B
-darkgray,ダークグレー,A9A9A9
-darkgreen,ダークグリーン,006400
-darkkhaki,ダークカーキ,BDB76B
-darkmagenta,ダークマゼンタ,8B008B
-darkolivegreen,ダークオリーブグリーン,556B2F
-darkorange,ダークオレンジ,FF8C00
-darkorchid,ダークオーキッド,9932CC
-darkred,ダークレッド,8B0000
-darksalmon,ダークサーモン,E9967A
-darkseagreen,ダークシーグリーン,8FBC8F
-darkslateblue,ダークスレートブルー,483D8B
-darkslategray,ダークスレートグレー,2F4F4F
-darkturquoise,ダークターコイズ,00CED1
-darkviolet,ダークバイオレット,9400D3
-deeppink,ディープピンク,FF1493
-deepskyblue,ディープスカイブルー,00BFFF
-dimgray,ディムグレー,696969
-dodgerblue,ドジャーブルー,1E90FF
-firebrick,ファイアブリック,B22222
-floralwhite,フローラルホワイト,FFFAF0
-forestgreen,フォレストグリーン,228B22
-fuchsia / magenta,フクシア／マゼンタ,FF00FF
-gainsboro,ゲインズボロ,DCDCDC
-ghostwhite,ゴーストホワイト,F8F8FF
-gold,ゴールド,FFD700
-goldenrod,ゴールデンロッド,DAA520
-gray,グレー,808080
-green,グリーン,008000
-greenyellow,グリーンイエロー,ADFF2F
-honeydew,ハニーデュー,F0FFF0
-hotpink,ホットピンク,FF69B4
-indianred,インディアンレッド,CD5C5C
-indigo,インディゴ,4B0082
-ivory,アイボリー,FFFFF0
-khaki,カーキ,F0E68C
-lavender,ラベンダー,E6E6FA
-lavenderblush,ラベンダーブラッシュ,FFF0F5
-lawngreen,ローングリーン,7CFC00
-lemonchiffon,レモンシフォン,FFFACD
-lightblue,ライトブルー,ADD8E6
-lightcoral,ライトコーラル,F08080
-lightcyan,ライトシアン,E0FFFF
-lightgoldenrodyellow,ライトゴールデンロッドイエロー,FAFAD2
-lightgray,ライトグレー,D3D3D3
-lightgreen,ライトグリーン,90EE90
-lightpink,ライトピンク,FFB6C1
-lightsalmon,ライトサーモン,FFA07A
-lightseagreen,ライトシーグリーン,20B2AA
-lightskyblue,ライトスカイブルー,87CEFA
-lightslategray,ライトスレートグレー,778899
-lightsteelblue,ライトスチールブルー,B0C4DE
-lightyellow,ライトイエロー,FFFFE0
-lime,ライム,00FF00
-limegreen,ライムグリーン,32CD32
-linen,リネン,FAF0E6
-maroon,マルーン,800000
-mediumaquamarine,ミディアムアクアマリン,66CDAA
-mediumblue,ミディアムブルー,0000CD
-mediumorchid,ミディアムオーキッド,BA55D3
-mediumpurple,ミディアムパープル,9370DB
-mediumseagreen,ミディアムシーグリーン,3CB371
-mediumslateblue,ミディアムスレートブルー,7B68EE
-mediumspringgreen,ミディアムスプリンググリーン,00FA9A
-mediumturquoise,ミディアムターコイズ,48D1CC
-mediumvioletred,ミディアムバイオレットレッド,C71585
-midnightblue,ミッドナイトブルー,191970
-mintcream,ミントクリーム,F5FFFA
-mistyrose,ミスティローズ,FFE4E1
-moccasin,モカシン,FFE4B5
-navajowhite,ナバホホワイト,FFDEAD
-navy,ネイビー,000080
-oldlace,オールドレース,FDF5E6
-olive,オリーブ,808000
-olivedrab,オリーブドラブ,6B8E23
-orange,オレンジ,FFA500
-orangered,オレンジレッド,FF4500
-orchid,オーキッド,DA70D6
-palegoldenrod,ペールゴールデンロッド,EEE8AA
-palegreen,ペールグリーン,98FB98
-paleturquoise,ペールターコイズ,AFEEEE
-palevioletred,ペールバイオレットレッド,DB7093
-papayawhip,パパイヤホイップ,FFEFD5
-peachpuff,ピーチパフ,FFDAB9
-peru,ペルー,CD853F
-pink,ピンク,FFC0CB
-plum,プラム,DDA0DD
-powderblue,パウダーブルー,B0E0E6
-purple,パープル,800080
-rebeccapurple,レベッカパープル,663399
-red,レッド,FF0000
-rosybrown,ロージーブラウン,BC8F8F
-royalblue,ロイヤルブルー,4169E1
-saddlebrown,サドルブラウン,8B4513
-salmon,サーモン,FA8072
-sandybrown,サンディブラウン,F4A460
-seagreen,シーグリーン,2E8B57
-seashell,シーシェル,FFF5EE
-sienna,シエナ,A0522D
-silver,シルバー,C0C0C0
-skyblue,スカイブルー,87CEEB
-slateblue,スレートブルー,6A5ACD
-slategray,スレートグレー,708090
-snow,スノー,FFFAFA
-springgreen,スプリンググリーン,00FF7F
-steelblue,スチールブルー,4682B4
-tan,タン,D2B48C
-teal,ティール,008080
-thistle,シスル,D8BFD8
-tomato,トマト,FF6347
-turquoise,ターコイズ,40E0D0
-violet,バイオレット,EE82EE
-wheat,ウィート,F5DEB3
-white,ホワイト,FFFFFF
-whitesmoke,ホワイトスモーク,F5F5F5
-yellow,イエロー,FFFF00
-yellowgreen,イエローグリーン,9ACD32`;
+// 日本の伝統色 250色 [色名, 読み, hex]。色の値は nippon-colors（MIT License, Copyright (c) 2016 Alex Sun）より
+const RAW = `撫子,なでしこ,DC9FB4
+紅梅,こうばい,E16B8C
+蘇芳,すおう,8E354A
+退紅,たいこう,F8C3CD
+一斥染,いっこんぞめ,F4A7B9
+桑染,くわぞめ,64363C
+桃,もも,F596AA
+苺,いちご,B5495B
+薄紅,うすべに,E87A90
+今様,いまよう,D05A6E
+中紅,なかべに,DB4D6D
+桜,さくら,FEDFE1
+梅鼠,うめねずみ,9E7A7A
+韓紅花,からくれない,D0104C
+燕脂,えんじ,9F353A
+紅,くれない,CB1B45
+鴇,とき,EEA9A9
+長春,ちょうしゅん,BF6766
+深緋,こきあけ,86473F
+桜鼠,さくらねずみ,B19693
+甚三紅,じんざもみ,EB7A77
+小豆,あずき,954A45
+蘇芳香,すおうこう,A96360
+赤紅,あかべに,CB4042
+真朱,しんしゅ,AB3B3A
+灰桜,はいざくら,D7C4BB
+栗梅,くりうめ,904840
+海老茶,えびちゃ,734338
+銀朱,ぎんしゅ,C73E3A
+黒鳶,くろとび,554236
+紅鳶,べにとび,994639
+曙,あけぼの,F19483
+紅樺,べにかば,B54434
+水がき,みずがき,B9887D
+珊瑚朱,さんごしゅ,F17C67
+紅檜皮,べにひわだ,884C3A
+猩猩緋,しょうじょうひ,E83015
+鉛丹,えんたん,D75455
+芝翫茶,しかんちゃ,B55D4C
+檜皮,ひわだ,854836
+柿渋,かきしぶ,A35E47
+緋,あけ,CC543A
+鳶,とび,724832
+紅緋,べにひ,F75C2F
+栗皮茶,くりかわちゃ,6A4028
+弁柄,べんがら,9A5034
+照柿,てりがき,C46243
+江戸茶,えどちゃ,AF5F3C
+洗朱,あらいしゅ,FB966E
+百塩茶,ももしおちゃ,724938
+唐茶,からちゃ,B47157
+ときがら茶,ときがらちゃ,DB8E71
+黄丹,おうに,F05E1C
+纁,そひ,ED784A
+遠州茶,えんしゅうちゃ,CA7853
+樺茶,かばちゃ,B35C37
+焦茶,こげちゃ,563F2E
+赤香,あかこう,E3916E
+雀茶,すずめちゃ,8F5A3C
+宍,しし,F0A986
+宗伝唐茶,そうでんからちゃ,A0674B
+樺,かば,C1693C
+深支子,こきくちなし,FB9966
+胡桃,くるみ,947A6D
+代赭,たいしゃ,A36336
+洗柿,あらいがき,E79460
+黄櫨染,こうろぜん,7D532C
+赤朽葉,あかくちば,C78550
+礪茶,とのちゃ,985F2A
+赤白橡,あかしろつるばみ,E1A679
+煎茶,せんちゃ,855B32
+萱草,かんぞう,FC9F4D
+洒落柿,しゃれがき,FFBA84
+紅鬱金,べにうこん,E98B2A
+梅染,うめぞめ,E9A368
+枇杷茶,びわちゃ,B17844
+丁子茶,ちょうじちゃ,96632E
+憲法染,けんぽうぞめ,43341B
+琥珀,こはく,CA7A2C
+薄柿,うすがき,ECB88A
+伽羅,きゃら,78552B
+丁子染,ちょうじぞめ,B07736
+柴染,ふしぞめ,967249
+朽葉,くちば,E2943B
+金茶,きんちゃ,C7802D
+狐,きつね,9B6E23
+煤竹,すすたけ,6E552F
+薄香,うすこう,EBB471
+砥粉,とのこ,D7B98E
+銀煤竹,ぎんすすたけ,82663A
+黄土,おうど,B68E55
+白茶,しらちゃ,BC9F77
+媚茶,こびちゃ,876633
+黄唐茶,きがらちゃ,C18A26
+山吹,やまぶき,FFB11B
+山吹茶,やまぶきちゃ,D19826
+櫨染,はじぞめ,DDA52D
+桑茶,くわちゃ,C99833
+玉子,たまご,F9BF45
+白橡,しろつるばみ,DCB879
+黄橡,きつるばみ,BA9132
+玉蜀黍,たまもろこし,E8B647
+花葉,はなば,F7C242
+生壁,なまかべ,7D6C46
+鳥の子,とりのこ,DAC9A6
+浅黄,うすき,FAD689
+黄朽葉,きくちば,D9AB42
+梔子,くちなし,F6C555
+籐黄,とうおう,FFC408
+鬱金,うこん,EFBB24
+芥子,からし,CAAD5F
+肥後煤竹,ひごすすたけ,8D742A
+利休白茶,りきゅうしらちゃ,B4A582
+灰汁,あく,877F6C
+利休茶,りきゅうちゃ,897D55
+路考茶,ろこうちゃ,74673E
+菜種油,なたねゆ,A28C37
+鶯茶,うぐいすちゃ,6C6024
+黄海松茶,きみるちゃ,867835
+海松茶,みるちゃ,62592C
+刈安,かりやす,E9CD4C
+菜の花,なのはな,F7D94C
+黄蘗,きはだ,FBE251
+蒸栗,むしくり,D9CD90
+青朽葉,あおくちば,ADA142
+女郎花,おみなえし,DDD23B
+鶸茶,ひわちゃ,A5A051
+鶸,ひわ,BEC23F
+鶯,うぐいす,6C6A2D
+柳茶,やなぎちゃ,939650
+苔,こけ,838A2D
+麹塵,きくじん,B1B479
+璃寛茶,りかんちゃ,616138
+藍媚茶,あいこびちゃ,4B4E2A
+海松,みる,5B622E
+千歳茶,せんさいちゃ,4D5139
+梅幸茶,ばいこうちゃ,89916B
+鶸萌黄,ひわもえぎ,90B44B
+柳染,やなぎぞめ,91AD70
+裏柳,うらやなぎ,B5CAA0
+岩井茶,いわいちゃ,646A58
+萌黄,もえぎ,7BA23F
+苗,なえ,86C166
+柳煤竹,やなぎすすたけ,4A593D
+松葉,まつば,42602D
+青丹,あおに,516E41
+薄青,うすあお,91B493
+柳鼠,やなぎねずみ,808F7C
+常磐,ときわ,1B813E
+若竹,わかたけ,5DAC81
+千歳緑,ちとせみどり,36563C
+緑,みどり,227D51
+白緑,びゃくろく,A8D8B9
+老竹,おいたけ,6A8372
+木賊,とくさ,2D6D4B
+御納戸茶,おなんどちゃ,465D4C
+緑青,ろくしょう,24936E
+錆青磁,さびせいじ,86A697
+青竹,あおたけ,00896C
+ビロード,びろーど,096148
+虫襖,むしあお,20604F
+藍海松茶,あいみるちゃ,0F4C3A
+沈香茶,とのちゃ,4F726C
+青緑,あおみどり,00AA90
+青磁,せいじ,69B0AC
+鉄,てつ,26453D
+水浅葱,みずあさぎ,66BAB7
+青碧,せいへき,268785
+錆鉄御納戸,さびてつおなんど,405B55
+高麗納戸,こうらいなんど,305A56
+白群,びゃくぐん,78C2C4
+御召茶,おめしちゃ,376B6D
+瓶覗,かめのぞき,A5DEE4
+深川鼠,ふかがわねずみ,77969A
+錆浅葱,さびあさぎ,6699A1
+水,みず,81C7D4
+浅葱,あさぎ,33A6B8
+御納戸,おなんど,0C4842
+藍,あい,0D5661
+新橋,しんばし,0089A7
+錆御納戸,さびおなんど,336774
+鉄御納戸,てつおなんど,255359
+花浅葱,はなあさぎ,1E88A8
+藍鼠,あいねずみ,566C73
+舛花,ますはな,577C8A
+空,そら,58B2DC
+熨斗目花,のしめはな,2B5F75
+千草,ちぐさ,3A8FB7
+御召御納戸,おめしおなんど,2E5C6E
+縹,はなだ,006284
+勿忘草,わすれなぐさ,7DB9DE
+群青,ぐんじょう,51A8DD
+露草,つゆくさ,2EA9DF
+黒橡,くろつるばみ,0B1013
+紺,こん,0F2540
+褐,かち,08192D
+瑠璃,るり,005CAF
+瑠璃紺,るりこん,0B346E
+紅碧,べにみどり,7B90D2
+藤鼠,ふじねずみ,6E75A4
+鉄紺,てつこん,261E47
+紺青,こんじょう,113285
+紅掛花,べにかけはな,4E4F97
+紺桔梗,こんききょう,211E55
+藤,ふじ,8B81C3
+二藍,ふたあい,70649A
+楝,おうち,9B90C2
+藤紫,ふじむらさき,8A6BBE
+桔梗,ききょう,6A4C9C
+紫苑,しおん,8F77B5
+滅紫,めっし,533D5B
+薄,うす,B28FCE
+半,はした,986DB2
+江戸紫,えどむらさき,77428D
+紫紺,しこん,3C2F41
+深紫,こきむらさき,4A225D
+菫,すみれ,66327C
+紫,むらさき,592C63
+菖蒲,あやめ,6F3381
+藤煤竹,ふじすすたけ,574C57
+紅藤,べにふじ,B481BB
+黒紅,くろべに,3F2B36
+茄子紺,なすこん,572A3F
+葡萄鼠,ぶどうねずみ,5E3D50
+鳩羽鼠,はとばねずみ,72636E
+杜若,かきつばた,622954
+蒲葡,えびぞめ,6D2E5B
+牡丹,ぼたん,C1328E
+梅紫,うめむらさき,A8497A
+似紫,にせむらさき,562E37
+躑躅,つつじ,E03C8A
+紫鳶,むらさきとび,60373E
+白練,しろねり,FCFAF2
+胡粉,ごふん,FFFFFB
+白鼠,しろねずみ,BDC0BA
+銀鼠,ぎんねずみ,91989F
+鉛,なまり,787878
+灰,はい,828282
+素鼠,すねずみ,787D7B
+利休鼠,りきゅうねずみ,707C74
+鈍,にび,656765
+青鈍,あおにび,535953
+溝鼠,どぶねずみ,4F4F48
+紅消鼠,べにけしねずみ,52433D
+藍墨茶,あいすみちゃ,373C38
+檳榔子染,びんろうじぞめ,3A3226
+消炭,けしずみ,434343
+墨,すみ,1C1C1C
+黒,くろ,080808
+呂,ろ,0C0C0C`;
 
-// ゲームでの正式な色名（すべてオリジナル）。もとのウェブの色名は「◯◯とほぼ同じ」として添える
-const POEM={"aliceblue": "冬の朝の吐く息", "antiquewhite": "古書店の文庫本のページ", "aqua / cyan": "プールの底のゆらめき", "aquamarine": "ラムネ瓶のビー玉", "azure": "雪山のてっぺんの空気", "beige": "焼く前のクッキー生地", "bisque": "湯上がりの頬", "black": "停電の夜", "blanchedalmond": "牛乳寒天", "blue": "青いセロハン越しの空", "blueviolet": "夜店の光る腕輪", "brown": "使いこんだランドセル", "burlywood": "新しい木のまな板", "cadetblue": "曇り空の港", "chartreuse": "雨の日のアマガエル", "chocolate": "バレンタイン前夜の湯せん", "coral": "金魚すくいの金魚", "cornflowerblue": "矢車草の野原", "cornsilk": "ひだまりのカーテン", "crimson": "舞台の緞帳", "darkblue": "深夜の海", "darkcyan": "苔むした井戸の水", "darkgoldenrod": "古いお寺の金箔", "darkgray": "雨雲のおなか", "darkgreen": "深い山の影", "darkkhaki": "枯れはじめた芝生", "darkmagenta": "熟れすぎたぶどう", "darkolivegreen": "漬物石の苔", "darkorange": "夕方の柿", "darkorchid": "魔女の帽子", "darkred": "古いワインの染み", "darksalmon": "焼き鮭の身", "darkseagreen": "抹茶ラテの泡", "darkslateblue": "嵐の前の空", "darkslategray": "雨に濡れた瓦", "darkturquoise": "熱帯魚の水槽", "darkviolet": "夜明け前の朝顔", "deeppink": "縁日のヨーヨー", "deepskyblue": "飛行機雲の向こう", "dimgray": "火を落としたあとの炭", "dodgerblue": "新品の水筒", "firebrick": "れんが倉庫", "floralwhite": "和紙のちょうちん", "forestgreen": "雨上がりの杉林", "fuchsia / magenta": "蛍光ペンのピンク", "gainsboro": "曇りガラス", "ghostwhite": "白いシャツの襟", "gold": "優勝カップのふち", "goldenrod": "稲刈り前の田んぼ", "gray": "雨の日の歩道橋", "green": "非常口の看板", "greenyellow": "蛍光ペンの黄緑", "honeydew": "メロンの皮のすぐ内側", "hotpink": "縁日のわたあめの袋", "indianred": "梅干しのしそ", "indigo": "藍染めののれん", "ivory": "古いピアノの白鍵", "khaki": "祖父の古い登山帽", "lavender": "眠る前の窓辺", "lavenderblush": "桜もちの皮", "lawngreen": "刈ったばかりの芝生", "lemonchiffon": "レモンクリームパン", "lightblue": "曇りのち晴れの空", "lightcoral": "いちごミルク", "lightcyan": "氷の角", "lightgoldenrodyellow": "バニラアイスのふた", "lightgray": "冬の曇り空", "lightgreen": "枝豆のさや", "lightpink": "ひな祭りのあられ", "lightsalmon": "夕焼けのはじまり", "lightseagreen": "珊瑚礁の浅瀬", "lightskyblue": "五月の朝の空", "lightslategray": "古い鉄橋", "lightsteelblue": "冬の湖", "lightyellow": "卵ボーロ", "lime": "炭酸がはじける音", "limegreen": "メロンソーダ", "linen": "洗いざらしのシーツ", "maroon": "あずき色のジャージ", "mediumaquamarine": "ミントアイス", "mediumblue": "夜の水族館", "mediumorchid": "すみれの砂糖づけ", "mediumpurple": "ラベンダー畑の夕暮れ", "mediumseagreen": "新茶の湯のみ", "mediumslateblue": "星座早見盤", "mediumspringgreen": "春の田んぼの苗", "mediumturquoise": "夏の川の淵", "mediumvioletred": "ガーネットの指輪", "midnightblue": "終電のあとの空", "mintcream": "歯みがき粉の泡", "mistyrose": "朝もやのバラ", "moccasin": "カスタードプリン", "navajowhite": "ホットケーキの生地", "navy": "真夜中の制服", "oldlace": "祖母のレースのハンカチ", "olive": "梅雨どきの池", "olivedrab": "夏草の土手", "orange": "運動会の玉入れの玉", "orangered": "炎の芯", "orchid": "雨上がりのあじさい", "palegoldenrod": "麦わら帽子", "palegreen": "春キャベツの葉", "paleturquoise": "風鈴のガラス", "palevioletred": "しおれかけたカーネーション", "papayawhip": "あんにんどうふ", "peachpuff": "桃のうぶ毛", "peru": "焼きいもの皮", "pink": "桜でんぶ", "plum": "藤棚の下", "powderblue": "赤ちゃんの肌着", "purple": "紫いもモンブラン", "rebeccapurple": "宵の明星を待つ空", "red": "郵便ポストの赤", "rosybrown": "古いバラの押し花", "royalblue": "王子さまのマント", "saddlebrown": "革のグローブ", "salmon": "サーモンの握り", "sandybrown": "夕方の砂浜", "seagreen": "竹林の奥", "seashell": "貝殻の内側", "sienna": "放課後の校庭の土", "silver": "銀紙のチョコ", "skyblue": "夏休み初日の空", "slateblue": "夕立のあとの夜空", "slategray": "昔の黒板消し", "snow": "誰も踏んでいない朝の雪", "springgreen": "メロンゼリーのきらめき", "steelblue": "ジーンズの膝", "tan": "ミルクコーヒー", "teal": "古い港の銅屋根", "thistle": "藤色の便せん", "tomato": "縁側で冷やしたトマト", "turquoise": "南の島の浅瀬", "violet": "夢の中の金平糖", "wheat": "実った麦畑", "white": "ノートの一ページ目", "whitesmoke": "冬の窓の結露", "yellow": "黄色い通学帽", "yellowgreen": "初夏の稲"};
 const hex2rgb = h => [0,2,4].map(i => parseInt(h.slice(i,i+2),16));
 const rgb2hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
 function rgb2hsl([r,g,b]){ r/=255; g/=255; b/=255;
@@ -497,7 +606,7 @@ function rgb2lab(c){ const lin=c.map(v=>{v/=255; return v<=.04045 ? v/12.92 : ((
 const dE = (a,b) => Math.hypot(a[0]-b[0],a[1]-b[1],a[2]-b[2]);
 
 const COLORS = RAW.split('\n').map(line => { const [name,kana,hex]=line.split(','); const rgb=hex2rgb(hex);
-  return {name,kana:POEM[name],std:kana,hex:'#'+hex,rgb,lab:rgb2lab(rgb)}; });
+  return {name,kana:name,std:kana,hex:'#'+hex,rgb,lab:rgb2lab(rgb)}; });
 
 // 三原色を混ぜてから、HSL の彩度を倍率で動かす（0%で灰色、200%で最大まで鮮やかに）
 function mix(r,g,b,sPct){ const [h,s,l]=rgb2hsl([r,g,b]); return hsl2rgb(h,Math.min(1,s*sPct/100),l); }
@@ -510,11 +619,11 @@ const K = {r:$('k-r'),g:$('k-g'),b:$('k-b'),s:$('k-s')};
 const store = { get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
                 set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
 // 図鑑: found=っぽい色以上で載った色。冠はモードごとに別に記録する（2=銀冠: 継ぎ足しチャレンジでぴったり, 3=金冠: 一発でぴったり）
-const oldRank = store.get('iro-rank',{});
-const found = new Set([...store.get('iro-found',[]), ...Object.keys(oldRank)]);
-const crowns = Object.assign({pour:{},drop:{}}, store.get('iro-crowns',null) ||
+const oldRank = store.get('iro2-rank',{});
+const found = new Set([...store.get('iro2-found',[]), ...Object.keys(oldRank)]);
+const crowns = Object.assign({pour:{},drop:{}}, store.get('iro2-crowns',null) ||
   {pour:Object.fromEntries(Object.entries(oldRank).filter(([,v])=>v>=2))});
-let best = store.get('iro-best',0);
+let best = store.get('iro2-best',0);
 let mode = 'quiz';
 let quiz = null;
 
@@ -550,7 +659,7 @@ function renderQuiz(){
   $('target-row').hidden=false;
   $('sw-target').style.backgroundColor=t.hex;
   $('chip-tag').textContent=quiz.done ? '結果' : `Round ${quiz.i+1} / 5`;
-  $('chip-name').textContent=t.kana; $('chip-kana').textContent=quiz.revealed?`${t.std}とほぼ同じ`:'';
+  $('chip-name').textContent=t.kana; $('chip-kana').textContent=t.std;
   $('rounds').innerHTML=quiz.targets.map((c,i)=>{
     const sc=quiz.scores[i];
     return sc!=null ? `<span class="done" style="background:${c.hex}">${sc}</span>` : `<span class="${i===quiz.i?'now':''}">${i+1}</span>`;
@@ -568,7 +677,7 @@ $('q-go').onclick=()=>{
   st.textContent=`${word}。${p} 点`;
   if(d<NAME_TH){ const {isNew}=record(t,1,null); if(isNew) st.textContent+='　図鑑に載せました'; }
   if(quiz.i===4){ quiz.done=true; const tot=quiz.scores.reduce((a,b)=>a+b,0);
-    if(tot>best){ best=tot; store.set('iro-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
+    if(tot>best){ best=tot; store.set('iro2-best',best); st.textContent+=`　合計 ${tot} 点、ベスト更新`; } else st.textContent+=`　合計 ${tot} 点`; }
   renderQuiz();
 };
 $('q-next').onclick=()=>{
@@ -579,8 +688,8 @@ $('q-next').onclick=()=>{
 
 // ---------- 調合モード ----------
 // 光は足し算。器は真っ暗から始まり、赤・緑・青を注ぐほど明るくなる。彩度は今の色をより鮮やかにする。どれも戻せない。
-function saveFound(){ store.set('iro-found',[...found]); store.set('iro-crowns',crowns); }
-let pourStart=[0,0,0], pourStartName='black', cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro-cups',0);
+function saveFound(){ store.set('iro2-found',[...found]); store.set('iro2-crowns',crowns); }
+let pourStart=[0,0,0], pourStartName='black', cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro2-cups',0);
 const SPOUT_COLOR={r:'#ff0000',g:'#00ff00',b:'#0000ff',s:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'};
 function hslF(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); return [0,8,4].map(n=>255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)))); }
 const cupRGB=()=>cupC.map(v=>Math.round(Math.min(255,Math.max(0,v))));
@@ -652,15 +761,15 @@ function record(c,level,mode){ const isNew=!found.has(c.name), before=mode?(crow
 const MODE_JA={pour:'注ぐ',drop:'しずく'};
 // 1杯目の判定。冠はモード（'pour' / 'drop'）ごと。っぽい色で、そのモードの冠がまだなければ継ぎ足しチャレンジに進める
 // しずく金冠のレシピ（落とした順）。短いものが見つかったら差し替える
-const recipes=store.get('iro-recipes',{});
+const recipes=store.get('iro2-recipes',{});
 const STEP_JA={'0L':'赤・大','0S':'赤・小','1L':'緑・大','1S':'緑・小','2L':'青・大','2S':'青・小','s':'彩度'};
-function saveRecipe(c){ if(!recipes[c.name] || dropLog.length<recipes[c.name].length){ recipes[c.name]=dropLog.slice(); store.set('iro-recipes',recipes); } }
+function saveRecipe(c){ if(!recipes[c.name] || dropLog.length<recipes[c.name].length){ recipes[c.name]=dropLog.slice(); store.set('iro2-recipes',recipes); } }
 function recipeText(r){ if(!r||!r.length) return '何も落とさない'; const runs=[];
   for(const t of r){ const last=runs[runs.length-1]; if(last&&last[0]===t) last[1]++; else runs.push([t,1]); }
   return runs.map(([t,n])=>STEP_JA[t]+(n>1?'×'+n:'')).join(' → '); }
 function recipeHTML(r){ return recipeText(r).split(' → ').map(x=>`<span class="step">${x}</span>`).join('→'); }
 function judgeCup(rgb, st, show, hide, mode, canTopUp){
-  cups++; store.set('iro-cups',cups); renderCups();
+  cups++; store.set('iro2-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
   if(d<EXACT_TH){ const {isNew,up}=record(n,3,mode); show(n,MODE_JA[mode]+'金冠');
     if(mode==='drop') saveRecipe(n);
@@ -717,30 +826,13 @@ $('tab-drop').onclick=()=>setMode('drop');
 
 // ---------- 図鑑 ----------
 // ---------- トロフィー ----------
-// 絵や景色のイメージに合う色を、この図鑑の色名から選んだもの（絵の正確な色ではない）
-const TROPHIES=[
-  ['光の三原色','画面の光を作る3色',['red','lime','blue']],
-  ['色の三原色','印刷のインクの3色',['aqua / cyan','fuchsia / magenta','yellow']],
-  ['モノクロ写真','白から黒までの階調',['white','silver','gray','dimgray','black']],
-  ['虹','雨上がりの7色',['red','orange','yellow','green','blue','indigo','violet']],
-  ['ゴッホのひまわり','花びらと花瓶と背景のイメージ',['gold','goldenrod','darkgoldenrod','sienna','olivedrab']],
-  ['モネの睡蓮','水面と花と光のイメージ',['cadetblue','darkseagreen','plum','thistle','lavender']],
-  ['北斎の大波','藍の波と白い飛沫と舟のイメージ',['navy','steelblue','lightsteelblue','ivory','tan']],
-  ['夕焼け','沈む太陽から夜の始まりまで',['gold','darkorange','tomato','palevioletred','slateblue']],
-  ['夜空','深い夜と星',['midnightblue','navy','darkslateblue','indigo','gold']],
-  ['桜並木','花びらと幹',['pink','lightpink','mistyrose','lavenderblush','saddlebrown']],
-  ['深い森','木々と土',['darkgreen','forestgreen','darkolivegreen','olivedrab','saddlebrown']],
-  ['南の海','砂浜から沖まで',['wheat','aquamarine','turquoise','deepskyblue','royalblue']],
-  ['紅葉','秋の山',['firebrick','chocolate','darkorange','goldenrod','sienna']],
-  ['宝石箱','ルビー、エメラルド、サファイア、アメジスト、金',['crimson','mediumseagreen','royalblue','mediumorchid','gold']],
-  ['お菓子屋さん','クリームとフルーツとチョコ',['peachpuff','lemonchiffon','pink','papayawhip','chocolate']],
-  ['真っ白な世界','白にもいろいろある',['white','snow','ivory','seashell','ghostwhite']],
-];
+// 伝統色の名前の由来や使われ方でまとめた組み合わせ
+const TROPHIES=[["江戸の人気役者", "歌舞伎役者の名前から流行った茶色", ["芝翫茶", "璃寛茶", "路考茶", "梅幸茶", "岩井茶"]], ["利休好み", "千利休の名を冠した色", ["利休茶", "利休白茶", "利休鼠"]], ["竹の一生", "芽吹いてから煤けるまで", ["若竹", "青竹", "老竹", "煤竹"]], ["藍染めの階段", "藍がめに浸すたびに深くなる", ["瓶覗", "水浅葱", "浅葱", "縹", "藍", "紺", "褐"]], ["鳥づくし", "鳥の名前の色", ["鴇", "鶯", "鶸", "雀茶", "鳶", "鳩羽鼠"]], ["岩絵具", "日本画の顔料", ["群青", "緑青", "白群", "真朱", "胡粉", "黄土", "代赭"]], ["春の野", "花と若芽", ["桜", "桃", "菜の花", "菫", "萌黄"]], ["落ち葉", "朽ちていく葉の四色", ["朽葉", "赤朽葉", "黄朽葉", "青朽葉"]], ["水墨画", "墨の濃淡", ["墨", "黒", "消炭", "鈍", "灰"]], ["白さ比べ", "白にもいろいろある", ["白練", "胡粉", "白鼠", "銀鼠"]], ["紅の深み", "紅花で染めた赤", ["紅", "韓紅花", "猩猩緋", "緋", "深緋"]], ["高貴な紫", "位の高い人だけが着られた色", ["紫", "深紫", "江戸紫", "滅紫", "紫紺"]], ["台所", "食卓にある色", ["小豆", "煎茶", "菜種油", "玉子", "蒸栗", "胡桃"]], ["百鼠", "江戸の町で流行ったねずみ色", ["梅鼠", "桜鼠", "深川鼠", "藍鼠", "藤鼠", "葡萄鼠", "溝鼠"]], ["実りの季節", "果物と木の実", ["苺", "桃", "枇杷茶", "照柿", "蒸栗"]], ["花づくし", "花の名前の色", ["撫子", "牡丹", "躑躅", "杜若", "桔梗", "女郎花", "勿忘草"]]];
 const COLOR_BY=Object.fromEntries(COLORS.map(c=>[c.name,c]));
 const bestCrown=n=>Math.max(crowns.drop[n]||0, crowns.pour[n]||0);
 function trophyTier(names){ if(!names.every(n=>found.has(n))) return 0; if(!names.every(n=>bestCrown(n)>=2)) return 1; return names.every(n=>bestCrown(n)>=3) ? 3 : 2; }
 const TIER_JA={1:'銅',2:'銀',3:'金'};
-const earned=store.get('iro-trophies',{});
+const earned=store.get('iro2-trophies',{});
 function renderTrophies(announce){
   let got=0; const news=[];
   $('trophies').innerHTML=TROPHIES.map(([title,desc,names])=>{ const t=trophyTier(names); if(t) got++;
@@ -751,7 +843,7 @@ function renderTrophies(announce){
     if(!t) return `<div class="trophy locked"><header><h3>？？？</h3><span class="medal">未獲得</span></header><p>ある色の組み合わせを揃えると、ここに現れます。</p></div>`;
     return `<div class="trophy"><header><h3>${title}</h3><span class="medal t${t}">${TIER_JA[t]}</span></header><p>${desc}</p><div class="tmem">${mem}</div></div>`; }).join('');
   $('trophy-n').textContent=`${got} / ${TROPHIES.length} 獲得`;
-  store.set('iro-trophies',earned);
+  store.set('iro2-trophies',earned);
   if(news.length) toast(news.join('　'));
 }
 let toastTimer=null;
@@ -789,10 +881,10 @@ function crownChips(c){ const chips=['drop','pour'].filter(m=>crowns[m][c.name]>
   return `<svg class="mark ${v===3?'gold':'silver'}" viewBox="0 0 18 16" role="img" aria-label="${label}"><title>${label}</title>${ICON[m]}</svg>`; }).join('');
   return chips ? `<div class="chips">${chips}</div>` : ''; }
 // しずくモードの12滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
-const POUR_ONLY=new Set(["aliceblue","azure","cornsilk","floralwhite","ghostwhite","ivory","lavenderblush","lightyellow","mintcream","oldlace","papayawhip","seashell","snow","whitesmoke"]);
+const POUR_ONLY=new Set([]);
 // しずくの12滴では金冠（差3%未満）に届かない色、銀冠（継ぎ足しで差5%未満）に届かない色。これも総当たりで調べた
-const DROP_NO_GOLD=new Set(["aliceblue", "azure", "beige", "blanchedalmond", "cornsilk", "floralwhite", "gainsboro", "ghostwhite", "honeydew", "ivory", "lavender", "lavenderblush", "lightcyan", "lightgoldenrodyellow", "lightyellow", "linen", "mintcream", "mistyrose", "moccasin", "oldlace", "papayawhip", "seashell", "snow", "whitesmoke"]);
-const DROP_NO_SILVER=new Set(["aliceblue", "azure", "blanchedalmond", "cornsilk", "floralwhite", "ghostwhite", "ivory", "lavenderblush", "lightyellow", "mintcream", "moccasin", "oldlace", "papayawhip", "seashell", "snow", "white", "whitesmoke"]);
+const DROP_NO_GOLD=new Set(["桜", "黒橡", "白練"]);
+const DROP_NO_SILVER=new Set(["白練", "胡粉"]);
 function limitTag(c){
   if(POUR_ONLY.has(c.name)) return '<span class="badge strong">注ぐ専用</span>';
   const g=DROP_NO_GOLD.has(c.name), sv=DROP_NO_SILVER.has(c.name);
@@ -805,7 +897,7 @@ function renderGrid(flashName){
   $('found-bar').style.width=(found.size/COLORS.length*100)+'%';
   const card=c=>{ const has=found.has(c.name);
     return `<button class="card ${has?'':'no'} ${c.name===flashName?'flash':''}" data-n="${c.name}" aria-label="${has?c.kana:'未発見の色、'+c.hint}">
-      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.std+'とほぼ同じ':c.hint}</div>${limitTag(c)}</button>`; };
+      <div class="c" style="${has?'background:'+c.hex:''}"></div>${crownChips(c)}<div class="n">${has?c.kana:'？？？'}</div><div class="k">${has?c.std:c.hint}</div>${limitTag(c)}</button>`; };
   $('grid').innerHTML = FAMS.map(([f,sw])=>{ const all=COLORS.filter(c=>c.fam===f), got=all.filter(c=>found.has(c.name)).length;
     const list=all.filter(passFilter);
     if(!list.length) return '';
@@ -819,7 +911,7 @@ function showDetail(c){
   const cr=['drop','pour'].map(m=>{ const v=crowns[m][c.name]; return `${MODE_JA[m]}：${v===3?'金冠':v===2?'銀冠':'まだ冠なし'}`; }).join('　');
   const r=recipes[c.name];
   $('detail').innerHTML=`<div class="detail"><div class="sw" style="background:${c.hex}"></div><div>
-    <b style="font-size:17px">${c.kana}</b> <span class="muted">${c.std}（${c.name}）とほぼ同じ・${c.hex}</span><div class="muted" style="font-size:13px">${cr}</div>
+    <b style="font-size:17px">${c.kana}</b> <span class="muted">${c.std}・${c.hex}</span><div class="muted" style="font-size:13px">${cr}</div>
     <div class="recipe">${r ? 'しずく金冠のレシピ：'+recipeHTML(r) : (crowns.drop[c.name]===3 ? 'しずく金冠のレシピは記録されていません（記録を始める前に取った冠です）' : 'しずくで金冠を取ると、ここにレシピが残ります。')}</div>
     <div class="actions" style="margin-top:6px"><button class="btn ghost" id="det-pour">注ぐモードの見本にする</button><button class="btn ghost" id="det-close">閉じる</button></div></div></div>`;
   $('detail').hidden=false;
