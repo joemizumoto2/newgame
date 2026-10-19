@@ -1,0 +1,596 @@
+<title>四文字熟語バトル</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@400;700;900&display=swap">
+<style>
+/* 藍の対局場。札は和紙、型の色は 攻=朱・守=青磁・策=藤。一画面で上から 相手の札 → 土俵 → 自分の札 */
+:root {
+  --ai: #131d33;
+  --ai-2: #1b2945;
+  --ai-3: #26385c;
+  --line: #34486f;
+  --washi: #f1ece1;
+  --washi-2: #e2dac8;
+  --sumi: #1d1c22;
+  --sumi-2: #5b5866;
+  --fg: #e8ebf3;
+  --muted: #9aa7c2;
+  --shu: #e0533a;
+  --seiji: #4fb3a2;
+  --fuji: #a083d6;
+  --kin: #d4b25a;
+  --font-brush: "Yuji Syuku", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --font-ui: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  background: var(--ai);
+  background-image: radial-gradient(120% 60% at 50% 45%, var(--ai-2), var(--ai) 70%);
+  color: var(--fg);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font-family: inherit; color: inherit; }
+button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outline-offset: 2px; }
+
+.app {
+  max-width: 560px; margin: 0 auto; min-height: 100%;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-block: 12px 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+}
+
+/* ── 得点 ── */
+.scorebar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.side { display: flex; flex-direction: column; gap: 2px; }
+.side.cpu { align-items: flex-end; text-align: right; }
+.side .who { font-size: 12px; color: var(--muted); letter-spacing: .08em; }
+.side .pts { font-family: var(--font-brush); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.pips { display: flex; gap: 6px; }
+.pip {
+  min-width: 46px; padding: 4px 6px; border-radius: 6px; text-align: center;
+  border: 1px solid var(--line); font-size: 11px; color: var(--muted); line-height: 1.25;
+}
+.pip b { display: block; font-size: 12px; color: var(--fg); font-weight: 700; }
+.pip.now { border-color: var(--kin); color: var(--kin); }
+.pip.win { background: color-mix(in srgb, var(--kin) 22%, transparent); border-color: var(--kin); }
+.pip.lose { background: color-mix(in srgb, var(--shu) 18%, transparent); border-color: color-mix(in srgb, var(--shu) 60%, transparent); }
+.pip.draw { border-style: dashed; }
+
+/* ── 型チップ ── */
+.type {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  font-family: var(--font-brush); font-size: 13px; color: #fff; flex: none;
+}
+.type.攻 { background: var(--shu); }
+.type.守 { background: var(--seiji); }
+.type.策 { background: var(--fuji); }
+
+/* ── 相手の札（裏向き、型だけ見える） ── */
+.cpu-hand { display: flex; justify-content: center; gap: 6px; min-height: 46px; }
+.back {
+  width: 34px; height: 46px; border-radius: 5px; display: grid; place-items: center;
+  background: repeating-linear-gradient(45deg, var(--ai-3) 0 4px, var(--ai-2) 4px 8px);
+  border: 1px solid var(--line); transition: opacity .3s, transform .3s;
+}
+.back.used { opacity: 0; transform: translateY(10px) scale(.8); }
+
+/* ── 土俵 ── */
+.arena {
+  position: relative; flex: 1; min-height: 300px;
+  border: 1px solid var(--line); border-radius: 14px;
+  background: color-mix(in srgb, var(--ai-2) 70%, transparent);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 14px 12px; overflow: hidden;
+}
+.crit { text-align: center; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.crit .round { font-size: 12px; letter-spacing: .2em; color: var(--kin); }
+.crit .name { font-family: var(--font-brush); font-size: 28px; line-height: 1.2; text-wrap: balance; }
+.crit .desc { font-size: 12px; color: var(--muted); }
+.crit.reveal .name { animation: brushIn .55s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes brushIn { from { opacity: 0; transform: scale(1.6); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+
+.timer { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
+.timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.timer .track { fill: none; stroke: var(--line); stroke-width: 4; }
+.timer .bar { fill: none; stroke: var(--kin); stroke-width: 4; stroke-linecap: round; transition: stroke .3s; }
+.timer.hurry .bar { stroke: var(--shu); }
+.timer .num { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-variant-numeric: tabular-nums; }
+.timer.hurry .num { color: var(--shu); animation: pulse .5s infinite alternate; }
+@keyframes pulse { to { transform: scale(1.2); } }
+
+.triangle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
+.triangle .gt { opacity: .7; }
+
+.duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; flex: 1; }
+.slot { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.slot .label { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
+.vs { font-family: var(--font-brush); font-size: 22px; color: var(--muted); }
+
+.big {
+  position: relative; width: 100px; height: 150px; border-radius: 8px;
+  background: var(--washi); color: var(--sumi);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  transition: filter .4s, opacity .4s;
+}
+.big .type { position: absolute; top: 6px; left: 6px; }
+.kanji { display: flex; flex-direction: column; align-items: center; font-family: var(--font-brush); line-height: 1.08; }
+.big .kanji { font-size: 30px; }
+.big.empty { background: transparent; border: 1px dashed var(--line); box-shadow: none; }
+.big.facedown { background: repeating-linear-gradient(45deg, var(--ai-3) 0 6px, var(--ai-2) 6px 12px); border: 1px solid var(--line); }
+.big.lost { filter: grayscale(1) brightness(.7); }
+.big.in-left { animation: slamL .45s cubic-bezier(.3,1.4,.5,1); }
+.big.in-right { animation: slamR .45s cubic-bezier(.3,1.4,.5,1); }
+@keyframes slamL { from { transform: translate(-60px, 80px) rotate(-12deg) scale(.7); opacity: 0; } }
+@keyframes slamR { from { transform: translate(60px, -80px) rotate(12deg) scale(.7); opacity: 0; } }
+.big.flip { animation: flip .4s ease-out; }
+@keyframes flip { from { transform: rotateY(90deg); } }
+.big.hit { animation: hit .45s ease-out; }
+@keyframes hit { 30% { transform: translateX(-8px) rotate(-4deg); } 60% { transform: translateX(6px) rotate(3deg); } }
+.big.winner { box-shadow: 0 0 0 3px var(--kin), 0 0 28px color-mix(in srgb, var(--kin) 60%, transparent); }
+
+.stamp {
+  position: absolute; right: -12px; top: -12px; width: 46px; height: 46px; border-radius: 8px;
+  border: 3px solid var(--shu); color: var(--shu); background: color-mix(in srgb, var(--washi) 85%, transparent);
+  font-family: var(--font-brush); font-size: 28px; display: grid; place-items: center;
+  transform: rotate(-12deg); animation: stamp .35s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes stamp { from { transform: rotate(-30deg) scale(2.4); opacity: 0; } }
+
+.val { font-variant-numeric: tabular-nums; text-align: center; min-height: 40px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.val .n { font-size: 22px; font-weight: 900; line-height: 1.1; }
+.val .why { font-size: 11px; color: var(--muted); line-height: 1.35; }
+.val .mult { font-size: 11px; color: var(--kin); font-weight: 700; }
+
+.flash { position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 60%, color-mix(in srgb, var(--kin) 70%, white), transparent 55%); }
+.flash.go { animation: flash .5s ease-out; }
+@keyframes flash { 15% { opacity: .9; } to { opacity: 0; } }
+.arena.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translate(-5px, 2px); } 40% { transform: translate(4px, -3px); } 60% { transform: translate(-3px, 1px); } 80% { transform: translate(2px, 0); } }
+
+.verdict { min-height: 22px; font-weight: 700; text-align: center; }
+.verdict.win { color: var(--kin); }
+.verdict.lose { color: var(--shu); }
+
+/* ── 自分の札 ── */
+.hand { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.card {
+  position: relative; border: none; border-radius: 7px; padding: 6px 2px 5px;
+  background: var(--washi); color: var(--sumi); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  box-shadow: 0 3px 8px rgba(0,0,0,.3);
+  transition: transform .18s, box-shadow .18s, opacity .3s;
+}
+.card .type { width: 18px; height: 18px; font-size: 11px; }
+.card .kanji { font-size: clamp(17px, 5.2vw, 24px); }
+.card .mini { font-size: 10px; line-height: 1.3; color: var(--sumi-2); font-variant-numeric: tabular-nums; text-align: center; }
+.card.sel { transform: translateY(-10px); box-shadow: 0 0 0 2px var(--kin), 0 8px 18px rgba(0,0,0,.4); }
+.card.used { visibility: hidden; }
+.card:disabled { cursor: default; }
+.hand.locked .card:not(.sel) { opacity: .55; }
+.hand.dealing .card { animation: deal .4s backwards cubic-bezier(.2,1.2,.4,1); }
+@keyframes deal { from { transform: translateY(60px) rotate(8deg); opacity: 0; } }
+
+.detail {
+  min-height: 74px; border-radius: 10px; background: var(--ai-2); border: 1px solid var(--line);
+  padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
+}
+.detail .w { font-family: var(--font-brush); font-size: 20px; display: flex; align-items: center; gap: 8px; }
+.detail .y { font-size: 11px; color: var(--muted); }
+.detail .m { font-size: 12px; color: var(--fg); grid-column: 1; }
+.detail .stats { grid-column: 1 / -1; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.detail .stats b { color: var(--fg); }
+.detail .hint { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
+.play {
+  grid-row: 1 / span 2; grid-column: 2; border: none; border-radius: 999px; padding: 10px 18px;
+  background: var(--kin); color: var(--sumi); font-weight: 900; font-size: 15px; cursor: pointer;
+}
+.play:disabled { opacity: .4; cursor: default; }
+
+/* ── 開始・結果 ── */
+.overlay {
+  position: fixed; inset: 0; z-index: 5; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--ai) 88%, transparent); backdrop-filter: blur(4px);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.panel { max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+.panel h1 { font-family: var(--font-brush); font-weight: 400; font-size: 40px; margin: 0; line-height: 1.15; text-wrap: balance; }
+.panel h2 { font-family: var(--font-brush); font-weight: 400; font-size: 48px; margin: 0; }
+.panel h2.win { color: var(--kin); }
+.panel h2.lose { color: var(--shu); }
+.rules { text-align: left; font-size: 13px; line-height: 1.75; color: var(--fg); margin: 0; padding-left: 1.2em; }
+.rules li::marker { color: var(--kin); }
+.rules .muted { color: var(--muted); }
+.start {
+  border: none; border-radius: 999px; padding: 14px 34px; font-size: 17px; font-weight: 900;
+  background: var(--kin); color: var(--sumi); cursor: pointer;
+}
+.recap { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.recap .row { display: grid; grid-template-columns: 7em 1fr auto 1fr; gap: 8px; align-items: center; font-size: 12px;
+  background: var(--ai-2); border-radius: 8px; padding: 8px 10px; }
+.recap .row .r { color: var(--muted); text-align: left; }
+.recap .row .me, .recap .row .op { font-family: var(--font-brush); font-size: 16px; }
+.recap .row .res { font-weight: 900; }
+.recap .row .res.win { color: var(--kin); }
+.recap .row .res.lose { color: var(--shu); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<div class="app" id="app">
+  <div class="scorebar">
+    <div class="side"><span class="who">あなた</span><span class="pts" id="myPts">0</span></div>
+    <div class="pips" id="pips"></div>
+    <div class="side cpu"><span class="who">CPU</span><span class="pts" id="cpuPts">0</span></div>
+  </div>
+  <div class="cpu-hand" id="cpuHand" aria-label="CPUの札（型だけ見える）"></div>
+
+  <div class="arena" id="arena">
+    <div class="timer" id="timer" hidden>
+      <svg viewBox="0 0 44 44"><circle class="track" cx="22" cy="22" r="19"/><circle class="bar" id="timerBar" cx="22" cy="22" r="19" stroke-dasharray="119.4" stroke-dashoffset="0"/></svg>
+      <div class="num" id="timerNum">10</div>
+    </div>
+    <div class="crit" id="crit">
+      <span class="round" id="critRound">一本目</span>
+      <span class="name" id="critName">—</span>
+      <span class="desc" id="critDesc"></span>
+    </div>
+    <div class="triangle" id="triangle" hidden>
+      <span class="type 守">守</span><span class="gt">›</span><span class="type 攻">攻</span><span class="gt">›</span>
+      <span class="type 策">策</span><span class="gt">›</span><span class="type 守">守</span><span>（左が右に強い）</span>
+    </div>
+    <div class="duel">
+      <div class="slot">
+        <span class="label">あなた</span>
+        <div class="big empty" id="mySlot"></div>
+        <div class="val" id="myVal"></div>
+      </div>
+      <span class="vs">対</span>
+      <div class="slot">
+        <span class="label">CPU</span>
+        <div class="big empty" id="cpuSlot"></div>
+        <div class="val" id="cpuVal"></div>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <div class="detail" id="detail"><span class="hint">札を選ぶと、意味と数字がここに出ます。</span></div>
+  <div class="hand" id="hand"></div>
+</div>
+
+<div class="overlay" id="titleScreen">
+  <div class="panel">
+    <h1>四文字熟語バトル</h1>
+    <ol class="rules">
+      <li>熟語の札が5枚配られ、CPUと<b>3本勝負</b>。使うのは3枚です。</li>
+      <li>一本目・二本目は、その場で<b>勝負の基準</b>が発表されます。<b>10秒</b>以内に1枚出してください。<br><span class="muted">画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ など</span></li>
+      <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
+      <li>相手の札は、型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
+    </ol>
+    <button class="start" id="startBtn">対局開始</button>
+  </div>
+</div>
+
+<div class="overlay" id="endScreen" hidden>
+  <div class="panel">
+    <h2 id="endTitle">勝ち</h2>
+    <div id="endScore" style="font-size:15px"></div>
+    <div class="recap" id="recap"></div>
+    <button class="start" id="againBtn">もう一局</button>
+  </div>
+</div>
+
+<script>
+const DATA = [{"w":"勇猛果敢","y":"ゆうもうかかん","t":"攻","m":"勇ましく、思い切って行う","s":[9,11,8,12],"rad":0,"rn":1,"num":0,"mora":7},{"w":"電光石火","y":"でんこうせっか","t":"攻","m":"稲妻のように素早い","s":[13,6,5,4],"rad":0,"rn":1,"num":0,"mora":7},{"w":"一騎当千","y":"いっきとうせん","t":"攻","m":"一人で千人に匹敵する強さ","s":[1,18,6,3],"rad":0,"rn":1,"num":1001,"mora":7},{"w":"疾風迅雷","y":"しっぷうじんらい","t":"攻","m":"激しく素早い勢い","s":[10,9,6,13],"rad":0,"rn":1,"num":0,"mora":8},{"w":"獅子奮迅","y":"ししふんじん","t":"攻","m":"獅子のように猛烈に奮い立つ","s":[13,3,16,6],"rad":0,"rn":1,"num":0,"mora":6},{"w":"猪突猛進","y":"ちょとつもうしん","t":"攻","m":"向こう見ずに突き進む","s":[11,8,11,11],"rad":94,"rn":2,"num":0,"mora":7},{"w":"先手必勝","y":"せんてひっしょう","t":"攻","m":"先に仕掛けた方が勝つ","s":[6,4,5,12],"rad":0,"rn":1,"num":0,"mora":7},{"w":"乾坤一擲","y":"けんこんいってき","t":"攻","m":"運命をかけて大勝負に出る","s":[11,8,1,18],"rad":0,"rn":1,"num":1,"mora":8},{"w":"一刀両断","y":"いっとうりょうだん","t":"攻","m":"ためらわずに決着をつける","s":[1,2,6,11],"rad":1,"rn":2,"num":1,"mora":8},{"w":"天下無双","y":"てんかむそう","t":"攻","m":"天下に並ぶ者がない","s":[4,3,12,4],"rad":0,"rn":1,"num":0,"mora":6},{"w":"一網打尽","y":"いちもうだじん","t":"攻","m":"一度に残らず捕らえる","s":[1,14,5,6],"rad":0,"rn":1,"num":1,"mora":7},{"w":"百戦錬磨","y":"ひゃくせんれんま","t":"攻","m":"多くの戦いで鍛え上げられた","s":[6,13,16,16],"rad":0,"rn":1,"num":100,"mora":7},{"w":"怒髪衝天","y":"どはつしょうてん","t":"攻","m":"髪が逆立つほどの激しい怒り","s":[9,14,15,4],"rad":0,"rn":1,"num":0,"mora":7},{"w":"縦横無尽","y":"じゅうおうむじん","t":"攻","m":"思う存分に暴れ回る","s":[16,15,12,6],"rad":0,"rn":1,"num":0,"mora":7},{"w":"八面六臂","y":"はちめんろっぴ","t":"攻","m":"一人で何人分もの大活躍","s":[2,9,4,17],"rad":12,"rn":2,"num":14,"mora":7},{"w":"千軍万馬","y":"せんぐんばんば","t":"攻","m":"大軍勢。戦いの経験が豊富","s":[3,9,3,10],"rad":0,"rn":1,"num":11000,"mora":7},{"w":"弱肉強食","y":"じゃくにくきょうしょく","t":"攻","m":"強い者が弱い者を食う","s":[10,6,11,9],"rad":57,"rn":2,"num":0,"mora":8},{"w":"意気衝天","y":"いきしょうてん","t":"攻","m":"意気込みが天を突くほど","s":[13,6,15,4],"rad":0,"rn":1,"num":0,"mora":6},{"w":"百発百中","y":"ひゃっぱつひゃくちゅう","t":"攻","m":"撃てば必ず当たる","s":[6,9,6,4],"rad":106,"rn":2,"num":200,"mora":8},{"w":"一心不乱","y":"いっしんふらん","t":"攻","m":"脇目もふらず打ち込む","s":[1,4,4,7],"rad":1,"rn":2,"num":1,"mora":7},{"w":"剛毅果断","y":"ごうきかだん","t":"攻","m":"意志が強く決断が早い","s":[10,15,8,11],"rad":0,"rn":1,"num":0,"mora":6},{"w":"七転八倒","y":"しちてんばっとう","t":"攻","m":"転げ回ってもがき苦しむ","s":[2,11,2,10],"rad":0,"rn":1,"num":15,"mora":8},{"w":"千載一遇","y":"せんざいいちぐう","t":"攻","m":"めったにない好機","s":[3,13,1,12],"rad":0,"rn":1,"num":1001,"mora":8},{"w":"天真爛漫","y":"てんしんらんまん","t":"攻","m":"無邪気で飾り気がない","s":[4,10,21,14],"rad":0,"rn":1,"num":0,"mora":8},{"w":"百花繚乱","y":"ひゃっかりょうらん","t":"攻","m":"優れたものが一斉に咲き誇る","s":[6,7,18,7],"rad":0,"rn":1,"num":100,"mora":7},{"w":"堅忍不抜","y":"けんにんふばつ","t":"守","m":"我慢強く心が揺るがない","s":[12,7,4,7],"rad":0,"rn":1,"num":0,"mora":7},{"w":"泰然自若","y":"たいぜんじじゃく","t":"守","m":"落ち着き払って動じない","s":[10,12,6,8],"rad":0,"rn":1,"num":0,"mora":7},{"w":"不撓不屈","y":"ふとうふくつ","t":"守","m":"どんな困難にもくじけない","s":[4,15,4,8],"rad":1,"rn":2,"num":0,"mora":6},{"w":"難攻不落","y":"なんこうふらく","t":"守","m":"攻め落とすのが難しい","s":[18,7,4,12],"rad":0,"rn":1,"num":0,"mora":7},{"w":"金城鉄壁","y":"きんじょうてっぺき","t":"守","m":"守りが非常に堅い","s":[8,9,13,16],"rad":167,"rn":2,"num":0,"mora":8},{"w":"七転八起","y":"しちてんはっき","t":"守","m":"何度転んでも立ち上がる","s":[2,11,2,10],"rad":0,"rn":1,"num":15,"mora":7},{"w":"明鏡止水","y":"めいきょうしすい","t":"守","m":"曇りのない静かな心","s":[8,19,4,4],"rad":0,"rn":1,"num":0,"mora":7},{"w":"質実剛健","y":"しつじつごうけん","t":"守","m":"飾り気がなく強くたくましい","s":[15,8,10,11],"rad":0,"rn":1,"num":0,"mora":8},{"w":"一意専心","y":"いちいせんしん","t":"守","m":"一つのことに心を注ぐ","s":[1,13,9,4],"rad":61,"rn":2,"num":1,"mora":7},{"w":"初志貫徹","y":"しょしかんてつ","t":"守","m":"初めの志を貫き通す","s":[7,7,11,15],"rad":0,"rn":1,"num":0,"mora":6},{"w":"大器晩成","y":"たいきばんせい","t":"守","m":"大人物は遅れて大成する","s":[3,15,12,6],"rad":0,"rn":1,"num":0,"mora":7},{"w":"隠忍自重","y":"いんにんじちょう","t":"守","m":"じっと耐えて軽はずみをしない","s":[14,7,6,9],"rad":0,"rn":1,"num":0,"mora":7},{"w":"無病息災","y":"むびょうそくさい","t":"守","m":"病気をせず元気に過ごす","s":[12,10,10,7],"rad":86,"rn":2,"num":0,"mora":7},{"w":"一致団結","y":"いっちだんけつ","t":"守","m":"心を一つにまとめる","s":[1,10,6,12],"rad":0,"rn":1,"num":1,"mora":7},{"w":"安全第一","y":"あんぜんだいいち","t":"守","m":"何よりも安全を優先する","s":[6,6,11,1],"rad":0,"rn":1,"num":1,"mora":8},{"w":"自給自足","y":"じきゅうじそく","t":"守","m":"必要な物を自分でまかなう","s":[6,12,6,7],"rad":132,"rn":2,"num":0,"mora":6},{"w":"不老不死","y":"ふろうふし","t":"守","m":"年を取らず死ぬこともない","s":[4,6,4,6],"rad":1,"rn":2,"num":0,"mora":5},{"w":"一期一会","y":"いちごいちえ","t":"守","m":"一生に一度の出会い","s":[1,12,1,6],"rad":1,"rn":2,"num":2,"mora":6},{"w":"三寒四温","y":"さんかんしおん","t":"守","m":"寒い日と暖かい日が繰り返す","s":[3,12,5,12],"rad":0,"rn":1,"num":7,"mora":7},{"w":"花鳥風月","y":"かちょうふうげつ","t":"守","m":"自然の美しい風物","s":[7,11,9,4],"rad":0,"rn":1,"num":0,"mora":7},{"w":"森羅万象","y":"しんらばんしょう","t":"守","m":"この世のあらゆるもの","s":[12,19,3,12],"rad":0,"rn":1,"num":10000,"mora":7},{"w":"九死一生","y":"きゅうしいっしょう","t":"守","m":"危ういところで命拾いする","s":[2,6,1,5],"rad":0,"rn":1,"num":10,"mora":7},{"w":"家内安全","y":"かないあんぜん","t":"守","m":"家族みんなが無事","s":[10,4,6,6],"rad":40,"rn":2,"num":0,"mora":7},{"w":"清廉潔白","y":"せいれんけっぱく","t":"守","m":"心が清く後ろ暗い所がない","s":[11,13,15,5],"rad":85,"rn":2,"num":0,"mora":8},{"w":"唯一無二","y":"ゆいいつむに","t":"守","m":"ただ一つで二つとない","s":[11,1,12,2],"rad":0,"rn":1,"num":3,"mora":6},{"w":"二人三脚","y":"ににんさんきゃく","t":"守","m":"二人で息を合わせて進む","s":[2,2,3,11],"rad":0,"rn":1,"num":5,"mora":7},{"w":"四苦八苦","y":"しくはっく","t":"守","m":"ひどく苦労する","s":[5,8,2,8],"rad":140,"rn":2,"num":12,"mora":5},{"w":"一日千秋","y":"いちじつせんしゅう","t":"守","m":"待ち遠しくてたまらない","s":[1,4,3,9],"rad":0,"rn":1,"num":1001,"mora":8},{"w":"一喜一憂","y":"いっきいちゆう","t":"守","m":"状況に喜んだり心配したり","s":[1,12,1,15],"rad":1,"rn":2,"num":2,"mora":7},{"w":"三位一体","y":"さんみいったい","t":"守","m":"三つが固く一つにまとまる","s":[3,7,1,7],"rad":1,"rn":2,"num":4,"mora":7},{"w":"深謀遠慮","y":"しんぼうえんりょ","t":"策","m":"先々まで考え抜いた計画","s":[11,16,13,15],"rad":0,"rn":1,"num":0,"mora":7},{"w":"臨機応変","y":"りんきおうへん","t":"策","m":"その場に応じて対応する","s":[18,16,7,9],"rad":0,"rn":1,"num":0,"mora":7},{"w":"権謀術数","y":"けんぼうじゅっすう","t":"策","m":"人を欺くたくみな策略","s":[15,16,11,13],"rad":0,"rn":1,"num":0,"mora":8},{"w":"一石二鳥","y":"いっせきにちょう","t":"策","m":"一つの行いで二つの得","s":[1,5,2,11],"rad":0,"rn":1,"num":3,"mora":7},{"w":"用意周到","y":"よういしゅうとう","t":"策","m":"準備に抜かりがない","s":[5,13,8,8],"rad":0,"rn":1,"num":0,"mora":7},{"w":"起死回生","y":"きしかいせい","t":"策","m":"絶望的な状況を立て直す","s":[10,6,6,5],"rad":0,"rn":1,"num":0,"mora":6},{"w":"以心伝心","y":"いしんでんしん","t":"策","m":"言葉なしで心が通じ合う","s":[5,4,6,4],"rad":9,"rn":2,"num":0,"mora":7},{"w":"適材適所","y":"てきざいてきしょ","t":"策","m":"能力に合った役目に就ける","s":[14,7,14,8],"rad":162,"rn":2,"num":0,"mora":7},{"w":"千変万化","y":"せんぺんばんか","t":"策","m":"さまざまに変化する","s":[3,9,3,4],"rad":0,"rn":1,"num":11000,"mora":7},{"w":"奇想天外","y":"きそうてんがい","t":"策","m":"思いもよらない奇抜さ","s":[8,13,4,5],"rad":37,"rn":2,"num":0,"mora":7},{"w":"神出鬼没","y":"しんしゅつきぼつ","t":"策","m":"自在に現れたり消えたり","s":[9,5,10,7],"rad":0,"rn":1,"num":0,"mora":7},{"w":"温故知新","y":"おんこちしん","t":"策","m":"古きを学び新しきを知る","s":[12,9,8,13],"rad":0,"rn":1,"num":0,"mora":6},{"w":"博学多才","y":"はくがくたさい","t":"策","m":"知識が広く才能豊か","s":[12,8,6,3],"rad":0,"rn":1,"num":0,"mora":7},{"w":"呉越同舟","y":"ごえつどうしゅう","t":"策","m":"敵同士が同じ場に居合わせる","s":[7,12,6,6],"rad":30,"rn":2,"num":0,"mora":7},{"w":"朝三暮四","y":"ちょうさんぼし","t":"策","m":"目先の違いでごまかす","s":[12,3,14,5],"rad":0,"rn":1,"num":7,"mora":6},{"w":"試行錯誤","y":"しこうさくご","t":"策","m":"試しと失敗を重ねて進む","s":[13,6,16,14],"rad":149,"rn":2,"num":0,"mora":6},{"w":"一挙両得","y":"いっきょりょうとく","t":"策","m":"一つの行動で二つの利益","s":[1,10,6,11],"rad":1,"rn":2,"num":1,"mora":7},{"w":"十人十色","y":"じゅうにんといろ","t":"策","m":"考えや好みは人それぞれ","s":[2,2,2,6],"rad":24,"rn":2,"num":20,"mora":7},{"w":"八方美人","y":"はっぽうびじん","t":"策","m":"誰にでも愛想よく振る舞う","s":[2,4,9,2],"rad":0,"rn":1,"num":8,"mora":7},{"w":"千差万別","y":"せんさばんべつ","t":"策","m":"種類も違いも数限りない","s":[3,10,3,7],"rad":0,"rn":1,"num":11000,"mora":7},{"w":"五里霧中","y":"ごりむちゅう","t":"策","m":"手がかりがなく迷う","s":[4,7,19,4],"rad":0,"rn":1,"num":5,"mora":5},{"w":"十中八九","y":"じっちゅうはっく","t":"策","m":"ほぼ間違いない","s":[2,4,2,2],"rad":0,"rn":1,"num":27,"mora":7},{"w":"自画自賛","y":"じがじさん","t":"策","m":"自分で自分をほめる","s":[6,8,6,15],"rad":132,"rn":2,"num":0,"mora":5},{"w":"半信半疑","y":"はんしんはんぎ","t":"策","m":"半分信じて半分疑う","s":[5,9,5,14],"rad":24,"rn":2,"num":0,"mora":7},{"w":"魑魅魍魎","y":"ちみもうりょう","t":"策","m":"山や川に住むさまざまな化け物","s":[21,15,18,18],"rad":194,"rn":4,"num":0,"mora":6}];
+
+const RAD_NAMES = {
+  1: "一（いち）", 9: "人（ひと）", 12: "八（はち）", 24: "十（じゅう）", 30: "口（くち）", 37: "大（だい）",
+  40: "宀（うかんむり）", 57: "弓（ゆみへん）", 61: "心（こころ）", 85: "氵（さんずい）", 86: "火（ひ）",
+  94: "犭（けものへん）", 106: "白（しろ）", 132: "自（みずから）", 140: "艹（くさかんむり）",
+  149: "言（ごんべん）", 162: "辶（しんにょう）", 167: "金（かねへん）", 194: "鬼（きにょう）"
+};
+const TYPES = ["攻", "守", "策"];
+const BEATS = { 守: "攻", 攻: "策", 策: "守" };
+const ROUND_NAMES = ["一本目", "二本目", "三本目"];
+const ROUND_POINTS = [1, 1, 2];
+const TIME_LIMIT = 10;
+
+const sum = a => a.reduce((x, y) => x + y, 0);
+const strokes = c => sum(c.s);
+const power = c => strokes(c) + (c.rn - 1) * 5;
+
+const CRITS = [
+  { key: "many", name: "画数が多い", desc: "4字の画数の合計が多い方が勝ち",
+    score: c => strokes(c), show: c => `${strokes(c)}画`, why: c => c.s.join("+") },
+  { key: "few", name: "画数が少ない", desc: "4字の画数の合計が少ない方が勝ち",
+    score: c => -strokes(c), show: c => `${strokes(c)}画`, why: c => c.s.join("+") },
+  { key: "rad", name: "同じ部首が多い", desc: "同じ部首の字が多い方が勝ち",
+    score: c => c.rn, show: c => `${c.rn}字`, why: c => c.rn > 1 ? `${RAD_NAMES[c.rad] || "同じ部首"}がそろう` : "そろいなし" },
+  { key: "num", name: "数字が大きい", desc: "熟語の中の数字を足した合計が大きい方が勝ち",
+    score: c => c.num, show: c => c.num.toLocaleString("ja-JP"), why: c => numWhy(c) },
+  { key: "yomi", name: "読みが長い", desc: "読みの音の数が多い方が勝ち（小さい「ゃゅょ」は数えない）",
+    score: c => c.mora, show: c => `${c.mora}音`, why: c => c.y },
+  { key: "max", name: "一字の画数", desc: "いちばん画数の多い一字で比べる",
+    score: c => Math.max(...c.s), show: c => `${Math.max(...c.s)}画`, why: c => `「${c.w[c.s.indexOf(Math.max(...c.s))]}」` },
+];
+const NUMS = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10, 百: 100, 千: 1000, 万: 10000 };
+function numWhy(c) {
+  const parts = [...c.w].filter(ch => NUMS[ch]).map(ch => ch);
+  return parts.length ? parts.join("+") : "数字なし";
+}
+
+const tate = w => [...w].map(ch => `<span>${ch}</span>`).join("");
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const wait = ms => new Promise(r => setTimeout(r, reduceMotion ? Math.min(ms, 250) : ms));
+const rand = n => Math.floor(Math.random() * n);
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+let S = null; // 対局の状態
+let timerId = null;
+
+function newGame() {
+  const deck = shuffle(DATA);
+  const crits = shuffle(CRITS).slice(0, 2);
+  S = {
+    hand: deck.slice(0, 5).map(c => ({ ...c, used: false })),
+    cpu: deck.slice(5, 10).map(c => ({ ...c, used: false })),
+    crits, round: 0, score: [0, 0], results: [], sel: null, accepting: false,
+  };
+}
+
+/* ── 描画 ── */
+function renderScore() {
+  $("myPts").textContent = S.score[0];
+  $("cpuPts").textContent = S.score[1];
+  $("pips").innerHTML = ROUND_NAMES.map((n, i) => {
+    const r = S.results[i];
+    const cls = r ? r.res : (i === S.round ? "now" : "");
+    return `<div class="pip ${cls}"><b>${n}</b>${ROUND_POINTS[i]}点</div>`;
+  }).join("");
+}
+function renderCpuHand() {
+  $("cpuHand").innerHTML = S.cpu.map(c => `<div class="back ${c.used ? "used" : ""}"><span class="type ${c.t}">${c.t}</span></div>`).join("");
+}
+function renderHand(dealing) {
+  const h = $("hand");
+  h.classList.toggle("dealing", !!dealing);
+  h.classList.toggle("locked", !S.accepting);
+  h.innerHTML = S.hand.map((c, i) => `
+    <button class="card ${c.used ? "used" : ""} ${S.sel === i ? "sel" : ""}" data-i="${i}" style="animation-delay:${i * 70}ms"
+      ${S.accepting && !c.used ? "" : "disabled"} aria-label="${c.w}">
+      <span class="type ${c.t}">${c.t}</span>
+      <span class="kanji">${tate(c.w)}</span>
+      <span class="mini">画${strokes(c)} 部${c.rn}<br>数${c.num >= 10000 ? Math.round(c.num / 1000) / 10 + "万" : c.num} 音${c.mora}</span>
+    </button>`).join("");
+}
+function renderDetail() {
+  const d = $("detail");
+  if (S.sel == null) {
+    d.innerHTML = `<span class="hint">${S.accepting ? "札を選ぶと、意味と数字がここに出ます。" : "　"}</span>`;
+    return;
+  }
+  const c = S.hand[S.sel];
+  d.innerHTML = `
+    <span class="w"><span class="type ${c.t}">${c.t}</span>${c.w}<span class="y">${c.y}</span></span>
+    <button class="play" id="playBtn" ${S.accepting ? "" : "disabled"}>出す</button>
+    <span class="m">${c.m}</span>
+    <span class="stats">画数 <b>${strokes(c)}</b>（${c.s.join("+")}）　部首 <b>${c.rn}</b>${c.rn > 1 ? `（${RAD_NAMES[c.rad] || ""}）` : ""}　数字 <b>${c.num.toLocaleString("ja-JP")}</b>　読み <b>${c.mora}音</b>　総合力 <b>${power(c)}</b></span>`;
+  $("playBtn").onclick = () => playerPlay(S.sel);
+}
+function bigCard(c, extra = "") {
+  return `<span class="type ${c.t}">${c.t}</span><span class="kanji">${tate(c.w)}</span>${extra}`;
+}
+function setSlot(id, c, anim) {
+  const el = $(id);
+  el.className = "big" + (c ? "" : " empty") + (anim ? " " + anim : "");
+  el.innerHTML = c ? bigCard(c) : "";
+}
+function setFaceDown(id) {
+  const el = $(id);
+  el.className = "big facedown in-right";
+  el.innerHTML = "";
+}
+
+/* ── 進行 ── */
+async function startRound() {
+  const r = S.round;
+  S.sel = null;
+  renderScore(); renderCpuHand();
+  setSlot("mySlot", null); setSlot("cpuSlot", null);
+  $("myVal").innerHTML = ""; $("cpuVal").innerHTML = ""; $("verdict").textContent = ""; $("verdict").className = "verdict";
+
+  const crit = $("crit");
+  crit.classList.remove("reveal");
+  $("critRound").textContent = `${ROUND_NAMES[r]}（${ROUND_POINTS[r]}点）`;
+  if (r < 2) {
+    $("critName").textContent = "？";
+    $("critDesc").textContent = "基準を発表します";
+    $("triangle").hidden = true;
+    renderHand(r === 0); renderDetail();
+    await wait(r === 0 ? 900 : 600);
+    const c = S.crits[r];
+    $("critName").textContent = c.name;
+    $("critDesc").textContent = c.desc;
+  } else {
+    $("critName").textContent = "総合力・三すくみ";
+    $("critDesc").textContent = "画数の合計＋部首のそろい×5。相性が有利なら×1.5";
+    $("triangle").hidden = false;
+  }
+  void crit.offsetWidth; crit.classList.add("reveal");
+  S.accepting = true;
+  renderHand(); renderDetail();
+  startTimer();
+}
+
+function startTimer() {
+  const t0 = performance.now();
+  const bar = $("timerBar"), num = $("timerNum"), box = $("timer");
+  box.hidden = false; box.classList.remove("hurry");
+  clearInterval(timerId);
+  const tick = () => {
+    const left = Math.max(0, TIME_LIMIT - (performance.now() - t0) / 1000);
+    num.textContent = Math.ceil(left);
+    bar.setAttribute("stroke-dashoffset", (119.4 * (1 - left / TIME_LIMIT)).toFixed(1));
+    box.classList.toggle("hurry", left <= 3);
+    if (left <= 0) {
+      clearInterval(timerId);
+      const open = S.hand.map((c, i) => i).filter(i => !S.hand[i].used);
+      playerPlay(S.sel != null ? S.sel : open[rand(open.length)], true);
+    }
+  };
+  tick();
+  timerId = setInterval(tick, 100);
+}
+
+$("hand").addEventListener("click", e => {
+  const b = e.target.closest(".card");
+  if (!b || !S.accepting) return;
+  const i = +b.dataset.i;
+  if (S.sel === i) { playerPlay(i); return; } // 同じ札をもう一度押しても出せる
+  S.sel = i;
+  renderHand(); renderDetail();
+});
+
+function cpuPick() {
+  const open = S.cpu.filter(c => !c.used);
+  if (S.round < 2) {
+    const crit = S.crits[S.round];
+    const ranked = open.slice().sort((a, b) => crit.score(b) - crit.score(a));
+    const keep = open.slice().sort((a, b) => power(b) - power(a))[0]; // 三本目用に残したい札
+    if (Math.random() < 0.25) return open[rand(open.length)];
+    if (ranked[0] === keep && ranked.length > 1 && Math.random() < 0.5) return ranked[1];
+    return ranked[0];
+  }
+  // 三本目：あなたの残り札（型は見えている）に対して平均で強い札を選ぶ
+  const mine = S.hand.filter(c => !c.used);
+  const ev = c => sum(mine.map(m => Math.sign(total(c, m).v - total(m, c).v)));
+  const best = open.slice().sort((a, b) => ev(b) - ev(a))[0];
+  return Math.random() < 0.7 ? best : open[rand(open.length)];
+}
+
+function total(c, vs) {
+  const base = power(c);
+  const adv = BEATS[c.t] === vs.t;
+  return { base, adv, v: adv ? Math.round(base * 1.5) : base };
+}
+
+async function playerPlay(i, timeout) {
+  if (!S.accepting || i == null || S.hand[i].used) return;
+  S.accepting = false;
+  clearInterval(timerId);
+  $("timer").hidden = true;
+  const me = S.hand[i], op = cpuPick();
+  me.used = true; op.used = true; S.sel = null;
+  renderHand(); renderDetail(); renderCpuHand();
+
+  setSlot("mySlot", me, "in-left");
+  if (timeout) { $("verdict").textContent = "時間切れ。札が自動で出ました"; }
+  await wait(250);
+  setFaceDown("cpuSlot");
+  await wait(650);
+  setSlot("cpuSlot", op, "flip");
+  await wait(450);
+
+  // ぶつかる
+  $("flash").classList.remove("go"); void $("flash").offsetWidth; $("flash").classList.add("go");
+  if (!reduceMotion) { $("arena").classList.remove("shake"); void $("arena").offsetWidth; $("arena").classList.add("shake"); }
+
+  let a, b, myHtml, opHtml, tieBreak = false;
+  if (S.round < 2) {
+    const crit = S.crits[S.round];
+    a = crit.score(me); b = crit.score(op);
+    myHtml = valHtml(crit.show(me), crit.why(me));
+    opHtml = valHtml(crit.show(op), crit.why(op));
+    if (a === b) { tieBreak = true; a = power(me); b = power(op); }
+  } else {
+    const tm = total(me, op), to = total(op, me);
+    a = tm.v; b = to.v;
+    myHtml = valHtml(tm.v, `画数${strokes(me)}${me.rn > 1 ? `＋そろい${(me.rn - 1) * 5}` : ""}`, tm.adv ? `相性有利 ×1.5` : "");
+    opHtml = valHtml(to.v, `画数${strokes(op)}${op.rn > 1 ? `＋そろい${(op.rn - 1) * 5}` : ""}`, to.adv ? `相性有利 ×1.5` : "");
+  }
+  $("myVal").innerHTML = myHtml; $("cpuVal").innerHTML = opHtml;
+  countUp($("myVal")); countUp($("cpuVal"));
+  await wait(900);
+
+  const res = a > b ? "win" : a < b ? "lose" : "draw";
+  const pts = ROUND_POINTS[S.round];
+  if (res === "win") S.score[0] += pts;
+  if (res === "lose") S.score[1] += pts;
+  S.results.push({ res, me, op, crit: S.round < 2 ? S.crits[S.round].name : "総合力", tieBreak });
+
+  const winEl = res === "win" ? $("mySlot") : res === "lose" ? $("cpuSlot") : null;
+  const loseEl = res === "win" ? $("cpuSlot") : res === "lose" ? $("mySlot") : null;
+  if (winEl) {
+    winEl.classList.add("winner");
+    winEl.insertAdjacentHTML("beforeend", `<span class="stamp">勝</span>`);
+    loseEl.classList.add("hit");
+    setTimeout(() => loseEl.classList.add("lost"), 300);
+  }
+  const v = $("verdict");
+  v.className = "verdict " + res;
+  v.textContent = (tieBreak ? "同点。総合力で判定 → " : "") +
+    (res === "win" ? `一本！ あなたに${pts}点` : res === "lose" ? `CPUに${pts}点` : "引き分け");
+  renderScore();
+  await wait(1700);
+
+  S.round++;
+  if (S.round < 3) startRound(); else endGame();
+}
+
+function valHtml(n, why, mult) {
+  return `<span class="n" data-to="${typeof n === "number" ? n : ""}">${n}</span><span class="why">${why}</span>${mult ? `<span class="mult">${mult}</span>` : ""}`;
+}
+function countUp(el) {
+  const n = el.querySelector(".n");
+  const m = /^(-?[\d,]+)(.*)$/.exec(n.textContent);
+  if (!m || reduceMotion) return;
+  const to = +m[1].replace(/,/g, ""), suffix = m[2], t0 = performance.now();
+  const step = t => {
+    const p = Math.min(1, (t - t0) / 600);
+    n.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))).toLocaleString("ja-JP") + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+function endGame() {
+  const [m, c] = S.score;
+  const t = $("endTitle");
+  t.textContent = m > c ? "勝ち" : m < c ? "負け" : "引き分け";
+  t.className = m > c ? "win" : m < c ? "lose" : "";
+  $("endScore").textContent = `${m} 対 ${c}`;
+  $("recap").innerHTML = S.results.map((r, i) => `
+    <div class="row">
+      <span class="r">${ROUND_NAMES[i]}<br>${r.crit}</span>
+      <span class="me">${r.me.w}</span>
+      <span class="res ${r.res}">${r.res === "win" ? "勝" : r.res === "lose" ? "負" : "分"}</span>
+      <span class="op">${r.op.w}</span>
+    </div>`).join("");
+  $("endScreen").hidden = false;
+}
+
+function begin() {
+  $("titleScreen").hidden = true;
+  $("endScreen").hidden = true;
+  newGame();
+  startRound();
+}
+$("startBtn").onclick = begin;
+$("againBtn").onclick = begin;
+
+// 開始画面の後ろに、配られた状態の盤面を見せておく
+newGame();
+renderScore(); renderCpuHand(); renderHand(); renderDetail();
+</script>
