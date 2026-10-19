@@ -23,7 +23,8 @@
   --font-ui: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   color-scheme: dark;
 }
-html, body { height: 100%; }
+html { height: 100%; box-sizing: border-box; }
+body { height: 100%; }
 [hidden] { display: none !important; }
 body {
   background: var(--ai);
@@ -37,9 +38,10 @@ button { font-family: inherit; color: inherit; }
 button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outline-offset: 2px; }
 
 .app {
-  max-width: 560px; margin: 0 auto; min-height: 100%;
-  display: flex; flex-direction: column; gap: 10px;
-  padding-block: 12px 16px;
+  /* 一画面に収める：高さは画面に合わせ、土俵が伸び縮みする */
+  max-width: 560px; margin: 0 auto; height: 100%;
+  display: flex; flex-direction: column; gap: 8px;
+  padding-block: 8px 10px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   box-sizing: border-box;
@@ -50,7 +52,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .side { display: flex; flex-direction: column; gap: 2px; }
 .side.cpu { align-items: flex-end; text-align: right; }
 .side .who { font-size: 12px; color: var(--muted); letter-spacing: .08em; }
-.side .pts { font-family: var(--font-brush); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.side .pts { font-family: var(--font-brush); font-size: 26px; line-height: 1; font-variant-numeric: tabular-nums; }
 .pips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .pip {
   min-width: 46px; padding: 4px 6px; border-radius: 6px; text-align: center;
@@ -75,9 +77,9 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .type.策 { background: var(--fuji); }
 
 /* ── 相手の札（裏向き、型だけ見える） ── */
-.cpu-hand { display: flex; justify-content: center; gap: 6px; min-height: 46px; }
+.cpu-hand { display: flex; justify-content: center; gap: 6px; min-height: 38px; }
 .back {
-  width: 34px; height: 46px; border-radius: 5px; display: grid; place-items: center;
+  width: 30px; height: 38px; border-radius: 5px; display: grid; place-items: center;
   background: repeating-linear-gradient(45deg, var(--ai-3) 0 4px, var(--ai-2) 4px 8px);
   border: 1px solid var(--line); transition: opacity .3s, transform .3s;
 }
@@ -85,11 +87,11 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 
 /* ── 土俵 ── */
 .arena {
-  position: relative; flex: 1; min-height: 300px;
+  position: relative; flex: 1 1 0; min-height: 0;
   border: 1px solid var(--line); border-radius: 14px;
   background: color-mix(in srgb, var(--ai-2) 70%, transparent);
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  padding: 14px 12px; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 12px; overflow: hidden;
 }
 .crit { padding-inline: 56px; text-align: center; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .crit .round { font-size: 12px; letter-spacing: .2em; color: var(--kin); }
@@ -128,13 +130,13 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .triangle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
 .triangle .gt { opacity: .7; }
 
-.duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; flex: 1; }
+.duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; flex: 1 1 0; min-height: 0; }
 .slot { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .slot .label { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
 .vs { font-family: var(--font-brush); font-size: 22px; color: var(--muted); }
 
 .big {
-  position: relative; width: 100px; height: 150px; border-radius: 8px;
+  position: relative; height: clamp(92px, 17dvh, 150px); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px;
   background: var(--washi); color: var(--sumi);
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -142,7 +144,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 }
 .big .type { position: absolute; top: 6px; left: 6px; }
 .kanji { display: flex; flex-direction: column; align-items: center; font-family: var(--font-brush); line-height: 1.08; }
-.big .kanji { font-size: 30px; }
+.big .kanji { font-size: clamp(18px, 3.2dvh, 30px); }
 .big.empty { background: transparent; border: 1px dashed var(--line); box-shadow: none; }
 .big.facedown { background: repeating-linear-gradient(45deg, var(--ai-3) 0 6px, var(--ai-2) 6px 12px); border: 1px solid var(--line); }
 .big.lost { filter: grayscale(1) brightness(.7); }
@@ -190,7 +192,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
   transition: transform .18s, box-shadow .18s, opacity .3s;
 }
 .card .type { width: 18px; height: 18px; font-size: 11px; }
-.card .kanji { font-size: clamp(17px, 5.2vw, 24px); }
+.card .kanji { font-size: clamp(15px, min(5.2vw, 2.6dvh), 24px); }
 .card .mini { font-size: 10px; line-height: 1.3; color: var(--sumi-2); font-variant-numeric: tabular-nums; text-align: center; }
 .card.sel { transform: translateY(-10px); box-shadow: 0 0 0 2px var(--kin), 0 8px 18px rgba(0,0,0,.4); }
 .card.used { visibility: hidden; }
@@ -203,7 +205,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 @keyframes deal { from { transform: translateY(60px) rotate(8deg); opacity: 0; } }
 
 .detail {
-  min-height: 74px; border-radius: 10px; background: var(--ai-2); border: 1px solid var(--line);
+  min-height: 58px; border-radius: 10px; background: var(--ai-2); border: 1px solid var(--line);
   padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
 }
 .detail .w { font-family: var(--font-brush); font-size: 20px; display: flex; align-items: center; gap: 8px; }
@@ -332,8 +334,8 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
     <ol class="rules">
       <li>CPUと<b>3本勝負</b>。最初に<b>三本の基準</b>がまとめて発表されます。<br><span class="muted">一本目・二本目は 画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ などからランダム</span></li>
       <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
-      <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>7秒</b>で出す。<br><b>一枚勝負</b>：三本すべてを戦う四字熟語を<b>自分で考えて</b>、<b>30秒</b>で入力する。読みのひらがなでも入力できます。</li>
-      <li>残り時間が少なくなると（手札勝負は3秒、一枚勝負は5秒）、画面のふちが赤く点滅します。</li>
+      <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>10秒</b>で出す。<br><b>一枚勝負</b>：三本すべてを戦う四字熟語を<b>自分で考えて</b>、<b>30秒</b>で入力する。読みのひらがなでも入力できます。</li>
+      <li>残り5秒になると、画面のふちが赤く点滅します。</li>
       <li>手札勝負では、相手の札は型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
     </ol>
     <div class="modes">
@@ -371,8 +373,8 @@ const TYPES = ["攻", "守", "策"];
 const BEATS = { 守: "攻", 攻: "策", 策: "守" };
 const ROUND_NAMES = ["一本目", "二本目", "三本目"];
 const ROUND_POINTS = [1, 1, 2];
-const TIME_LIMITS = { hand: 7, one: 30 };
-const DANGER_AT = { hand: 3, one: 5 };
+const TIME_LIMITS = { hand: 10, one: 30 };
+const DANGER_AT = { hand: 5, one: 5 };
 
 const sum = a => a.reduce((x, y) => x + y, 0);
 const strokes = c => sum(c.s);
