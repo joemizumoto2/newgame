@@ -178,6 +178,9 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .card.used { visibility: hidden; }
 .card:disabled { cursor: default; }
 .hand.locked .card:not(.sel) { opacity: .55; }
+.arena.picking { min-height: 0; flex: none; }
+.arena.picking .duel, .arena.picking .verdict { display: none; }
+.hand.eight { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 14px; }
 .hand.dealing .card { animation: deal .4s backwards cubic-bezier(.2,1.2,.4,1); }
 @keyframes deal { from { transform: translateY(60px) rotate(8deg); opacity: 0; } }
 
@@ -211,6 +214,11 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .rules { text-align: left; font-size: 13px; line-height: 1.75; color: var(--fg); margin: 0; padding-left: 1.2em; }
 .rules li::marker { color: var(--kin); }
 .rules .muted { color: var(--muted); }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.mode { display: flex; flex-direction: column; gap: 4px; align-items: center; padding: 12px 8px; }
+.mode small { font-size: 11px; font-weight: 400; }
+.sub { background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 999px; padding: 10px 22px; cursor: pointer; }
+.endbtns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .start {
   border: none; border-radius: 999px; padding: 14px 34px; font-size: 17px; font-weight: 900;
   background: var(--kin); color: var(--sumi); cursor: pointer;
@@ -276,12 +284,15 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
   <div class="panel">
     <h1>四文字熟語バトル</h1>
     <ol class="rules">
-      <li>熟語の札が5枚配られ、CPUと<b>3本勝負</b>。使うのは3枚です。</li>
-      <li>最初に<b>三本の基準</b>がまとめて発表されます。そのあと一本ごとに<b>15秒</b>以内で1枚出してください。<br><span class="muted">画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ など</span></li>
+      <li>CPUと<b>3本勝負</b>。最初に<b>三本の基準</b>がまとめて発表されます。<br><span class="muted">一本目・二本目は 画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ などからランダム</span></li>
       <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
+      <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>15秒</b>で出す。<br><b>一枚勝負</b>：8枚の札から、三本すべてを戦う1枚を<b>15秒</b>で選ぶ。</li>
       <li>相手の札は、型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
     </ol>
-    <button class="start" id="startBtn">対局開始</button>
+    <div class="modes">
+      <button class="start mode" data-mode="hand">手札勝負<small>一本ずつ出す</small></button>
+      <button class="start mode" data-mode="one">一枚勝負<small>1枚で三本を戦う</small></button>
+    </div>
   </div>
 </div>
 
@@ -290,7 +301,10 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
     <h2 id="endTitle">勝ち</h2>
     <div id="endScore" style="font-size:15px"></div>
     <div class="recap" id="recap"></div>
-    <button class="start" id="againBtn">もう一局</button>
+    <div class="endbtns">
+      <button class="start" id="againBtn">もう一局</button>
+      <button class="sub" id="menuBtn">モードを選ぶ</button>
+    </div>
   </div>
 </div>
 
@@ -343,12 +357,14 @@ function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { co
 let S = null; // 対局の状態
 let timerId = null;
 
-function newGame() {
+function newGame(mode = "hand") {
   const deck = shuffle(DATA);
   const crits = shuffle(CRITS).slice(0, 2);
+  const n = mode === "one" ? 8 : 5;
   S = {
-    hand: deck.slice(0, 5).map(c => ({ ...c, used: false })),
-    cpu: deck.slice(5, 10).map(c => ({ ...c, used: false })),
+    mode,
+    hand: deck.slice(0, n).map(c => ({ ...c, used: false })),
+    cpu: deck.slice(n, n * 2).map(c => ({ ...c, used: false })),
     crits, round: 0, score: [0, 0], results: [], sel: null, accepting: false,
   };
 }
@@ -369,7 +385,7 @@ function renderScore(shown = 3) {
 async function announce() {
   $("critRound").textContent = "今回の三本";
   $("critName").textContent = "基準を発表";
-  $("critDesc").textContent = "一本ごとに15秒で札を出します";
+  $("critDesc").textContent = S.mode === "one" ? "15秒で、三本すべてを戦う1枚を選びます" : "一本ごとに15秒で札を出します";
   $("triangle").hidden = true;
   renderScore(0); renderHand(true); renderDetail();
   await wait(700);
@@ -387,6 +403,7 @@ function renderCpuHand() {
 function renderHand(dealing) {
   const h = $("hand");
   h.classList.toggle("dealing", !!dealing);
+  h.classList.toggle("eight", S.hand.length > 5);
   h.classList.toggle("locked", !S.accepting);
   h.innerHTML = S.hand.map((c, i) => `
     <button class="card ${c.used ? "used" : ""} ${S.sel === i ? "sel" : ""}" data-i="${i}" style="animation-delay:${i * 70}ms"
@@ -428,11 +445,31 @@ function setFaceDown(id) {
 async function startRound() {
   const r = S.round;
   S.sel = null;
-  if (r === 0) { renderCpuHand(); await announce(); }
+  if (r === 0) { $("hand").hidden = $("detail").hidden = false; renderCpuHand(); await announce(); }
   renderScore(); renderCpuHand();
+  $("arena").classList.toggle("picking", S.mode === "one");
+  if (S.mode === "one") {
+    clearArena();
+    $("critRound").textContent = "一枚勝負";
+    $("critName").textContent = "1枚を選ぶ";
+    $("critDesc").textContent = "上の三本すべてを、この1枚で戦います";
+    $("triangle").hidden = false;
+    const crit = $("crit"); crit.classList.remove("reveal"); void crit.offsetWidth; crit.classList.add("reveal");
+  } else {
+    showRound(r);
+  }
+  S.accepting = true;
+  renderHand(); renderDetail();
+  startTimer();
+}
+
+function clearArena() {
   setSlot("mySlot", null); setSlot("cpuSlot", null);
   $("myVal").innerHTML = ""; $("cpuVal").innerHTML = ""; $("verdict").textContent = ""; $("verdict").className = "verdict";
+}
 
+function showRound(r) {
+  clearArena();
   const crit = $("crit");
   crit.classList.remove("reveal");
   $("critRound").textContent = `${ROUND_NAMES[r]}（${ROUND_POINTS[r]}点）`;
@@ -447,9 +484,6 @@ async function startRound() {
     $("triangle").hidden = false;
   }
   void crit.offsetWidth; crit.classList.add("reveal");
-  S.accepting = true;
-  renderHand(); renderDetail();
-  startTimer();
 }
 
 function startTimer() {
@@ -498,6 +532,32 @@ function cpuPick() {
   return Math.random() < 0.7 ? best : open[rand(open.length)];
 }
 
+// 一枚勝負：あなたの8枚（型だけでなく中身も同じ条件で）に対して、平均の得点が高い札を選ぶ
+function cpuPickOne() {
+  const ev = c => sum(S.hand.map(m => sum([0, 1, 2].map(r => {
+    const x = judge(c, m, r);
+    return Math.sign(x.a - x.b) * ROUND_POINTS[r];
+  }))));
+  const best = S.cpu.slice().sort((a, b) => ev(b) - ev(a))[0];
+  return Math.random() < 0.6 ? best : S.cpu[rand(S.cpu.length)];
+}
+
+// r本目の基準で me と op を比べる（a が自分、b が相手の値）
+function judge(me, op, r) {
+  if (r < 2) {
+    const crit = S.crits[r];
+    let a = crit.score(me), b = crit.score(op), tieBreak = false;
+    if (a === b) { tieBreak = true; a = power(me); b = power(op); }
+    return { a, b, tieBreak, myHtml: valHtml(crit.show(me), crit.why(me)), opHtml: valHtml(crit.show(op), crit.why(op)) };
+  }
+  const tm = total(me, op), to = total(op, me);
+  return {
+    a: tm.v, b: to.v, tieBreak: false,
+    myHtml: valHtml(tm.v, `画数${strokes(me)}${me.rn > 1 ? `＋そろい${(me.rn - 1) * 5}` : ""}`, tm.adv ? `相性有利 ×1.5` : ""),
+    opHtml: valHtml(to.v, `画数${strokes(op)}${op.rn > 1 ? `＋そろい${(op.rn - 1) * 5}` : ""}`, to.adv ? `相性有利 ×1.5` : ""),
+  };
+}
+
 function total(c, vs) {
   const base = power(c);
   const adv = BEATS[c.t] === vs.t;
@@ -509,10 +569,29 @@ async function playerPlay(i, timeout) {
   S.accepting = false;
   clearInterval(timerId);
   $("timer").hidden = true;
-  const me = S.hand[i], op = cpuPick();
+  const me = S.hand[i], op = S.mode === "one" ? cpuPickOne() : cpuPick();
   me.used = true; op.used = true; S.sel = null;
   renderHand(); renderDetail(); renderCpuHand();
+  $("arena").classList.remove("picking");
 
+  if (S.mode === "one") {
+    $("hand").hidden = $("detail").hidden = true; // 選んだあとは土俵だけ見せる
+    for (let r = 0; r < 3; r++) {
+      S.round = r;
+      showRound(r);
+      renderScore();
+      await clash(me, op, r === 0 && timeout);
+    }
+    S.round = 3;
+    endGame();
+    return;
+  }
+  await clash(me, op, timeout);
+  S.round++;
+  if (S.round < 3) startRound(); else endGame();
+}
+
+async function clash(me, op, timeout) {
   setSlot("mySlot", me, "in-left");
   if (timeout) { $("verdict").textContent = "時間切れ。札が自動で出ました"; }
   await wait(250);
@@ -525,19 +604,7 @@ async function playerPlay(i, timeout) {
   $("flash").classList.remove("go"); void $("flash").offsetWidth; $("flash").classList.add("go");
   if (!reduceMotion) { $("arena").classList.remove("shake"); void $("arena").offsetWidth; $("arena").classList.add("shake"); }
 
-  let a, b, myHtml, opHtml, tieBreak = false;
-  if (S.round < 2) {
-    const crit = S.crits[S.round];
-    a = crit.score(me); b = crit.score(op);
-    myHtml = valHtml(crit.show(me), crit.why(me));
-    opHtml = valHtml(crit.show(op), crit.why(op));
-    if (a === b) { tieBreak = true; a = power(me); b = power(op); }
-  } else {
-    const tm = total(me, op), to = total(op, me);
-    a = tm.v; b = to.v;
-    myHtml = valHtml(tm.v, `画数${strokes(me)}${me.rn > 1 ? `＋そろい${(me.rn - 1) * 5}` : ""}`, tm.adv ? `相性有利 ×1.5` : "");
-    opHtml = valHtml(to.v, `画数${strokes(op)}${op.rn > 1 ? `＋そろい${(op.rn - 1) * 5}` : ""}`, to.adv ? `相性有利 ×1.5` : "");
-  }
+  const { a, b, tieBreak, myHtml, opHtml } = judge(me, op, S.round);
   $("myVal").innerHTML = myHtml; $("cpuVal").innerHTML = opHtml;
   countUp($("myVal")); countUp($("cpuVal"));
   await wait(900);
@@ -562,9 +629,6 @@ async function playerPlay(i, timeout) {
     (res === "win" ? `一本！ あなたに${pts}点` : res === "lose" ? `CPUに${pts}点` : "引き分け");
   renderScore();
   await wait(1700);
-
-  S.round++;
-  if (S.round < 3) startRound(); else endGame();
 }
 
 function valHtml(n, why, mult) {
@@ -599,14 +663,15 @@ function endGame() {
   $("endScreen").hidden = false;
 }
 
-function begin() {
+function begin(mode) {
   $("titleScreen").hidden = true;
   $("endScreen").hidden = true;
-  newGame();
+  newGame(mode);
   startRound();
 }
-$("startBtn").onclick = begin;
-$("againBtn").onclick = begin;
+document.querySelectorAll(".mode").forEach(b => b.onclick = () => begin(b.dataset.mode));
+$("againBtn").onclick = () => begin(S.mode);
+$("menuBtn").onclick = () => { $("endScreen").hidden = true; $("titleScreen").hidden = false; };
 
 // 開始画面の後ろに、配られた状態の盤面を見せておく
 newGame();
