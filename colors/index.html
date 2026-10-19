@@ -181,6 +181,10 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .hrow i{width:28px;height:28px;border-radius:4px;border:1px solid var(--line)}
 .hrow .res{white-space:nowrap;font-weight:700}
 @media (max-width:520px){.hrow{grid-template-columns:28px minmax(0,1fr)}.hrow .res{grid-column:2;white-space:normal}}
+.howto{font-size:13px;border:1px solid var(--line);border-radius:6px;padding:8px 12px;background:var(--surface)}
+.howto summary{cursor:pointer;font-weight:700}
+.howto p,.howto ul{margin:6px 0 0;max-width:62ch}
+.howto ul{padding-left:1.2em}
 .badge.strong{background:var(--fg);color:var(--bg);font-weight:700}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -246,9 +250,17 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <div class="droprow"><b>赤</b><button class="dropbtn" data-ch="0" data-a="64"><span class="dot big" style="background:#ff0000"></span>大きいしずく</button><button class="dropbtn" data-ch="0" data-a="16"><span class="dot small" style="background:#ff0000"></span>小さいしずく</button></div>
         <div class="droprow"><b>緑</b><button class="dropbtn" data-ch="1" data-a="64"><span class="dot big" style="background:#00ff00"></span>大きいしずく</button><button class="dropbtn" data-ch="1" data-a="16"><span class="dot small" style="background:#00ff00"></span>小さいしずく</button></div>
         <div class="droprow"><b>青</b><button class="dropbtn" data-ch="2" data-a="64"><span class="dot big" style="background:#0000ff"></span>大きいしずく</button><button class="dropbtn" data-ch="2" data-a="16"><span class="dot small" style="background:#0000ff"></span>小さいしずく</button></div>
-        <div class="droprow"><b>彩度</b><button class="dropbtn" data-ch="s" style="grid-column:span 2"><span class="dot big" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span>彩度のしずく（今の色を鮮やかに）</button></div>
+        <div class="droprow"><b>彩度</b><button class="dropbtn" data-ch="s" style="grid-column:span 2"><span class="dot big" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span>彩度のしずく（落とした時の色を鮮やかに）</button></div>
       </div>
       <div class="hist" id="d-now"></div>
+      <details class="howto"><summary>彩度のしくみ</summary>
+        <p>赤・緑・青は、入れた量だけで色が決まります。順番は関係ありません。<b>彩度だけは、落とす瞬間の器の色に効く</b>ので、いつ落とすかで仕上がりが変わります。</p>
+        <ul>
+          <li>色味と明るさはそのままで、<b>一番多い色が増え、一番少ない色が減ります</b>。光を減らせるのは彩度だけです。</li>
+          <li>くすんだ色ほどよく効きます。灰色・黒・白や、赤だけ・黄色だけのような純色には効きません。</li>
+          <li>例：赤・大×2、緑・大×2、青・大のあと（くすんだ黄色）に彩度を落とすと、鮮やかな黄色になります。青を入れる前に落とすと、黄色は純色なので何も起きません。</li>
+        </ul>
+      </details>
       <div class="panel">
         <div class="status" id="d-status">真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。</div>
         <div class="actions">
@@ -277,6 +289,14 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button class="spout" data-ch="s" id="sp-s"><span class="dot" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span><b>彩度</b><small>長押しで注ぐ</small></button>
       </div>
       <div class="hist" id="p-now"></div>
+      <details class="howto"><summary>彩度のしくみ</summary>
+        <p>赤・緑・青は、入れた量だけで色が決まります。順番は関係ありません。<b>彩度だけは、注ぐ瞬間の器の色に効く</b>ので、いつ注ぐかで仕上がりが変わります。</p>
+        <ul>
+          <li>色味と明るさはそのままで、<b>一番多い色が増え、一番少ない色が減ります</b>。光を減らせるのは彩度だけです。</li>
+          <li>くすんだ色ほどよく効きます。灰色・黒・白や、赤だけ・黄色だけのような純色には効きません。</li>
+          <li>例：赤と緑を同じだけ注ぎ、青を少し注いでくすんだ黄色にしてから彩度を注ぐと、鮮やかな黄色になります。青を入れる前に注ぐと、黄色は純色なので何も起きません。</li>
+        </ul>
+      </details>
       <div class="panel">
         <div class="status" id="p-status">真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。</div>
         <div class="actions">
