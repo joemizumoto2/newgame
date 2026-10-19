@@ -174,6 +174,13 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .medal{font-size:11px;font-weight:700;border-radius:999px;padding:1px 9px;white-space:nowrap;border:1px solid var(--line);color:var(--muted)}
 .medal.t1{background:#c98a53;color:#1d1d22;border-color:#c98a53}.medal.t2{background:#c9cdd4;color:#1d1d22;border-color:#c9cdd4}.medal.t3{background:#e2b53c;color:#1d1d22;border-color:#e2b53c}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.hist{font-size:13px;line-height:1.9;min-height:1.9em}
+.hist .step{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:0 8px;margin:0 2px;white-space:nowrap;background:var(--surface)}
+.hist .step.add{border-style:dashed}
+.hrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.hrow i{width:28px;height:28px;border-radius:4px;border:1px solid var(--line)}
+.hrow .res{white-space:nowrap;font-weight:700}
+@media (max-width:520px){.hrow{grid-template-columns:28px minmax(0,1fr)}.hrow .res{grid-column:2;white-space:normal}}
 .badge.strong{background:var(--fg);color:var(--bg);font-weight:700}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;border:1px solid var(--fg);border-radius:999px;padding:0 6px;margin-top:4px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -241,6 +248,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <div class="droprow"><b>青</b><button class="dropbtn" data-ch="2" data-a="64"><span class="dot big" style="background:#0000ff"></span>大きいしずく</button><button class="dropbtn" data-ch="2" data-a="16"><span class="dot small" style="background:#0000ff"></span>小さいしずく</button></div>
         <div class="droprow"><b>彩度</b><button class="dropbtn" data-ch="s" style="grid-column:span 2"><span class="dot big" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span>彩度のしずく（今の色を鮮やかに）</button></div>
       </div>
+      <div class="hist" id="d-now"></div>
       <div class="panel">
         <div class="status" id="d-status">真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。</div>
         <div class="actions">
@@ -268,6 +276,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         <button class="spout" data-ch="b" id="sp-b"><span class="dot" style="background:#0000ff"></span><b>青</b><small>長押しで注ぐ</small></button>
         <button class="spout" data-ch="s" id="sp-s"><span class="dot" style="background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></span><b>彩度</b><small>長押しで注ぐ</small></button>
       </div>
+      <div class="hist" id="p-now"></div>
       <div class="panel">
         <div class="status" id="p-status">真っ暗な器に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。</div>
         <div class="actions">
@@ -277,6 +286,11 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         </div>
       </div>
     </div>
+  </section>
+
+  <section id="history" hidden>
+    <div class="sechead"><h2 id="hist-title">これまでの器</h2><span class="muted" id="hist-n"></span></div>
+    <div id="hist-list"></div>
   </section>
 
   <section>
@@ -823,7 +837,7 @@ $('q-next').onclick=()=>{
 // ---------- 調合モード ----------
 // 光は足し算。器は真っ暗から始まり、赤・緑・青を注ぐほど明るくなる。彩度は今の色をより鮮やかにする。どれも戻せない。
 function saveFound(){ store.set('iro2-found',[...found]); store.set('iro2-crowns',crowns); }
-let pourStart=[0,0,0], pourStartName='black', cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro2-cups',0);
+let pourLog=[], pourStart=[0,0,0], pourStartName='black', cupC=[0,0,0], pouring=null, finished=false, pChal=null, cups=store.get('iro2-cups',0);
 const SPOUT_COLOR={r:'#ff0000',g:'#00ff00',b:'#0000ff',s:'conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)'};
 function hslF(h,s,l){ const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); return [0,8,4].map(n=>255*(l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)))); }
 const cupRGB=()=>cupC.map(v=>Math.round(Math.min(255,Math.max(0,v))));
@@ -831,16 +845,26 @@ function paintCup(){ $('cup').style.backgroundColor=rgb2hex(cupRGB()); }
 function pourStep(dt,held){
   // 押し始めはちょろちょろ、押し続けるほど勢いが増す
   const rate=14+190*Math.min(1,held/1.6);
-  if(pouring.ch==='s'){ const [h,S,l]=rgb2hsl(cupRGB()); if(S>0){ const ns=S+(1-S)*Math.min(1,rate/160*dt); cupC=hslF(h,ns,l); } }
-  else { const i='rgb'.indexOf(pouring.ch); cupC[i]=Math.min(255,cupC[i]+rate*dt); }
-  paintCup();
+  const seg=pourLog[pourLog.length-1];
+  if(pouring.ch==='s'){ const [h,S,l]=rgb2hsl(cupRGB()); if(S>0){ const ns=S+(1-S)*Math.min(1,rate/160*dt); cupC=hslF(h,ns,l); seg.a+=(ns-S)*255; } }
+  else { const i='rgb'.indexOf(pouring.ch), before=cupC[i]; cupC[i]=Math.min(255,cupC[i]+rate*dt); seg.a+=cupC[i]-before; }
+  paintCup(); renderPourNow();
 }
 function tick(t){ if(!pouring) return; const dt=Math.min(.05,(t-pouring.last)/1000); pouring.last=t; pourStep(dt,(t-pouring.t0)/1000); requestAnimationFrame(tick); }
 function startPour(ch){ if(pouring) return;
   if(pChal){ if(pChal.ch && pChal.ch!==ch) return; if(!pChal.ch){ pChal.ch=ch; $('p-done').disabled=false; document.querySelectorAll('.spout').forEach(b=>b.disabled=b.dataset.ch!==ch); } }
   else if(finished) return; const now=performance.now(); pouring={ch,t0:now,last:now};
+  const last=pourLog[pourLog.length-1], add=!!pChal;
+  if(last && last.ch===ch && last.add===add) {} else pourLog.push({ch,a:0,add});
   $('sp-'+ch).classList.add('on'); const st=$('stream'); st.style.background=SPOUT_COLOR[ch]; st.classList.add('on');
   pourStep(.03,0); requestAnimationFrame(tick); }
+// 注いだ量は数字ではなく言葉で残す
+const POUR_JA={r:'赤',g:'緑',b:'青',s:'彩度'};
+const amountJa=a=>a<6?'ちょろっと':a<24?'少し':a<64?'しっかり':a<128?'たっぷり':'なみなみ';
+function pourStepsHTML(){ const head=pourStartName==='black'?'':`<span class="step">${STARTS.find(x=>x[0]===pourStartName)[1]}から</span>→`;
+  const segs=pourLog.filter(x=>x.a>0.05);
+  return head+(segs.length?segs.map(x=>`<span class="step${x.add?' add':''}">${x.add?'＋':''}${POUR_JA[x.ch]} ${amountJa(x.a)}</span>`).join('→'):''); }
+function renderPourNow(){ const h=pourStepsHTML(); $('p-now').innerHTML='この器：'+(h||'<span class="muted">まだ何も注いでいません</span>'); }
 function stopPour(){ if(!pouring) return; $('sp-'+pouring.ch).classList.remove('on'); $('stream').classList.remove('on'); pouring=null; }
 document.querySelectorAll('.spout').forEach(b=>{
   b.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ b.setPointerCapture(e.pointerId); }catch(_){} startPour(b.dataset.ch); });
@@ -861,7 +885,7 @@ $('p-done').onclick=()=>{
   if(t){ pChal={target:t,ch:null}; setSpouts(true); $('p-done').disabled=true; $('p-done').textContent='もう一度仕上げる'; $('p-empty').textContent='見送って次の器へ'; }
   else { $('p-done').disabled=true; $('p-empty').textContent='次の器へ'; }
 };
-function emptyCup(){ stopPour(); cupC=pourStart.slice(); finished=false; pChal=null; $('p-done').textContent='仕上げる'; setSpouts(true); $('p-done').disabled=false; paintCup();
+function emptyCup(){ stopPour(); cupC=pourStart.slice(); pourLog=[]; renderPourNow(); finished=false; pChal=null; $('p-done').textContent='仕上げる'; setSpouts(true); $('p-done').disabled=false; paintCup();
   $('p-empty').textContent='器を空ける'; $('sample').hidden=true;
   $('p-status').className='status'; $('p-status').textContent=(pourStartName==='black'?'真っ暗な器':'選んだ系統の手前まで光が入った器')+'に光を注いで色を作ります。注いだ光は戻せません。できたと思ったら「仕上げる」を押してください。'; }
 $('p-empty').onclick=emptyCup;
@@ -869,18 +893,21 @@ $('p-empty').onclick=emptyCup;
 // ---------- しずくモード ----------
 // 大きいしずく＝1/4、小さいしずく＝1/16、彩度のしずく＝今の色の鮮やかさを3割ほど上げる。器は12滴まで。
 const DROP_CAP=12, DROP_SAT=0.35;
-let dropC=[0,0,0], dropUsed=0, dropDone=false, dChal=null, dropLog=[]; // dChal={target, ch}: 継ぎ足しチャレンジ中
+let dropC=[0,0,0], dropUsed=0, dropDone=false, dChal=null, dropLog=[], dropAdd=[]; // dChal={target, ch}: 継ぎ足しチャレンジ中
 function satDrop(c){ const [h,s,l]=rgb2hsl(c); return s ? hsl2rgb(h,s+(1-s)*DROP_SAT,l) : c; }
 function renderDrop(){
   $('cup-d').style.backgroundColor=rgb2hex(dropC);
   $('meter').innerHTML=Array.from({length:DROP_CAP},(_,i)=>`<i class="${i<dropUsed?'used':''}"></i>`).join('');
   document.querySelectorAll('.dropbtn').forEach(b=>b.disabled = dChal ? (dChal.ch!=null && b.dataset.ch!==dChal.ch) : (dropDone||dropUsed>=DROP_CAP));
   $('d-done').disabled = dChal ? dChal.ch==null : dropDone;
+  const h=dropStepsHTML(); $('d-now').innerHTML='この器：'+(h||'<span class="muted">まだ何も落としていません</span>');
 }
+function dropStepsHTML(){ const a=dropLog.length?recipeHTML(dropLog):'', b=dropAdd.length?recipeText(dropAdd).split(' → ').map(x=>`<span class="step add">＋${x}</span>`).join('→'):'';
+  return a+(a&&b?'→':'')+b; }
 document.querySelectorAll('.dropbtn').forEach(b=>b.onclick=()=>{
   if(dChal){ if(dChal.ch!=null && dChal.ch!==b.dataset.ch) return; dChal.ch=b.dataset.ch; }
   else if(dropDone||dropUsed>=DROP_CAP) return;
-  if(!dChal) dropLog.push(b.dataset.ch==='s' ? 's' : b.dataset.ch+(b.dataset.a==='64'?'L':'S'));
+  const tok=b.dataset.ch==='s' ? 's' : b.dataset.ch+(b.dataset.a==='64'?'L':'S'); if(dChal) dropAdd.push(tok); else dropLog.push(tok);
   if(b.dataset.ch==='s') dropC=satDrop(dropC); else { const i=+b.dataset.ch; dropC=dropC.slice(); dropC[i]=Math.min(255,dropC[i]+ +b.dataset.a); }
   if(!dChal) dropUsed++; const cup=$('cup-d'); cup.classList.remove('bump'); void cup.offsetWidth; cup.classList.add('bump');
   if(!dChal && dropUsed>=DROP_CAP){ $('d-status').className='status'; $('d-status').textContent='器がいっぱいになりました。「仕上げる」を押してください。'; }
@@ -902,21 +929,29 @@ function recipeText(r){ if(!r||!r.length) return '何も落とさない'; const 
   for(const t of r){ const last=runs[runs.length-1]; if(last&&last[0]===t) last[1]++; else runs.push([t,1]); }
   return runs.map(([t,n])=>STEP_JA[t]+(n>1?'×'+n:'')).join(' → '); }
 function recipeHTML(r){ return recipeText(r).split(' → ').map(x=>`<span class="step">${x}</span>`).join('→'); }
+// これまでの器（新しい順に30杯まで）
+const history=store.get('iro2-history',[]);
+function histPush(mode,rgb,res){ history.unshift({m:mode,steps:mode==='drop'?dropStepsHTML():pourStepsHTML(),hex:rgb2hex(rgb),res}); history.length=Math.min(history.length,30); store.set('iro2-history',history); renderHistory(); }
+function histChallenge(mode,rgb,res){ const h=history[0]; if(!h||h.m!==mode) return; h.steps=mode==='drop'?dropStepsHTML():pourStepsHTML(); h.hex2=rgb2hex(rgb); h.res+=' → '+res; store.set('iro2-history',history); renderHistory(); }
+function renderHistory(){ const m=mode==='drop'?'drop':mode==='free'?'pour':null; $('history').hidden=!m; if(!m) return;
+  const list=history.filter(h=>h.m===m).slice(0,12);
+  $('hist-title').textContent=`これまでの器（${MODE_JA[m]}）`; $('hist-n').textContent=list.length?`新しい順に${list.length}杯`:'';
+  $('hist-list').innerHTML=list.length?list.map(h=>`<div class="hrow"><i style="background:${h.hex2||h.hex}"></i><div class="hist">${h.steps||'<span class="muted">何も入れずに仕上げ</span>'}</div><span class="res">${h.res}</span></div>`).join(''):'<p class="muted">まだ仕上げた器はありません。</p>'; }
 function judgeCup(rgb, st, show, hide, mode, canTopUp){
   cups++; store.set('iro2-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
   if(d<EXACT_TH){ const {isNew,up}=record(n,3,mode); show(n,MODE_JA[mode]+'金冠');
     if(mode==='drop') saveRecipe(n);
-    st.className='status good'; st.textContent=`「${n.kana}」ぴったり。一発で作ったので${MODE_JA[mode]}金冠です。`+(isNew?'図鑑に載せました。':up?'':'もう持っています。')+(mode==='drop'?`　レシピ：${recipeText(recipes[n.name])}`:''); return null; }
+    st.className='status good'; st.textContent=`「${n.kana}」ぴったり。一発で作ったので${MODE_JA[mode]}金冠です。`+(isNew?'図鑑に載せました。':up?'':'もう持っています。')+(mode==='drop'?`　レシピ：${recipeText(recipes[n.name])}`:''); histPush(mode,rgb,`${n.kana}（金冠）`); return null; }
   if(d<NAME_TH){ const {isNew}=record(n,1,mode); show(n,'っぽい色');
-    st.className='status'+(isNew?' good':''); st.textContent=`「${n.kana}」っぽい色ができました。`+(isNew?'図鑑に載せました。':'もう図鑑に載っています。');
+    st.className='status'+(isNew?' good':''); st.textContent=`「${n.kana}」っぽい色ができました。`+(isNew?'図鑑に載せました。':'もう図鑑に載っています。'); histPush(mode,rgb,`${n.kana}っぽい`);
     if((crowns[mode][n.name]||0)<2){
       if(canTopUp(n)){ st.textContent+=`　1色だけ継ぎ足して差5%未満に仕上げれば、${MODE_JA[mode]}銀冠です。`; return n; }
       st.textContent+='　この混ぜ方からは、1色の継ぎ足しでは銀冠に届きません。'; }
     return null; }
   hide();
-  if(d<22){ st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; }
-  else { st.className='status'; st.textContent='名前のない色ができました。'; }
+  if(d<22){ st.className='status warn'; st.textContent='名前のある色の近くまで来ていたようです。'; histPush(mode,rgb,'名前なし（惜しい）'); }
+  else { st.className='status'; st.textContent='名前のない色ができました。'; histPush(mode,rgb,'名前なし'); }
   return null;
 }
 // 1色だけの継ぎ足しで、銀冠の基準（差5%未満）に届く道があるか。届かないならチャレンジは出さない
@@ -933,8 +968,8 @@ function reachDrop(c0,target){ const ok=rgb=>dE(rgb2lab(rgb),target.lab)<SILVER_
 function judgeChallenge(rgb, target, st, mode){
   const d=dE(rgb2lab(rgb),target.lab);
   const pct=`差 ${d<0.05?'0.0':d.toFixed(1)}%`;
-  if(d<SILVER_TH){ record(target,2,mode); st.className='status good'; st.textContent=`「${target.kana}」に仕上がりました（${pct}）。${MODE_JA[mode]}銀冠です。`; }
-  else { const [n]=nearest(rgb); st.className='status'; st.textContent=`銀冠には届きませんでした（${pct}、銀冠は5%未満）。図鑑は「${target.kana}」っぽい色のままです。`+(n.name!==target.name?'（別の色に近づいていました）':''); }
+  if(d<SILVER_TH){ record(target,2,mode); st.className='status good'; st.textContent=`「${target.kana}」に仕上がりました（${pct}）。${MODE_JA[mode]}銀冠です。`; histChallenge(mode,rgb,`銀冠（${pct}）`); }
+  else { const [n]=nearest(rgb); st.className='status'; st.textContent=`銀冠には届きませんでした（${pct}、銀冠は5%未満）。図鑑は「${target.kana}」っぽい色のままです。`+(n.name!==target.name?'（別の色に近づいていました）':''); histChallenge(mode,rgb,`銀冠ならず（${pct}）`); }
 }
 function showSampleD(c,sub){ $('sample-d').hidden=false; $('sample-d-sw').style.background=c.hex; $('sample-d-name').textContent=c.kana; $('sample-d-sub').textContent=sub; }
 $('d-done').onclick=()=>{
@@ -944,7 +979,7 @@ $('d-done').onclick=()=>{
   if(t){ dChal={target:t,ch:null}; $('d-done').textContent='もう一度仕上げる'; $('d-empty').textContent='見送って次の器へ'; }
   else $('d-empty').textContent='次の器へ';
   renderDrop(); };
-$('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropLog=[]; dropDone=false; dChal=null; $('d-done').textContent='仕上げる'; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
+$('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropLog=[]; dropAdd=[]; dropDone=false; dChal=null; $('d-done').textContent='仕上げる'; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
   $('d-status').className='status'; $('d-status').textContent='真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。12滴を使い切る前に「仕上げる」を押しても構いません。'; renderDrop(); };
 
 function setMode(m){
@@ -952,7 +987,7 @@ function setMode(m){
   $('tab-quiz').setAttribute('aria-pressed',m==='quiz'); $('tab-drop').setAttribute('aria-pressed',m==='drop'); $('tab-free').setAttribute('aria-pressed',m==='free');
   $('bench-quiz').hidden=m!=='quiz'; $('bench-drop').hidden=m!=='drop'; $('bench-pour').hidden=m!=='free';
   if(m==='quiz') renderQuiz();
-  update();
+  renderHistory(); update();
 }
 $('tab-quiz').onclick=()=>setMode('quiz');
 $('tab-free').onclick=()=>setMode('free');
@@ -1062,6 +1097,6 @@ document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ filter=b
   document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b)); renderGrid(); });
 
 Object.values(K).forEach(k=>k.addEventListener('input',update));
-renderGrid(); trophiesReady=true; newQuiz(); paintCup(); renderDrop(); renderCups(); renderStarts(); update();
+renderGrid(); trophiesReady=true; newQuiz(); paintCup(); renderDrop(); renderCups(); renderStarts(); renderPourNow(); renderHistory(); update();
 })();
 </script>
