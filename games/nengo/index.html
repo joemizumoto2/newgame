@@ -1,0 +1,469 @@
+<title>年号あつめ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: スマホ一列の図鑑。上に時代の色で塗り分けた集まり具合の帯、その下に時代ごとの年号タイル。タイルを開くと3枚選ぶ問題、正解で出来事のカードが開く */
+:root{
+  --bg:#E9ECF0; --surface:#FFFFFF; --surface-2:#F1F3F6; --ink:#17202B; --muted:#5B6672; --line:#D2D8DF;
+  --primary:#28367E; --primary-ink:#FFFFFF; --primary-soft:#E2E6F6;
+  --good:#167A55; --good-bg:#DDF3E9; --bad:#B3362A; --bad-bg:#FBE3DF; --gold:#8C6400; --gold-bg:#FFF1C9;
+  --e0:#A0623A; --e1:#3F8A5C; --e2:#6E4F9A; --e3:#B84E6C; --e4:#35548A; --e5:#6A7A2A; --e6:#B5402A; --e7:#8E6A0E; --e8:#4E565E; --e9:#1D7F80;
+  --shadow:0 1px 0 rgba(23,32,43,.04), 0 8px 22px -16px rgba(23,32,43,.4);
+  --font-display:'Dela Gothic One','Hiragino Sans','Yu Gothic',system-ui,sans-serif;
+  --font-body:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic','Noto Sans JP',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1419; --surface:#182028; --surface-2:#1F2932; --ink:#E6EBF0; --muted:#98A5B1; --line:#2C3843;
+  --primary:#A3AEFF; --primary-ink:#0F1419; --primary-soft:#252C50;
+  --good:#52CC99; --good-bg:#16322A; --bad:#FF8A7D; --bad-bg:#3B201D; --gold:#EDC25A; --gold-bg:#3A3014;
+  --e0:#B0714A; --e1:#468F62; --e2:#7A5CA6; --e3:#BA5874; --e4:#44649C; --e5:#76863A; --e6:#BC4C36; --e7:#9A771A; --e8:#5C656E; --e9:#23898A;
+  --shadow:0 1px 0 rgba(0,0,0,.2), 0 10px 26px -18px rgba(0,0,0,.8);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1419; --surface:#182028; --surface-2:#1F2932; --ink:#E6EBF0; --muted:#98A5B1; --line:#2C3843;
+  --primary:#A3AEFF; --primary-ink:#0F1419; --primary-soft:#252C50;
+  --good:#52CC99; --good-bg:#16322A; --bad:#FF8A7D; --bad-bg:#3B201D; --gold:#EDC25A; --gold-bg:#3A3014;
+  --e0:#B0714A; --e1:#468F62; --e2:#7A5CA6; --e3:#BA5874; --e4:#44649C; --e5:#76863A; --e6:#BC4C36; --e7:#9A771A; --e8:#5C656E; --e9:#23898A;
+  --shadow:0 1px 0 rgba(0,0,0,.2), 0 10px 26px -18px rgba(0,0,0,.8);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.app{max-width:560px;margin:0 auto;padding-block:16px 48px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+.logo{font-family:var(--font-display);font-size:30px;line-height:1.1;letter-spacing:.02em;margin:0}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.top .sub{font-size:13px;color:var(--muted);font-weight:700;letter-spacing:.12em}
+.iconbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px;cursor:pointer;font-variant-numeric:tabular-nums}
+.iconbtn svg{width:18px;height:18px;fill:var(--gold)}
+.meter{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.meter .row{display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
+.meter .num{font-size:22px;font-variant-numeric:tabular-nums}
+.meter .num small{font-size:14px;color:var(--muted);font-weight:500}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2)}
+.bar span{display:block;height:100%}
+.meter .hint{font-size:13px;color:var(--muted);margin:0}
+.primary{display:block;width:100%;border:0;border-radius:12px;padding:13px 16px;background:var(--primary);color:var(--primary-ink);font-weight:700;font-size:16px;cursor:pointer}
+.primary:disabled{opacity:.4;cursor:default}
+.ghost{display:block;width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 16px;background:var(--surface);font-weight:700;font-size:15px;cursor:pointer}
+.era{display:flex;flex-direction:column;gap:8px}
+.era h2{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.era h2 i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.era h2 small{margin-left:auto;font-size:13px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+.tile{position:relative;min-width:0;border-radius:10px;padding:8px 10px 9px;text-align:left;cursor:pointer;min-height:70px;display:flex;flex-direction:column;justify-content:space-between;gap:2px;border:1.5px dashed var(--line);background:var(--surface-2)}
+.tile .y{font-weight:700;font-size:19px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .y small{font-size:11px;font-weight:500;margin-left:1px}
+.tile .t{font-size:12px;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.tile.open{border:0;color:#fff;background:var(--c)}
+.tile.open .t{color:rgba(255,255,255,.92);font-weight:500}
+.tile.open svg{position:absolute;right:6px;top:6px;width:22px;height:22px;opacity:.55}
+.tile .star{position:absolute;right:7px;bottom:6px;font-size:11px;font-weight:700;color:#fff;opacity:.9}
+.back{align-self:flex-start;border:0;background:none;padding:4px 0;font-weight:700;color:var(--primary);cursor:pointer;font-size:15px}
+.qhead{display:flex;flex-direction:column;gap:2px}
+.qhead .era-chip{align-self:flex-start;color:#fff;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--c)}
+.qhead .bigyear{font-size:52px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.qhead .bigyear small{font-size:22px;margin-left:4px}
+.qhead .q{margin:0;color:var(--muted);font-size:14px}
+.sentence{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:16px;font-weight:700;line-height:1.5}
+.sentence .blank{border-bottom:2px solid var(--line);color:var(--muted);font-weight:500;padding:0 4px;min-width:72px}
+.sentence .fill{padding:1px 8px;border-radius:6px;background:var(--primary-soft)}
+.sentence .fill.ok{background:var(--good-bg);color:var(--good)}
+.slot{display:flex;flex-direction:column;gap:6px}
+.slot h3{margin:0;font-size:13px;color:var(--muted);letter-spacing:.06em;display:flex;gap:6px;align-items:center}
+.slot h3 b{color:var(--good);font-size:12px}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-size:15px;font-weight:500;cursor:pointer;min-width:0}
+.opt span{min-width:0;overflow-wrap:anywhere}
+.opt .mark{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700}
+.opt.sel{border-color:var(--primary);background:var(--primary-soft)}
+.opt.sel .mark{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.opt.ok{border-color:var(--good);background:var(--good-bg);color:var(--good);cursor:default}
+.opt.ok .mark{background:var(--good);border-color:var(--good);color:var(--surface)}
+.opt.ng{border-color:var(--bad);background:var(--bad-bg);color:var(--bad);text-decoration:line-through;cursor:default}
+.opt.ng .mark{border-color:var(--bad)}
+.opt.dim{opacity:.4;cursor:default}
+.msg{margin:0;font-weight:700;text-align:center}
+.msg.bad{color:var(--bad)}
+.card{background:var(--surface);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.card .art{display:block;width:100%;max-width:100%;aspect-ratio:16/9;height:auto}
+.card .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.card .ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.card .ttl b{font-size:22px;text-wrap:balance}
+.card .ttl span{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.card .line{margin:0;font-weight:700;padding:8px 12px;border-radius:8px;background:var(--surface-2)}
+.card p{margin:0}
+.card .note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px}
+.card .note b{color:var(--ink)}
+.badge{align-self:flex-start;font-size:12px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--gold-bg);color:var(--gold)}
+.newtro{background:var(--gold-bg);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.newtro h3{margin:0;font-size:14px;color:var(--gold)}
+.newtro div{font-weight:700;display:flex;gap:8px;align-items:center}
+.newtro svg{width:18px;height:18px;fill:var(--gold);flex:none}
+.btns{display:flex;flex-direction:column;gap:8px}
+.tlist{display:flex;flex-direction:column;gap:8px}
+.tro{display:flex;gap:12px;align-items:center;background:var(--surface);border-radius:12px;padding:10px 12px;border:1px solid var(--line)}
+.tro .ic{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2)}
+.tro .ic svg{width:20px;height:20px;fill:var(--line)}
+.tro.got{border-color:transparent;box-shadow:var(--shadow)}
+.tro.got .ic{background:var(--gold-bg)}
+.tro.got .ic svg{fill:var(--gold)}
+.tro .tx{min-width:0;flex:1}
+.tro .tx b{display:block;font-size:15px}
+.tro .tx span{display:block;font-size:13px;color:var(--muted)}
+.tro .pg{flex:none;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.tro.got .pg{color:var(--gold)}
+.sec{margin:6px 0 0;font-size:14px;color:var(--muted);letter-spacing:.08em}
+.foot{font-size:12px;color:var(--muted);text-align:center;margin:0}
+@media (prefers-reduced-motion: no-preference){
+  .pop{animation:pop .45s ease-out}
+  @keyframes pop{from{transform:scale(.94);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+
+<div class="app" id="app"></div>
+
+<script>
+// ===== ゲームの中身（DOM に依存しない。Node でもそのまま動く） =====
+const ERAS = ['弥生','飛鳥','奈良','平安','鎌倉','室町','戦国・安土桃山','江戸','幕末','明治'];
+const SLOT_LABELS = ['だれが', 'なにを・どこで', 'どうした'];
+const CATS = { 戦:'争い', 政:'政治', 都:'都・城', 文:'文化', 海:'海の向こう' };
+
+// [年, 時代, 種類, 名前, だれが, なにを・どこで, どうした, 説明, 諸説・補足]
+const EVENT_ROWS = [
+  [57,0,'海','金印を授かる','奴国の王が','後漢の皇帝に使いを送り','「漢委奴国王」の金印を授かった','中国の歴史書『後漢書』に記録がある。江戸時代の1784年、福岡県の志賀島でこの金印とされるものが見つかった。'],
+  [239,0,'海','卑弥呼の使い','邪馬台国の卑弥呼が','魏に使いを送り','「親魏倭王」の称号を受けた','中国の歴史書『魏志倭人伝』に記録がある。','使いを送った年を238年とする説もある。邪馬台国がどこにあったかも諸説ある。'],
+  [538,1,'海','仏教の伝来','百済の聖明王が','倭（日本）の朝廷に','仏像や経典を贈った','仏教が正式に伝わった出来事とされる。','552年とする説もある。'],
+  [593,1,'政','聖徳太子が摂政に','聖徳太子が','おばにあたる推古天皇の','摂政となった','推古天皇は最初の女性天皇とされる。太子は蘇我馬子と協力して政治を進めた。','「聖徳太子」は後の時代の呼び名で、厩戸王（うまやとおう）とも呼ばれる。摂政という役職だったかどうかにも議論がある。'],
+  [604,1,'政','十七条の憲法','聖徳太子が','役人の心がまえとして','十七条の憲法を定めた','「和をもって貴しとなす」で始まる。今の憲法とはちがい、役人が守るべき心得を示したもの。'],
+  [607,1,'海','遣隋使','小野妹子が','隋の皇帝のもとへ','遣隋使として渡った','「日出づる処の天子…」で始まる国書を持って行き、隋の皇帝・煬帝を不快にさせたと伝わる。'],
+  [645,1,'戦','乙巳の変','中大兄皇子と中臣鎌足が','蘇我入鹿を','宮中で討ち、政治の改革を始めた','この後に始まる改革を「大化の改新」と呼ぶ。中臣鎌足は亡くなる直前に「藤原」の姓を与えられ、藤原氏の祖となった。'],
+  [672,1,'戦','壬申の乱','大海人皇子が','天智天皇の子・大友皇子と','皇位をめぐって戦い、勝った','勝った大海人皇子は即位して天武天皇となった。古代最大の内乱といわれる。'],
+  [701,1,'政','大宝律令','刑部親王や藤原不比等らが','唐の法律にならって','大宝律令をつくった','律は刑罰、令は政治のしくみを定めたきまり。天皇を中心とする国のしくみが整った。'],
+  [710,2,'都','平城京への遷都','元明天皇が','奈良の平城京に','都を移した','唐の都・長安にならい、碁盤の目のように道が通っていた。ここから奈良時代が始まる。'],
+  [712,2,'文','古事記','太安万侶が','稗田阿礼が覚えていた話をもとに','『古事記』をまとめた','今に残る日本で最も古い歴史書とされる。神話から推古天皇までのことが書かれている。'],
+  [743,2,'政','墾田永年私財法','聖武天皇の朝廷が','新しく切り開いた田を','永久に自分のものにしてよいと定めた','開墾を進めるための法。貴族や寺社が土地を広げ、のちの荘園のもとになった。'],
+  [752,2,'文','東大寺の大仏開眼','聖武太上天皇らが','奈良の東大寺で','大仏の開眼供養を行った','開眼供養は、できあがった仏像に魂を入れる儀式。聖武天皇は位をゆずった後もこの事業を見届けた。','この時点で大仏の金めっきなどはまだ途中だった。'],
+  [753,2,'海','鑑真の来日','唐の僧・鑑真が','5回の渡航失敗の末に日本へ','たどり着き、正式な戒律を伝えた','途中で目が見えなくなりながら、6回目の航海で日本に着いた。のちに奈良に唐招提寺を開いた。','九州に着いたのが753年の暮れで、平城京に入ったのは翌754年。'],
+  [794,3,'都','平安京への遷都','桓武天皇が','京都の平安京に','都を移した','ここから約400年続く平安時代が始まる。平安京はその後も長く都であり続けた。'],
+  [804,3,'海','最澄と空海の入唐','最澄と空海が','同じ遣唐使の一行で','唐へ渡った','二人は別々の船に乗っていた。帰国後、最澄は天台宗を、空海は真言宗を開いた。'],
+  [894,3,'海','遣唐使の停止','菅原道真が','唐が乱れていることを理由に','遣唐使の停止を願い出た','この後、日本の風土に合った「国風文化」が育っていった。','正式に廃止されたわけではなく、その後送られないまま907年に唐が滅んだ。'],
+  [905,3,'文','古今和歌集','紀貫之らが','醍醐天皇の命令で','『古今和歌集』を編んだ','天皇の命令でつくられた最初の和歌集（勅撰和歌集）。紀貫之はのちに『土佐日記』も書いた。','905年は編集が命じられた年とする見方もあり、完成の年には諸説ある。'],
+  [939,3,'戦','平将門の乱','平将門が','関東で','朝廷にそむき「新皇」を名乗った','翌940年に討たれた。同じころ、西では藤原純友も乱を起こしていた。','一族どうしの争いは935年から続いていた。'],
+  [1018,3,'文','望月の歌','藤原道長が','娘の威子が天皇の后となった祝いの席で','「この世をば わが世とぞ思ふ…」と詠んだ','三人の娘を次々と天皇の后にし、権力の頂点にいた。この歌は藤原実資の日記『小右記』に記されている。'],
+  [1053,3,'文','平等院鳳凰堂','藤原頼通が','宇治の平等院に','阿弥陀堂（鳳凰堂）を建てた','頼通は道長の子。極楽浄土をこの世に表そうとした建物で、今の10円玉にも描かれている。'],
+  [1086,3,'政','院政の始まり','白河上皇が','天皇の位をゆずった後も','上皇として政治を動かした（院政）','藤原氏の摂関政治に代わる政治のかたち。上皇の住まいを「院」と呼んだことからこの名がある。'],
+  [1156,3,'戦','保元の乱','後白河天皇の側が','崇徳上皇の側と','京都で戦い、勝った','天皇家と藤原氏の争いに武士が加わった。武士の力が大きくなるきっかけとなった。'],
+  [1159,3,'戦','平治の乱','平清盛が','源義朝を','破り、力を強めた','この戦いの後、義朝の子・頼朝は伊豆へ流された。','戦いが起きた平治元年12月は、今のこよみでは1160年1月にあたる。'],
+  [1167,3,'政','平清盛が太政大臣に','平清盛が','武士として初めて','太政大臣になった','娘を天皇の后にし、「平氏にあらずんば人にあらず」と言われるほど平氏は栄えた。'],
+  [1185,3,'戦','壇ノ浦の戦い','源義経らが','壇ノ浦（今の山口県下関市）で','平氏を滅ぼした','幼い安徳天皇も海に沈んだと伝わる。この年、源頼朝は国ごとに守護、荘園などに地頭を置くことを認められた。'],
+  [1192,4,'政','源頼朝が征夷大将軍に','源頼朝が','朝廷から','征夷大将軍に任じられた','鎌倉幕府の始まりの年として長く覚えられてきた。','守護・地頭を置いた1185年を幕府の始まりとする説が今は有力。'],
+  [1221,4,'戦','承久の乱','後鳥羽上皇が','鎌倉幕府を倒そうと','兵を挙げたが敗れた','北条政子が御家人たちに頼朝の恩を説き、幕府側を結束させたと伝わる。上皇は隠岐に流された。'],
+  [1232,4,'政','御成敗式目','北条泰時が','武士の裁判の基準として','御成敗式目を定めた','武士のための最初の法律。51か条からなる。'],
+  [1274,4,'戦','元寇（文永の役）','元と高麗の大軍が','博多湾に','攻め寄せた','幕府の御家人たちが防いだ。1281年にも再び攻めてきた（弘安の役）。','元軍が引き揚げた理由として「暴風雨」が有名だが、くわしくは諸説ある。'],
+  [1297,4,'政','永仁の徳政令','鎌倉幕府が','生活に苦しむ御家人のために','手放した土地をただで取り戻させた','元寇の後、ほうびが少なく御家人の暮らしは苦しくなっていた。かえって経済が混乱した。'],
+  [1333,4,'戦','鎌倉幕府の滅亡','足利尊氏や新田義貞らが','後醍醐天皇の呼びかけに応じて','鎌倉幕府を滅ぼした','尊氏は京都の六波羅探題を、義貞は鎌倉を攻め落とした。'],
+  [1334,5,'政','建武の新政','後醍醐天皇が','天皇を中心とする','新しい政治（建武の新政）を始めた','公家を重んじたため武士の不満が高まり、2年あまりで崩れた。'],
+  [1338,5,'政','足利尊氏が征夷大将軍に','足利尊氏が','北朝の天皇から','征夷大将軍に任じられた','京都に室町幕府を開いた。これより前に後醍醐天皇は吉野に移って南朝を立てており、朝廷は二つに分かれていた。'],
+  [1392,5,'政','南北朝の合一','足利義満が','南朝と北朝を','一つにまとめた','約60年続いた南北朝の対立が終わった。'],
+  [1397,5,'文','金閣','足利義満が','京都の北山に','山荘（のちの金閣）を建て始めた','義満の死後、寺（鹿苑寺）となった。今の金閣は1950年に焼けた後、1955年に建て直されたもの。'],
+  [1404,5,'海','勘合貿易','足利義満が','明と','勘合を使った貿易を始めた','勘合は、正式な貿易船であることを証明する札。海賊（倭寇）と区別するために使われた。'],
+  [1428,5,'戦','正長の土一揆','近江の馬借や農民らが','借金の帳消し（徳政）を求めて','土一揆を起こした','日本で最初の大きな農民の一揆といわれる。酒屋や土倉（金貸し）が襲われた。'],
+  [1467,5,'戦','応仁の乱','細川勝元の東軍が','山名宗全の西軍と','京都で約11年にわたり戦った','将軍のあとつぎ争いなどが原因。京都は焼け野原となり、戦国時代へとつながった。'],
+  [1489,5,'文','銀閣','足利義政が','京都の東山に','観音殿（のちの銀閣）を建てた','落ち着いた美しさの「東山文化」を代表する建物。義政は完成を見ないまま翌年に亡くなった。','1489年は骨組みが組み上がった年（上棟）。銀ぱくは貼られていない。'],
+  [1543,6,'海','鉄砲の伝来','ポルトガル人を乗せた船が','種子島に','流れ着き、鉄砲を伝えた','島の領主・種子島時尭が鉄砲を買い取った。まもなく堺などで作られるようになった。','1542年とする説もある。'],
+  [1549,6,'海','キリスト教の伝来','フランシスコ・ザビエルが','鹿児島に','上陸し、キリスト教を伝えた','今のスペイン出身の、イエズス会の宣教師。約2年間日本で布教した。'],
+  [1560,6,'戦','桶狭間の戦い','織田信長が','桶狭間（今の愛知県）で','今川義元を討ち取った','少ない兵で大軍を破り、信長の名が広まった。'],
+  [1573,6,'政','室町幕府の滅亡','織田信長が','将軍・足利義昭を','京都から追放した','これにより室町幕府は事実上滅んだ。'],
+  [1575,6,'戦','長篠の戦い','織田信長と徳川家康の連合軍が','長篠（今の愛知県）で','武田勝頼の軍を破った','大量の鉄砲を使った戦いとして知られる。','「鉄砲三段撃ち」の話は後の時代の創作ともいわれる。'],
+  [1576,6,'都','安土城','織田信長が','近江の安土（今の滋賀県）に','城を築き始めた','高くそびえる天守を持つ豪華な城だったが、本能寺の変の後に焼けた。'],
+  [1582,6,'戦','本能寺の変','明智光秀が','京都の本能寺で','主君の織田信長を討った','信長は天下統一を目前にしていた。光秀はその11日後、山崎の戦いで羽柴（豊臣）秀吉に敗れた。','光秀がなぜ謀反を起こしたかは今も諸説ある。'],
+  [1588,6,'政','刀狩','豊臣秀吉が','百姓から','刀や鉄砲を取り上げる命令を出した','一揆を防ぎ、武士と百姓の身分を分けるねらいがあった。'],
+  [1590,6,'戦','天下統一','豊臣秀吉が','小田原の北条氏を','降伏させ、天下統一を果たした','応仁の乱から続いた戦国の世がひとまず終わった。'],
+  [1600,6,'戦','関ヶ原の戦い','徳川家康の東軍が','関ヶ原（今の岐阜県）で','石田三成らの西軍を破った','「天下分け目の戦い」と呼ばれる。たった一日で決着がついた。'],
+  [1603,7,'政','江戸幕府の始まり','徳川家康が','征夷大将軍に任じられ','江戸に幕府を開いた','ここから約260年続く江戸時代が始まる。'],
+  [1615,7,'戦','大坂夏の陣','徳川家康が','大坂城を攻め','豊臣家を滅ぼした','秀吉の子・秀頼と母の淀殿は自害した。同じ年に武家諸法度が出された。'],
+  [1635,7,'政','参勤交代','徳川家光が','武家諸法度を改め','参勤交代を制度にした','大名は1年おきに江戸と領地を行き来し、妻と子は江戸に住んだ。大名にとって大きな出費となった。'],
+  [1639,7,'海','ポルトガル船の来航禁止','江戸幕府が','ポルトガル船の','来航を禁止した','ヨーロッパの国ではオランダだけが、長崎の出島で貿易を許されるようになった。この体制はのちに「鎖国」と呼ばれた。'],
+  [1685,7,'政','生類憐みの令','徳川綱吉が','犬をはじめ生き物を','大切にするよう命じた','犬を特に大切にしたため、綱吉は「犬公方」と呼ばれた。綱吉が亡くなるとすぐに廃止された。','一つの法ではなく何度も出された命令の総称で、始まりの年には諸説ある。'],
+  [1689,7,'文','おくのほそ道の旅','松尾芭蕉が','弟子の曾良と','東北・北陸をめぐる旅に出た','この旅をもとに紀行文『おくのほそ道』を書いた。「夏草や兵どもが夢の跡」などの句がある。'],
+  [1702,7,'戦','赤穂浪士の討ち入り','大石内蔵助ら赤穂浪士が','吉良上野介の屋敷に','討ち入り、主君の仇を討った','のちに「忠臣蔵」として芝居などで広く知られるようになった。','討ち入りは元禄15年12月14日の夜で、今のこよみでは1703年1月末にあたる。'],
+  [1716,7,'政','享保の改革','徳川吉宗が','8代将軍となり','享保の改革を始めた','倹約をすすめ、新田開発や目安箱の設置などを行った。'],
+  [1774,7,'文','解体新書','杉田玄白や前野良沢らが','オランダ語の医学書を訳し','『解体新書』を出版した','辞書もほとんどない中で、苦労して訳したと伝わる。蘭学が広まるきっかけとなった。'],
+  [1787,7,'政','寛政の改革','松平定信が','老中として','寛政の改革を始めた','定信は吉宗の孫。倹約や、ききんに備えた米のたくわえをすすめた。'],
+  [1800,7,'文','伊能忠敬の測量','伊能忠敬が','蝦夷地（今の北海道）から','全国の測量を始めた','56歳（数え年）から約17年かけて全国を歩いて測った。亡くなった後の1821年に、正確な日本地図が完成した。'],
+  [1837,7,'戦','大塩平八郎の乱','大塩平八郎が','大坂で','ききんに苦しむ人々を救おうと乱を起こした','元は大坂町奉行所の役人。乱は半日ほどでしずめられたが、幕府に大きな衝撃を与えた。'],
+  [1841,7,'政','天保の改革','水野忠邦が','老中首座として','天保の改革を始めた','ぜいたくを厳しく禁じたが、反発が強く2年あまりで失敗に終わった。'],
+  [1853,8,'海','ペリーの来航','アメリカのペリーが','4せきの軍艦を率いて浦賀に','来航し、開国を求めた','黒い船体から「黒船」と呼ばれた。翌年、ふたたび来航した。'],
+  [1854,8,'海','日米和親条約','江戸幕府が','アメリカと','日米和親条約を結んだ','下田と函館の2つの港を開いた。長く続いた鎖国の体制が終わった。'],
+  [1858,8,'海','日米修好通商条約','大老・井伊直弼のもとで幕府が','天皇の許しを得ないまま','日米修好通商条約を結んだ','5つの港を開いて貿易を始めた。日本に不利な不平等条約だった。'],
+  [1860,8,'戦','桜田門外の変','水戸藩などの浪士たちが','江戸城の桜田門の外で','大老・井伊直弼を襲い、暗殺した','井伊直弼が反対派を厳しく処罰した「安政の大獄」への反発が原因。'],
+  [1866,8,'政','薩長同盟','坂本龍馬らが','薩摩藩と長州藩の','同盟の仲立ちをした','対立していた二つの藩が手を結び、幕府を倒す流れが強まった。'],
+  [1867,8,'政','大政奉還','徳川慶喜が','朝廷に','政権を返した','慶喜は15代将軍。これで約260年続いた江戸幕府の政治が終わった。'],
+  [1868,9,'政','五箇条の御誓文','明治天皇が','神々に誓う形で','新しい政治の方針（五箇条の御誓文）を示した','「広く会議を興し、万機公論に決すべし」で始まる。同じ年、元号が明治に改められた。'],
+  [1871,9,'政','廃藩置県','明治政府が','藩を廃止して','府と県を置いた','中央から役人（府知事・県令）を送り、国が直接治めるしくみになった。'],
+  [1872,9,'文','鉄道の開通','明治政府が','新橋〜横浜の間に','日本で最初の鉄道を開いた','イギリスの技術を取り入れた。約29kmを約53分で結んだ。'],
+  [1873,9,'政','地租改正','明治政府が','土地の値段（地価）をもとに','税を現金で納めさせる地租改正を始めた','米で納める年貢に代わり、地価の3%を現金で納めるようにした。国の収入が安定した。'],
+  [1877,9,'戦','西南戦争','西郷隆盛が','鹿児島の士族たちとともに','政府に対して兵を挙げた','日本で最後の大きな内戦。政府軍に敗れ、西郷は自害した。'],
+  [1885,9,'政','内閣制度','伊藤博文が','初代の','内閣総理大臣になった','それまでの太政官制に代わって、内閣制度ができた。'],
+  [1889,9,'政','大日本帝国憲法','明治天皇が','国民に授ける形で','大日本帝国憲法を発布した','伊藤博文らが、ドイツ（プロイセン）の憲法を手本に作った。翌年、最初の帝国議会が開かれた。'],
+];
+const EVENTS = EVENT_ROWS.map(([y, era, cat, name, a, b, c, text, note]) => ({ y, era, cat, name, parts: [a, b, c], text, note: note || '' }));
+const EV = Object.fromEntries(EVENTS.map(e => [e.y, e]));
+
+// 同じ人や組織が入った札は、まぎらわしいので互いのダミーにしない
+const NAMES = ['信長','秀吉','家康','慶喜','尊氏','義満','義政','義昭','太子','清盛','頼朝','義経','義朝','道長','頼通','聖武','直弼','明治天皇','明治政府','江戸幕府','鎌倉幕府','朝廷','アメリカ','平氏','豊臣','北条','後醍醐','征夷大将軍','遣唐使','老中','将軍'];
+const nameSet = t => NAMES.filter(n => t.includes(n));
+function shuffle(a, rnd = Math.random) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+// 3つの札それぞれに、近い時代の別の出来事から2枚ずつダミーを混ぜる
+function makeQuiz(y, rnd = Math.random) {
+  const ev = EV[y], idx = EVENTS.indexOf(ev);
+  const near = EVENTS.filter(e => e !== ev).sort((p, q) => Math.abs(EVENTS.indexOf(p) - idx) - Math.abs(EVENTS.indexOf(q) - idx));
+  const opts = ev.parts.map((right, s) => {
+    const mine = nameSet(right), seen = new Set([right]), pool = [];
+    for (const e of near) {
+      const t = e.parts[s];
+      if (seen.has(t) || nameSet(t).some(n => mine.includes(n))) continue;
+      seen.add(t); pool.push(t);
+      if (pool.length >= 7) break;
+    }
+    return shuffle([right, ...shuffle(pool, rnd).slice(0, 2)], rnd);
+  });
+  return { y, opts, picks: [null, null, null], ok: [false, false, false], ng: [[], [], []], misses: 0, done: false };
+}
+function pick(q, s, i) { if (q.done || q.ok[s] || q.ng[s].includes(i)) return; q.picks[s] = i; }
+// 答え合わせ。合っている札は固定、ちがう札は×が付いて選び直し
+function check(q) {
+  if (q.picks.some((p, s) => p === null && !q.ok[s])) return null;
+  const ev = EV[q.y]; let wrong = 0;
+  q.opts.forEach((o, s) => {
+    if (q.ok[s]) return;
+    if (o[q.picks[s]] === ev.parts[s]) q.ok[s] = true;
+    else { q.ng[s].push(q.picks[s]); q.picks[s] = null; wrong++; }
+  });
+  if (wrong) q.misses++; else q.done = true;
+  return wrong;
+}
+
+function newState() { return { open: {}, streak: 0, best: 0 }; }
+// 開いたことを記録。一発正解かどうか、連続記録も
+function record(st, q) {
+  if (st.open[q.y]) return;
+  const perfect = q.misses === 0;
+  st.open[q.y] = { p: perfect ? 1 : 0, t: Date.now() };
+  st.streak = perfect ? st.streak + 1 : 0;
+  st.best = Math.max(st.best, st.streak);
+}
+// 二つの端末の記録を合わせる（開いたものは消えない）
+function mergeState(a, b) {
+  const st = newState();
+  for (const s of [a, b]) {
+    if (!s || !s.open) continue;
+    for (const [y, v] of Object.entries(s.open)) if (EV[y]) { const cur = st.open[y]; st.open[y] = cur ? { p: Math.max(cur.p, v.p), t: Math.min(cur.t, v.t) } : { p: v.p ? 1 : 0, t: v.t || 0 }; }
+    st.best = Math.max(st.best, s.best || 0);
+  }
+  st.streak = Math.max(a?.streak || 0, b?.streak || 0);
+  return st;
+}
+
+const eraYears = i => EVENTS.filter(e => e.era === i).map(e => e.y);
+const T_SET = (id, name, desc, ys, need) => ({ id, kind: 'theme', name, desc, ys, need: need || ys.length });
+const TROPHIES = [
+  { id: 'n10', kind: 'count', name: 'はじめの十枚', desc: '年号を10個開く', need: 10 },
+  { id: 'nhalf', kind: 'count', name: '歴史の折り返し', desc: '年号を半分開く', need: Math.ceil(EVENTS.length / 2) },
+  { id: 'nall', kind: 'count', name: '日本史をあつめきった', desc: 'すべての年号を開く', need: EVENTS.length },
+  ...ERAS.map((n, i) => ({ id: 'era' + i, kind: 'era', era: i, name: n + 'をうめた', desc: n + 'の年号をすべて開く', ys: eraYears(i), need: eraYears(i).length })),
+  T_SET('taishi', '太子の時代', '聖徳太子のころの3つの出来事', [593, 604, 607]),
+  T_SET('fujiwara', '藤原氏の栄華', '鎌足から頼通まで、藤原氏が関わる4つの出来事', [645, 701, 1018, 1053]),
+  T_SET('miyako', '都うつり', '平城京と平安京', [710, 794]),
+  T_SET('umi', '海をこえて来たもの', '仏教、鑑真、鉄砲、キリスト教、黒船', [538, 753, 1543, 1549, 1853]),
+  T_SET('books', '書物と言葉', '古事記、古今和歌集、望月の歌、おくのほそ道、解体新書', [712, 905, 1018, 1689, 1774]),
+  T_SET('bakufu1', '三つの幕府のはじまり', '頼朝、尊氏、家康が将軍に', [1192, 1338, 1603]),
+  T_SET('bakufu2', '三つの幕府のおわり', '鎌倉、室町、江戸の幕府が終わった年', [1333, 1573, 1867]),
+  T_SET('yoshimitsu', '義満の三つの仕事', '南北朝の合一、金閣、勘合貿易', [1392, 1397, 1404]),
+  T_SET('tenka', '天下人の道', '信長・秀吉・家康が関わる10の出来事', [1560, 1573, 1575, 1576, 1582, 1588, 1590, 1600, 1603, 1615]),
+  T_SET('ran', '乱世の目撃者', '「乱」や「変」と名のつく出来事を6つ', [645, 672, 939, 1156, 1159, 1221, 1428, 1467, 1582, 1837, 1860], 6),
+  T_SET('kaikaku', '江戸の三大改革', '享保・寛政・天保の改革', [1716, 1787, 1841]),
+  T_SET('meiji', '新しい国のかたち', '明治の6つの改革', [1868, 1871, 1872, 1873, 1885, 1889]),
+  { id: 'p10', kind: 'perfect', name: '一発正解の達人', desc: '一発正解で10個開く', need: 10 },
+  { id: 's5', kind: 'streak', name: '五連続一発正解', desc: '一発正解を5回続ける', need: 5 },
+  { id: 'eraP', kind: 'eraPerfect', name: 'ノーミスの時代', desc: 'ひとつの時代をすべて一発正解でうめる', need: 1 },
+];
+function trophyProgress(t, st) {
+  const open = Object.keys(st.open).map(Number);
+  let have = 0;
+  if (t.kind === 'count') have = open.length;
+  else if (t.kind === 'era' || t.kind === 'theme') have = t.ys.filter(y => st.open[y]).length;
+  else if (t.kind === 'perfect') have = open.filter(y => st.open[y].p).length;
+  else if (t.kind === 'streak') have = st.best;
+  else if (t.kind === 'eraPerfect') have = ERAS.some((_, i) => eraYears(i).every(y => st.open[y] && st.open[y].p)) ? 1 : 0;
+  return { have: Math.min(have, t.need), need: t.need, done: have >= t.need };
+}
+const earned = st => TROPHIES.filter(t => trophyProgress(t, st).done).map(t => t.id);
+
+if (typeof module !== 'undefined') module.exports = { ERAS, EVENTS, EV, TROPHIES, makeQuiz, pick, check, record, newState, mergeState, trophyProgress, earned, nameSet };
+</script>
+
+<script>
+// ===== 挿絵・画面・保存 =====
+const ERA_C = i => `var(--e${i})`;
+const GLYPH = {
+  戦: '<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M18 82 82 18M82 82 18 18"/><path d="M12 70l18 18M70 12l18 18" stroke-width="7"/></g>',
+  政: '<g fill="currentColor"><rect x="24" y="22" width="52" height="56" rx="3" opacity=".9"/><rect x="16" y="16" width="68" height="10" rx="5"/><rect x="16" y="74" width="68" height="10" rx="5"/></g><g stroke="var(--glyph-bg,#000)" stroke-width="3" opacity=".35"><path d="M34 38h32M34 48h32M34 58h22"/></g>',
+  都: '<g fill="currentColor"><path d="M8 44 50 18l42 26H8z"/><rect x="18" y="44" width="64" height="6"/><rect x="24" y="50" width="6" height="30"/><rect x="47" y="50" width="6" height="30"/><rect x="70" y="50" width="6" height="30"/><rect x="12" y="80" width="76" height="6"/></g>',
+  文: '<g fill="currentColor"><rect x="16" y="20" width="44" height="60" rx="2" opacity=".9"/><path d="M84 10l6 6-30 46-10 6 4-11z"/></g><g stroke="var(--glyph-bg,#000)" stroke-width="3" opacity=".35"><path d="M26 34h24M26 44h24M26 54h16"/></g>',
+  海: '<g fill="currentColor"><path d="M12 62h76l-12 16H24z"/><rect x="48" y="14" width="4" height="48"/><path d="M54 18c18 6 24 20 24 36H54z"/><path d="M46 24c-12 6-18 16-18 30h18z" opacity=".8"/></g><path d="M6 88c8-6 14-6 22 0s14 6 22 0 14-6 22 0 14 6 22 0" fill="none" stroke="currentColor" stroke-width="3" opacity=".7"/>',
+};
+const glyphSVG = cat => `<svg viewBox="0 0 100 100" aria-hidden="true" style="color:#fff">${GLYPH[cat]}</svg>`;
+const TROPHY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12v3h3v3a5 5 0 0 1-5 5h-.3A6 6 0 0 1 13 15.9V19h4v3H7v-3h4v-3.1A6 6 0 0 1 8.3 13H8a5 5 0 0 1-5-5V5h3V2zm0 5H5v1a3 3 0 0 0 1.4 2.5A6 6 0 0 1 6 9V7zm12 0v2a6 6 0 0 1-.4 1.5A3 3 0 0 0 19 8V7h-1z"/></svg>';
+
+// 出来事のカードの絵：時代の色、年号の透かし、種類の印
+function cardArt(ev) {
+  const seig = [];
+  for (let r = 0; r < 4; r++) for (let c = -1; c < 9; c++) {
+    const x = c * 44 + (r % 2 ? 22 : 0), y = 128 + r * 14;
+    seig.push(`<path d="M${x - 22} ${y}a22 22 0 0 1 44 0" />`);
+  }
+  return `<svg class="art" viewBox="0 0 320 180" role="img" aria-label="${ev.name}の挿絵">
+    <rect width="320" height="180" fill="${ERA_C(ev.era)}"/>
+    <g fill="none" stroke="#fff" stroke-opacity=".16" stroke-width="2">${seig.join('')}</g>
+    <text x="18" y="112" font-family="Zen Kaku Gothic New, sans-serif" font-weight="700" font-size="92" fill="#fff" fill-opacity=".14">${ev.y}</text>
+    <g transform="translate(206 26) scale(.96)" style="color:#fff">${GLYPH[ev.cat]}</g>
+    <text x="18" y="34" font-family="Zen Kaku Gothic New, sans-serif" font-weight="700" font-size="14" fill="#fff" fill-opacity=".9">${ERAS[ev.era]}・${CATS[ev.cat]}</text>
+    <text x="18" y="160" font-family="Zen Kaku Gothic New, sans-serif" font-weight="700" font-size="${ev.name.length > 10 ? 20 : 26}" fill="#fff">${ev.name}</text>
+  </svg>`;
+}
+
+// ---- 保存：まずこの端末に。使えるときは本人だけが読める場所にも ----
+const LS_KEY = 'nengo-jp-v1';
+const store = {
+  remote: null,
+  loadLocal() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || null; } catch (e) { return null; } },
+  save(st) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(st)); } catch (e) {}
+    if (this.remote) this.remote.set({ open: st.open, streak: st.streak, best: st.best }).catch(() => {});
+  },
+  async connect(onMerged) {
+    try {
+      if (!window.claude || !window.claude.use) return;
+      const [db, user] = await Promise.all([claude.use('db'), claude.use('user')]);
+      if (!db || !user) return;
+      const id = await user.id(); if (!id) return;
+      const ref = db.doc('data/users/' + id + '/nengo-jp');
+      const snap = await ref.get();
+      this.remote = ref;
+      onMerged(snap.exists ? snap.data() : null);
+    } catch (e) { this.remote = null; }
+  },
+};
+
+const APP = { screen: 'home', st: mergeState(store.loadLocal(), null), q: null, newT: [] };
+const $app = document.getElementById('app');
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const VIEWS = {
+  home() {
+    const st = APP.st, n = Object.keys(st.open).length, total = EVENTS.length;
+    const segs = ERAS.map((_, i) => { const k = eraYears(i).filter(y => st.open[y]).length; return k ? `<span style="width:${k / total * 100}%;background:${ERA_C(i)}"></span>` : ''; }).join('');
+    const got = earned(st).length;
+    const eras = ERAS.map((en, i) => {
+      const evs = EVENTS.filter(e => e.era === i), k = evs.filter(e => st.open[e.y]).length;
+      return `<section class="era"><h2><i style="background:${ERA_C(i)}"></i>${en}<small>${k} / ${evs.length}</small></h2><div class="grid">${evs.map(e => {
+        const o = st.open[e.y];
+        return o
+          ? `<button class="tile open" style="--c:${ERA_C(i)}" data-act="view" data-y="${e.y}">${glyphSVG(e.cat)}<span class="y">${e.y}<small>年</small></span><span class="t">${esc(e.name)}</span>${o.p ? '<span class="star" aria-label="一発正解">★</span>' : ''}</button>`
+          : `<button class="tile" data-act="quiz" data-y="${e.y}"><span class="y">${e.y}<small>年</small></span><span class="t">？？？</span></button>`;
+      }).join('')}</div></section>`;
+    }).join('');
+    return `<header class="top"><div><h1 class="logo">年号あつめ</h1><div class="sub">日本史</div></div>
+      <button class="iconbtn" data-act="trophies">${TROPHY_SVG}${got} / ${TROPHIES.length}</button></header>
+      <section class="meter"><div class="row"><span>開いた年号</span><span class="num">${n}<small> / ${total}</small></span></div>
+      <div class="bar" role="img" aria-label="時代ごとの集まり具合">${segs}</div>
+      <p class="hint">${n ? 'タイルを選んで、その年に起きたことを3枚の札で当てよう。' : '年号のタイルを選んで、その年に起きたことを3枚の札で当てよう。正解すると出来事が開きます。'}</p></section>
+      ${n < total ? '<button class="primary" data-act="random">おまかせで1問</button>' : ''}
+      ${eras}
+      <p class="foot">年は学校でよく習う年を使っています。説が分かれるものはカードに書いてあります。</p>`;
+  },
+  quiz() {
+    const q = APP.q, ev = EV[q.y];
+    const sent = q.opts.map((o, s) => {
+      const p = q.ok[s] ? ev.parts[s] : (q.picks[s] !== null ? o[q.picks[s]] : null);
+      return p ? `<span class="fill${q.ok[s] ? ' ok' : ''}">${esc(p)}</span>` : `<span class="blank">${SLOT_LABELS[s]}</span>`;
+    }).join('');
+    const slots = q.opts.map((o, s) => `<div class="slot"><h3>${s + 1}枚目　${SLOT_LABELS[s]}${q.ok[s] ? '<b>✓ 正解</b>' : ''}</h3>${o.map((t, i) => {
+      let cls = 'opt', mark = '';
+      if (q.ok[s]) { if (t === ev.parts[s]) { cls += ' ok'; mark = '✓'; } else cls += ' dim'; }
+      else if (q.ng[s].includes(i)) { cls += ' ng'; mark = '×'; }
+      else if (q.picks[s] === i) { cls += ' sel'; mark = '●'; }
+      return `<button class="${cls}" data-act="pick" data-s="${s}" data-i="${i}"><span class="mark">${mark}</span><span>${esc(t)}</span></button>`;
+    }).join('')}</div>`).join('');
+    const ready = q.picks.every((p, s) => p !== null || q.ok[s]);
+    return `<button class="back" data-act="home">← 図鑑にもどる</button>
+      <div class="qhead" style="--c:${ERA_C(ev.era)}"><span class="era-chip">${ERAS[ev.era]}</span><div class="bigyear">${ev.y}<small>年</small></div><p class="q">この年、何が起きた？ 3枚の札を1枚ずつ選ぼう</p></div>
+      <div class="sentence">${sent}</div>
+      ${q.lastWrong ? `<p class="msg bad">${q.lastWrong}枚ちがいます。×の札以外から選び直そう</p>` : ''}
+      ${slots}
+      <button class="primary" data-act="check"${ready ? '' : ' disabled'}>答え合わせ</button>`;
+  },
+  reveal() {
+    const ev = EV[APP.q.y], o = APP.st.open[ev.y], fresh = APP.fresh;
+    const nt = APP.newT.map(id => TROPHIES.find(t => t.id === id));
+    return `${fresh ? '' : '<button class="back" data-act="home">← 図鑑にもどる</button>'}
+      ${fresh ? `<p class="msg" style="color:var(--good)">正解！ ${esc(ev.name)}が開きました</p>` : ''}
+      <article class="card${fresh ? ' pop' : ''}">${cardArt(ev)}<div class="body">
+        <div class="ttl"><b>${esc(ev.name)}</b><span>${ev.y}年</span></div>
+        ${o && o.p ? '<span class="badge">★ 一発正解</span>' : ''}
+        <p class="line">${ev.parts.map(esc).join('')}</p>
+        <p>${esc(ev.text)}</p>
+        ${ev.note ? `<p class="note"><b>諸説・補足</b>　${esc(ev.note)}</p>` : ''}
+      </div></article>
+      ${nt.length ? `<div class="newtro"><h3>トロフィーを手に入れた</h3>${nt.map(t => `<div>${TROPHY_SVG}${esc(t.name)}</div>`).join('')}</div>` : ''}
+      <div class="btns">${Object.keys(APP.st.open).length < EVENTS.length ? '<button class="primary" data-act="random">次の年号（おまかせ）</button>' : ''}<button class="ghost" data-act="home">図鑑を見る</button></div>`;
+  },
+  trophies() {
+    const st = APP.st;
+    const row = t => { const p = trophyProgress(t, st); return `<div class="tro${p.done ? ' got' : ''}"><div class="ic">${TROPHY_SVG}</div><div class="tx"><b>${esc(t.name)}</b><span>${esc(t.desc)}</span></div><div class="pg">${p.done ? '獲得' : p.have + ' / ' + p.need}</div></div>`; };
+    const group = (title, ks) => `<h2 class="sec">${title}</h2><div class="tlist">${TROPHIES.filter(t => ks.includes(t.kind)).map(row).join('')}</div>`;
+    return `<button class="back" data-act="home">← 図鑑にもどる</button>
+      <header class="top"><h1 class="logo" style="font-size:24px">トロフィー</h1><span class="iconbtn">${TROPHY_SVG}${earned(st).length} / ${TROPHIES.length}</span></header>
+      ${group('テーマでそろえる', ['theme'])}${group('時代をうめる', ['era'])}${group('あつめた数', ['count'])}${group('腕前', ['perfect', 'streak', 'eraPerfect'])}`;
+  },
+};
+
+function render(scrollTop) {
+  $app.innerHTML = VIEWS[APP.screen]();
+  if (scrollTop) window.scrollTo(0, 0);
+}
+function go(screen) { APP.screen = screen; render(true); }
+function startQuiz(y) { APP.q = makeQuiz(y); APP.fresh = false; go('quiz'); }
+function randomYear() { const rest = EVENTS.filter(e => !APP.st.open[e.y]); return rest.length ? rest[Math.floor(Math.random() * rest.length)].y : null; }
+
+$app.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, y = Number(b.dataset.y);
+  if (act === 'home') go('home');
+  else if (act === 'trophies') go('trophies');
+  else if (act === 'quiz') startQuiz(y);
+  else if (act === 'random') { const r = randomYear(); if (r) startQuiz(r); }
+  else if (act === 'view') { APP.q = { y }; APP.fresh = false; APP.newT = []; go('reveal'); }
+  else if (act === 'pick') { pick(APP.q, +b.dataset.s, +b.dataset.i); render(false); }
+  else if (act === 'check') {
+    const before = earned(APP.st), w = check(APP.q);
+    if (w === null) return;
+    APP.q.lastWrong = w;
+    if (APP.q.done) {
+      record(APP.st, APP.q); store.save(APP.st);
+      APP.newT = earned(APP.st).filter(id => !before.includes(id));
+      APP.fresh = true; go('reveal');
+    } else render(false);
+  }
+});
+
+render(false);
+store.connect(remote => { APP.st = mergeState(APP.st, remote); store.save(APP.st); if (APP.screen !== 'quiz') render(false); });
+</script>
