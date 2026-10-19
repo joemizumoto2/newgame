@@ -130,13 +130,14 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .triangle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
 .triangle .gt { opacity: .7; }
 
-.duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; flex: 1 1 0; min-height: 0; }
+.duel { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; width: 100%; flex: 1 1 0; min-height: 0; container-type: size; }
 .slot { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
 .slot .label { font-size: 11px; color: var(--muted); letter-spacing: .1em; }
 .vs { font-family: var(--font-brush); font-size: 22px; color: var(--muted); }
 
 .big {
-  position: relative; height: clamp(92px, 17dvh, 150px); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px;
+  /* 札の高さは土俵の残りの高さから決める（ラベルと数字の分 84px を引く） */
+  position: relative; height: clamp(56px, calc(100cqh - 84px), 150px); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px;
   background: var(--washi); color: var(--sumi);
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -144,7 +145,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 }
 .big .type { position: absolute; top: 6px; left: 6px; }
 .kanji { display: flex; flex-direction: column; align-items: center; font-family: var(--font-brush); line-height: 1.08; }
-.big .kanji { font-size: clamp(18px, 3.2dvh, 30px); }
+.big .kanji { font-size: clamp(11px, calc((100cqh - 84px) / 5.4), 30px); }
 .big.empty { background: transparent; border: 1px dashed var(--line); box-shadow: none; }
 .big.facedown { background: repeating-linear-gradient(45deg, var(--ai-3) 0 6px, var(--ai-2) 6px 12px); border: 1px solid var(--line); }
 .big.lost { filter: grayscale(1) brightness(.7); }
@@ -269,6 +270,11 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .recap .row .res.win { color: var(--kin); }
 .recap .row .res.lose { color: var(--shu); }
 
+@media (max-height: 620px) {
+  .crit .name { font-size: 22px; }
+  .crit .desc, .triangle span:last-child { display: none; }
+  .detail { min-height: 48px; padding-block: 6px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
