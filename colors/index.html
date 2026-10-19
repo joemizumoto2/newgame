@@ -864,7 +864,12 @@ const amountJa=a=>a<6?'ちょろっと':a<24?'少し':a<64?'しっかり':a<128?
 function pourStepsHTML(){ const head=pourStartName==='black'?'':`<span class="step">${STARTS.find(x=>x[0]===pourStartName)[1]}から</span>→`;
   const segs=pourLog.filter(x=>x.a>0.05);
   return head+(segs.length?segs.map(x=>`<span class="step${x.add?' add':''}">${x.add?'＋':''}${POUR_JA[x.ch]} ${amountJa(x.a)}</span>`).join('→'):''); }
-function renderPourNow(){ const h=pourStepsHTML(); $('p-now').innerHTML='この器：'+(h||'<span class="muted">まだ何も注いでいません</span>'); }
+// 仕上げたあとにだけ、注いだ量を％でまとめて見せる（赤・緑・青は満タンを100%、彩度は鮮やかさの上がり幅）
+function pourSummary(){ const tot={r:0,g:0,b:0,s:0}; pourLog.forEach(x=>tot[x.ch]+=x.a);
+  const start=pourStartName==='black'?'真っ暗':STARTS.find(x=>x[0]===pourStartName)[1];
+  return `${start}から：`+['r','g','b','s'].map(k=>`${POUR_JA[k]} ${Math.round(tot[k]/2.55)}%`).join('・'); }
+function renderPourNow(){ const h=pourStepsHTML();
+  $('p-now').innerHTML='この器：'+(h||'<span class="muted">まだ何も注いでいません</span>')+(finished&&!pChal?`<div><b>${pourSummary()}</b></div>`:''); }
 function stopPour(){ if(!pouring) return; $('sp-'+pouring.ch).classList.remove('on'); $('stream').classList.remove('on'); pouring=null; }
 document.querySelectorAll('.spout').forEach(b=>{
   b.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ b.setPointerCapture(e.pointerId); }catch(_){} startPour(b.dataset.ch); });
@@ -879,8 +884,8 @@ function showSample(c,sub){ $('sample').hidden=false; $('sample-sw').style.backg
 function renderCups(){ $('p-cups').textContent = cups ? `これまでに ${cups} 杯` : ''; }
 $('p-done').onclick=()=>{
   stopPour();
-  if(pChal){ judgeChallenge(cupRGB(),pChal.target,$('p-status'),'pour'); pChal=null; setSpouts(false); $('p-done').disabled=true; $('p-done').textContent='仕上げる'; $('p-empty').textContent='次の器へ'; return; }
-  if(finished) return; finished=true; setSpouts(false);
+  if(pChal){ judgeChallenge(cupRGB(),pChal.target,$('p-status'),'pour'); pChal=null; renderPourNow(); setSpouts(false); $('p-done').disabled=true; $('p-done').textContent='仕上げる'; $('p-empty').textContent='次の器へ'; return; }
+  if(finished) return; finished=true; setSpouts(false); renderPourNow();
   const t=judgeCup(cupRGB(),$('p-status'),showSample,()=>$('sample').hidden=true,'pour',(t,th)=>reachPour(cupC,t,th));
   if(t){ pChal={target:t,ch:null}; setSpouts(true); $('p-done').disabled=true; $('p-done').textContent='もう一度仕上げる'; $('p-empty').textContent='見送って次の器へ'; }
   else { $('p-done').disabled=true; $('p-empty').textContent='次の器へ'; }
@@ -931,12 +936,12 @@ function recipeText(r){ if(!r||!r.length) return '何も落とさない'; const 
 function recipeHTML(r){ return recipeText(r).split(' → ').map(x=>`<span class="step">${x}</span>`).join('→'); }
 // これまでの器（新しい順に30杯まで）
 const history=store.get('iro2-history',[]);
-function histPush(mode,rgb,res){ history.unshift({m:mode,steps:mode==='drop'?dropStepsHTML():pourStepsHTML(),hex:rgb2hex(rgb),res}); history.length=Math.min(history.length,30); store.set('iro2-history',history); renderHistory(); }
-function histChallenge(mode,rgb,res){ const h=history[0]; if(!h||h.m!==mode) return; h.steps=mode==='drop'?dropStepsHTML():pourStepsHTML(); h.hex2=rgb2hex(rgb); h.res+=' → '+res; store.set('iro2-history',history); renderHistory(); }
+function histPush(mode,rgb,res){ history.unshift({m:mode,steps:mode==='drop'?dropStepsHTML():pourStepsHTML(),sum:mode==='pour'?pourSummary():'',hex:rgb2hex(rgb),res}); history.length=Math.min(history.length,30); store.set('iro2-history',history); renderHistory(); }
+function histChallenge(mode,rgb,res){ const h=history[0]; if(!h||h.m!==mode) return; h.steps=mode==='drop'?dropStepsHTML():pourStepsHTML(); if(mode==='pour') h.sum=pourSummary(); h.hex2=rgb2hex(rgb); h.res+=' → '+res; store.set('iro2-history',history); renderHistory(); }
 function renderHistory(){ const m=mode==='drop'?'drop':mode==='free'?'pour':null; $('history').hidden=!m; if(!m) return;
   const list=history.filter(h=>h.m===m).slice(0,12);
   $('hist-title').textContent=`これまでの器（${MODE_JA[m]}）`; $('hist-n').textContent=list.length?`新しい順に${list.length}杯`:'';
-  $('hist-list').innerHTML=list.length?list.map(h=>`<div class="hrow"><i style="background:${h.hex2||h.hex}"></i><div class="hist">${h.steps||'<span class="muted">何も入れずに仕上げ</span>'}</div><span class="res">${h.res}</span></div>`).join(''):'<p class="muted">まだ仕上げた器はありません。</p>'; }
+  $('hist-list').innerHTML=list.length?list.map(h=>`<div class="hrow"><i style="background:${h.hex2||h.hex}"></i><div class="hist">${h.steps||'<span class="muted">何も入れずに仕上げ</span>'}${h.sum?`<div class="muted">${h.sum}</div>`:''}</div><span class="res">${h.res}</span></div>`).join(''):'<p class="muted">まだ仕上げた器はありません。</p>'; }
 function judgeCup(rgb, st, show, hide, mode, canTopUp){
   cups++; store.set('iro2-cups',cups); renderCups();
   const [n,d]=nearest(rgb);
