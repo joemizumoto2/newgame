@@ -136,8 +136,8 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .vs { font-family: var(--font-brush); font-size: 22px; color: var(--muted); }
 
 .big {
-  /* 札の高さは土俵の残りの高さから決める（ラベルと数字の分 84px を引く） */
-  position: relative; height: clamp(56px, calc(100cqh - 84px), 150px); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px;
+  /* 札の高さは土俵の残りの高さから決める（ラベルと数字の分 84px を引く）。小さくなりすぎないよう下限あり */
+  position: relative; height: clamp(132px, calc(100cqh - 84px), 195px); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px;
   background: var(--washi); color: var(--sumi);
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -145,7 +145,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 }
 .big .type { position: absolute; top: 6px; left: 6px; }
 .kanji { display: flex; flex-direction: column; align-items: center; font-family: var(--font-brush); line-height: 1.08; }
-.big .kanji { font-size: clamp(11px, calc((100cqh - 84px) / 5.4), 30px); }
+.big .kanji { font-size: clamp(22px, calc((100cqh - 84px) / 5.4), 36px); }
 .big.empty { background: transparent; border: 1px dashed var(--line); box-shadow: none; }
 .big.facedown { background: repeating-linear-gradient(45deg, var(--ai-3) 0 6px, var(--ai-2) 6px 12px); border: 1px solid var(--line); }
 .big.lost { filter: grayscale(1) brightness(.7); }
@@ -205,8 +205,12 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .hand.dealing .card { animation: deal .4s backwards cubic-bezier(.2,1.2,.4,1); }
 @keyframes deal { from { transform: translateY(60px) rotate(8deg); opacity: 0; } }
 
+/* 選んだ札の説明は、手札の上に浮かべて出す（土俵の高さを削らないため） */
+.handwrap { position: relative; }
 .detail {
-  min-height: 58px; border-radius: 10px; background: var(--ai-2); border: 1px solid var(--line);
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 14px); z-index: 3;
+  box-shadow: 0 -6px 24px rgba(0,0,0,.45);
+  border-radius: 10px; background: var(--ai-2); border: 1px solid var(--line);
   padding: 10px 12px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center;
 }
 .detail .w { font-family: var(--font-brush); font-size: 20px; display: flex; align-items: center; gap: 8px; }
@@ -273,7 +277,6 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 @media (max-height: 620px) {
   .crit .name { font-size: 22px; }
   .crit .desc, .triangle span:last-child { display: none; }
-  .detail { min-height: 48px; padding-block: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -319,8 +322,10 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
     <div class="flash" id="flash"></div>
   </div>
 
-  <div class="detail" id="detail"><span class="hint">札を選ぶと、意味と数字がここに出ます。</span></div>
-  <div class="hand" id="hand"></div>
+  <div class="handwrap">
+    <div class="detail" id="detail" hidden></div>
+    <div class="hand" id="hand"></div>
+  </div>
   <div class="entry" id="entry" hidden>
     <form id="entryForm">
       <input id="entryInput" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="四字熟語" aria-label="四字熟語を入力">
@@ -523,10 +528,8 @@ function renderHand(dealing) {
 }
 function renderDetail() {
   const d = $("detail");
-  if (S.sel == null) {
-    d.innerHTML = `<span class="hint">${S.accepting ? "札を選ぶと、意味と数字がここに出ます。" : "　"}</span>`;
-    return;
-  }
+  d.hidden = S.sel == null || S.mode === "one";
+  if (d.hidden) return;
   const c = S.hand[S.sel];
   d.innerHTML = `
     <span class="w"><span class="type ${c.t}">${c.t}</span>${c.w}<span class="y">${c.y}</span></span>
