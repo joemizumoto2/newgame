@@ -98,13 +98,31 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
 .crit.reveal .name { animation: brushIn .55s cubic-bezier(.2,.9,.3,1.2); }
 @keyframes brushIn { from { opacity: 0; transform: scale(1.6); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 
-.timer { position: absolute; top: 12px; right: 12px; width: 44px; height: 44px; }
+.timer { position: absolute; top: 10px; right: 10px; width: 58px; height: 58px; }
 .timer svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .timer .track { fill: none; stroke: var(--line); stroke-width: 4; }
-.timer .bar { fill: none; stroke: var(--kin); stroke-width: 4; stroke-linecap: round; transition: stroke .3s; }
+.timer .bar { fill: none; stroke: var(--kin); stroke-width: 4; stroke-linecap: round; transition: stroke .3s, stroke-dashoffset .1s linear; }
 .timer.hurry .bar { stroke: var(--shu); }
-.timer .num { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-variant-numeric: tabular-nums; }
-.timer.hurry .num { color: var(--shu); animation: pulse .5s infinite alternate; }
+.timer .num { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 900; font-size: 22px; font-variant-numeric: tabular-nums; }
+.timer.hurry .num { color: var(--shu); }
+
+/* 残り5秒：画面のふちが赤く脈打ち、真ん中に大きな秒数が出る */
+.danger {
+  position: fixed; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .3s;
+  --heat: 0;
+  box-shadow: inset 0 0 0 calc(3px + var(--heat) * 5px) var(--shu),
+              inset 0 0 calc(40px + var(--heat) * 80px) color-mix(in srgb, var(--shu) 75%, transparent);
+}
+.danger.on { opacity: 1; animation: beat 1s infinite; }
+@keyframes beat { 0% { opacity: 1; } 15% { opacity: .55; } 30% { opacity: 1; } 100% { opacity: .8; } }
+.bignum {
+  position: fixed; left: 50%; top: 42%; z-index: 4; pointer-events: none;
+  font-family: var(--font-brush); font-size: 150px; line-height: 1; color: var(--shu);
+  text-shadow: 0 0 24px color-mix(in srgb, var(--shu) 60%, transparent);
+  transform: translate(-50%, -50%); opacity: 0;
+}
+.bignum.go { animation: bignum .9s ease-out; }
+@keyframes bignum { 0% { opacity: .85; transform: translate(-50%, -50%) scale(1.5); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(.8); } }
 @keyframes pulse { to { transform: scale(1.2); } }
 
 .triangle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; justify-content: center; }
@@ -280,13 +298,17 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
   <div class="hand" id="hand"></div>
 </div>
 
+<div class="danger" id="danger"></div>
+<div class="bignum" id="bignum"></div>
+
 <div class="overlay" id="titleScreen">
   <div class="panel">
     <h1>四文字熟語バトル</h1>
     <ol class="rules">
       <li>CPUと<b>3本勝負</b>。最初に<b>三本の基準</b>がまとめて発表されます。<br><span class="muted">一本目・二本目は 画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ などからランダム</span></li>
       <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
-      <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>15秒</b>で出す。<br><b>一枚勝負</b>：8枚の札から、三本すべてを戦う1枚を<b>15秒</b>で選ぶ。</li>
+      <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>7秒</b>で出す。<br><b>一枚勝負</b>：8枚の札から、三本すべてを戦う1枚を<b>15秒</b>で選ぶ。</li>
+      <li>残り5秒になると、画面のふちが赤くなります。</li>
       <li>相手の札は、型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
     </ol>
     <div class="modes">
@@ -321,7 +343,8 @@ const TYPES = ["攻", "守", "策"];
 const BEATS = { 守: "攻", 攻: "策", 策: "守" };
 const ROUND_NAMES = ["一本目", "二本目", "三本目"];
 const ROUND_POINTS = [1, 1, 2];
-const TIME_LIMIT = 15;
+const TIME_LIMITS = { hand: 7, one: 15 };
+const DANGER_AT = 5;
 
 const sum = a => a.reduce((x, y) => x + y, 0);
 const strokes = c => sum(c.s);
@@ -385,7 +408,7 @@ function renderScore(shown = 3) {
 async function announce() {
   $("critRound").textContent = "今回の三本";
   $("critName").textContent = "基準を発表";
-  $("critDesc").textContent = S.mode === "one" ? "15秒で、三本すべてを戦う1枚を選びます" : "一本ごとに15秒で札を出します";
+  $("critDesc").textContent = S.mode === "one" ? `${TIME_LIMITS.one}秒で、三本すべてを戦う1枚を選びます` : `一本ごとに${TIME_LIMITS.hand}秒で札を出します`;
   $("triangle").hidden = true;
   renderScore(0); renderHand(true); renderDetail();
   await wait(700);
@@ -487,15 +510,27 @@ function showRound(r) {
 }
 
 function startTimer() {
+  const limit = TIME_LIMITS[S.mode];
   const t0 = performance.now();
-  const bar = $("timerBar"), num = $("timerNum"), box = $("timer");
+  const bar = $("timerBar"), num = $("timerNum"), box = $("timer"), danger = $("danger");
   box.hidden = false; box.classList.remove("hurry");
   clearInterval(timerId);
+  let lastSec = null;
   const tick = () => {
-    const left = Math.max(0, TIME_LIMIT - (performance.now() - t0) / 1000);
-    num.textContent = Math.ceil(left);
-    bar.setAttribute("stroke-dashoffset", (119.4 * (1 - left / TIME_LIMIT)).toFixed(1));
-    box.classList.toggle("hurry", left <= 3);
+    const left = Math.max(0, limit - (performance.now() - t0) / 1000);
+    const sec = Math.ceil(left);
+    num.textContent = sec;
+    bar.setAttribute("stroke-dashoffset", (119.4 * (1 - left / limit)).toFixed(1));
+    const hurry = left <= DANGER_AT;
+    box.classList.toggle("hurry", hurry);
+    danger.classList.toggle("on", hurry);
+    danger.style.setProperty("--heat", hurry ? (1 - left / DANGER_AT).toFixed(2) : 0);
+    if (hurry && sec !== lastSec && sec > 0) {
+      const big = $("bignum");
+      big.textContent = sec;
+      big.classList.remove("go"); void big.offsetWidth; big.classList.add("go");
+    }
+    lastSec = sec;
     if (left <= 0) {
       clearInterval(timerId);
       const open = S.hand.map((c, i) => i).filter(i => !S.hand[i].used);
@@ -569,6 +604,8 @@ async function playerPlay(i, timeout) {
   S.accepting = false;
   clearInterval(timerId);
   $("timer").hidden = true;
+  $("danger").classList.remove("on");
+  $("bignum").classList.remove("go");
   const me = S.hand[i], op = S.mode === "one" ? cpuPickOne() : cpuPick();
   me.used = true; op.used = true; S.sel = null;
   renderHand(); renderDetail(); renderCpuHand();
