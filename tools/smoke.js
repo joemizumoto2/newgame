@@ -28,14 +28,14 @@ const out = process.argv[3] || path.join(require('os').tmpdir(), 'kenkoku-smoke-
       const y = await p.evaluate(() => APP.g.turn);
       if (y === 8) await p.evaluate(() => { APP.g.war = 99; }); // 予告と侵攻の画面を必ず通す
       const b1 = await p.$('[data-act=build]:not([disabled])'); if (b1) await b1.click();
-      const h = await p.$('[data-act=hurry]:not([disabled])'); if (h && y % 4 === 0) await h.click();
+      const h = await p.$('[data-act=hurry]:not([disabled]) >> nth=0'); if (h && y % 4 === 0) await h.click();
       if (y === 12 || (y > 12 && await p.$('.alarm') && !fs.existsSync(path.join(out, 'alarm.png')))) await shot(y === 12 ? 'plan' : 'alarm');
       await click('[data-act=policy]:not([disabled])'); continue;
     }
     if (await p.$('[data-act=choose]')) { await shot('event'); await click('[data-act=choose][data-i="0"]'); continue; }
     if (await p.$('[data-act=prep]')) { await click('[data-act=prep]'); continue; }
     if (scr === 'campaign') { if (!fs.existsSync(path.join(out, 'campaign.png'))) await shot('campaign'); await click('[data-act=fight]'); continue; }
-    if (scr === 'battle') { await p.waitForTimeout(1200); await shot('battle', false); await click('[data-act=skip]'); await p.waitForSelector('[data-act=back-reign]'); await click('[data-act=back-reign]'); continue; }
+    if (scr === 'battle') { await p.waitForTimeout(1200); await shot('battle', false); if (await p.isVisible('[data-act=skip]')) await click('[data-act=skip]').catch(() => {}); await p.waitForSelector('[data-act=back-reign]'); await click('[data-act=back-reign]'); continue; }
     if (await p.$('[data-act=next]')) { await click('[data-act=next]'); continue; }
     errs.push('進めなくなった: ' + scr); break;
   }

@@ -34,7 +34,7 @@ function playSlow(){
     let offers=drawCards(g);
     if(g.morale<35&&offers.includes('fest')&&!whyNot(g,'fest')){startProject(g,'fest');offers=offers.filter(x=>x!=='fest')}
     for(const id of offers.sort(()=>Math.random()-.5)) if(!whyNot(g,id)&&roll(.85)){startProject(g,id);ST.builds++}
-    g.proj.forEach((p,i)=>{if(roll(.5))hurry(g,i)});
+    g.proj.forEach((p,i)=>{if(roll(.5))hurry(g,i,g.gold>g.hands+1?'g':g.hands>g.gold+1?'h':'m')});
     const pol=policyOffers(g),pref=pol.find(x=>(x==='p_work'&&g.hands>g.gold+4)||(x==='p_hire'&&g.gold>g.hands+5));
     playPolicy(g,pref||(pol[0]==='p_drill'||(g.war>=60&&roll(.5))?pol[0]:pick(pol)));ST.pol++;
     endYear(g);warTick(g);
