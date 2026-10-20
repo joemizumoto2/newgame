@@ -344,7 +344,7 @@ button:focus-visible, .card:focus-visible { outline: 2px solid var(--kin); outli
     <h1>四文字熟語バトル</h1>
     <ol class="rules">
       <li>CPUと<b>3本勝負</b>。最初に<b>三本の基準</b>がまとめて発表されます。<br><span class="muted">一本目・二本目は 画数が多い／少ない、同じ部首、数字の大きさ、読みの長さ などからランダム</span></li>
-      <li>三本目は<b>総合力</b>の勝負（2点）。<br><span class="muted">総合力＝画数の合計＋部首のそろい。型の相性で有利なら×1.5</span></li>
+      <li>三本目は<b>三すくみ</b>の勝負。型の相性で勝ち負けが決まり、同じ型どうしなら総合力（画数の合計＋部首のそろい）で比べます。<br><span class="muted">どの本も1点。同点の本は引き分けです</span></li>
       <li><b>手札勝負</b>：5枚の札から、一本ごとに1枚を<b>10秒</b>で出す。<br><b>一枚勝負</b>：三本すべてを戦う四字熟語を<b>自分で考えて</b>、<b>30秒</b>で入力する。読みのひらがなでも入力できます。</li>
       <li>残り5秒になると、画面のふちが赤く点滅します。</li>
       <li>手札勝負では、相手の札は型（<span class="type 攻">攻</span> <span class="type 守">守</span> <span class="type 策">策</span>）だけ見えています。</li>
@@ -383,7 +383,7 @@ const RAD_NAMES = {
 const TYPES = ["攻", "守", "策"];
 const BEATS = { 守: "攻", 攻: "策", 策: "守" };
 const ROUND_NAMES = ["一本目", "二本目", "三本目"];
-const ROUND_POINTS = [1, 1, 2];
+const ROUND_POINTS = [1, 1, 1];
 const TIME_LIMITS = { hand: 10, one: 30 };
 const DANGER_AT = { hand: 5, one: 5 };
 
@@ -483,7 +483,7 @@ function newGame(mode = "hand") {
 }
 
 /* ── 描画 ── */
-const critLabel = i => i < 2 ? S.crits[i].name : "総合力";
+const critLabel = i => i < 2 ? S.crits[i].name : "三すくみ";
 function renderScore(shown = 3) {
   $("myPts").textContent = S.score[0];
   $("cpuPts").textContent = S.score[1];
@@ -643,8 +643,8 @@ function showRound(r) {
     $("critName").textContent = c.name;
     $("critDesc").textContent = c.desc;
   } else {
-    $("critName").textContent = "総合力・三すくみ";
-    $("critDesc").textContent = "画数の合計＋部首のそろい×5。相性が有利なら×1.5";
+    $("critName").textContent = "三すくみ";
+    $("critDesc").textContent = "型の相性で勝ち。同じ型なら総合力（画数の合計＋部首のそろい×5）で比べる";
     $("triangle").hidden = false;
   }
   void crit.offsetWidth; crit.classList.add("reveal");
@@ -704,7 +704,7 @@ function cpuPick() {
   }
   // 三本目：あなたの残り札（型は見えている）に対して平均で強い札を選ぶ
   const mine = S.hand.filter(c => !c.used);
-  const ev = c => sum(mine.map(m => Math.sign(total(c, m).v - total(m, c).v)));
+  const ev = c => sum(mine.map(m => { const x = judge(c, m, 2); return Math.sign(x.a - x.b); }));
   const best = open.slice().sort((a, b) => ev(b) - ev(a))[0];
   return Math.random() < 0.7 ? best : open[rand(open.length)];
 }
@@ -724,22 +724,24 @@ function cpuPickOne() {
 function judge(me, op, r) {
   if (r < 2) {
     const crit = S.crits[r];
-    let a = crit.score(me), b = crit.score(op), tieBreak = false;
-    if (a === b) { tieBreak = true; a = power(me); b = power(op); }
-    return { a, b, tieBreak, myHtml: valHtml(crit.show(me), crit.why(me)), opHtml: valHtml(crit.show(op), crit.why(op)) };
+    const a = crit.score(me), b = crit.score(op);
+    return { a, b, myHtml: valHtml(crit.show(me), crit.why(me)), opHtml: valHtml(crit.show(op), crit.why(op)) };
   }
-  const tm = total(me, op), to = total(op, me);
+  // 三本目：相性で決まる。同じ型のときだけ総合力で比べる
+  const why = c => `画数${strokes(c)}${c.rn > 1 ? `＋そろい${(c.rn - 1) * 5}` : ""}`;
+  if (me.t !== op.t) {
+    const win = BEATS[me.t] === op.t;
+    return {
+      a: win ? 1 : 0, b: win ? 0 : 1,
+      myHtml: valHtml(me.t, `${me.t}は${win ? op.t + "に強い" : op.t + "に弱い"}`, win ? "相性で勝ち" : ""),
+      opHtml: valHtml(op.t, `${op.t}は${win ? me.t + "に弱い" : me.t + "に強い"}`, win ? "" : "相性で勝ち"),
+    };
+  }
   return {
-    a: tm.v, b: to.v, tieBreak: false,
-    myHtml: valHtml(tm.v, `画数${strokes(me)}${me.rn > 1 ? `＋そろい${(me.rn - 1) * 5}` : ""}`, tm.adv ? `相性有利 ×1.5` : ""),
-    opHtml: valHtml(to.v, `画数${strokes(op)}${op.rn > 1 ? `＋そろい${(op.rn - 1) * 5}` : ""}`, to.adv ? `相性有利 ×1.5` : ""),
+    a: power(me), b: power(op),
+    myHtml: valHtml(power(me), why(me), "同じ型：総合力で比較"),
+    opHtml: valHtml(power(op), why(op), "同じ型：総合力で比較"),
   };
-}
-
-function total(c, vs) {
-  const base = power(c);
-  const adv = BEATS[c.t] === vs.t;
-  return { base, adv, v: adv ? Math.round(base * 1.5) : base };
 }
 
 async function playerPlay(i, timeout) {
@@ -809,7 +811,7 @@ async function clash(me, op, timeout) {
   $("flash").classList.remove("go"); void $("flash").offsetWidth; $("flash").classList.add("go");
   if (!reduceMotion) { $("arena").classList.remove("shake"); void $("arena").offsetWidth; $("arena").classList.add("shake"); }
 
-  const { a, b, tieBreak, myHtml, opHtml } = judge(me, op, S.round);
+  const { a, b, myHtml, opHtml } = judge(me, op, S.round);
   $("myVal").innerHTML = myHtml; $("cpuVal").innerHTML = opHtml;
   countUp($("myVal")); countUp($("cpuVal"));
   await wait(900);
@@ -818,7 +820,7 @@ async function clash(me, op, timeout) {
   const pts = ROUND_POINTS[S.round];
   if (res === "win") S.score[0] += pts;
   if (res === "lose") S.score[1] += pts;
-  S.results.push({ res, me, op, crit: S.round < 2 ? S.crits[S.round].name : "総合力", tieBreak });
+  S.results.push({ res, me, op, crit: critLabel(S.round) });
 
   const winEl = res === "win" ? $("mySlot") : res === "lose" ? $("cpuSlot") : null;
   const loseEl = res === "win" ? $("cpuSlot") : res === "lose" ? $("mySlot") : null;
@@ -830,7 +832,7 @@ async function clash(me, op, timeout) {
   }
   const v = $("verdict");
   v.className = "verdict " + res;
-  v.textContent = (tieBreak ? "同点。総合力で判定 → " : "") +
+  v.textContent =
     (res === "win" ? `一本！ あなたに${pts}点` : res === "lose" ? `CPUに${pts}点` : "引き分け");
   renderScore();
   await wait(1700);
