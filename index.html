@@ -219,7 +219,7 @@ input.name{font-family:var(--font-head);font-size:22px;padding:10px 12px;border-
 .btn small{display:block;font-size:12px;font-weight:500;opacity:.85;margin-top:2px}
 .btn:disabled{opacity:.5;cursor:default}
 .pips.thin{gap:2px}
-.purse{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:10px}
+.purse{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .purse>div{display:flex;flex-direction:column;min-width:0}
 .purse b{font-family:var(--font-head);font-size:26px;line-height:1.25;font-variant-numeric:tabular-nums}
 .purse b.war{font-size:16px;line-height:1.6;color:var(--c)}
@@ -235,6 +235,12 @@ input.name{font-family:var(--font-head);font-size:22px;padding:10px 12px;border-
 .res.tone-good .eyebrow{color:var(--good)} .res.tone-bad .eyebrow{color:var(--bad)}
 .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0;padding:1px 8px;border-radius:999px;background:var(--primary-soft);color:var(--primary);vertical-align:1px}
 .tros{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.warcard{gap:8px}
+.wl{font-size:13px;font-weight:700;color:var(--c)}
+.alarm{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:12px;background:var(--red-bg);color:var(--red)}
+.alarm b{font-size:15px}
+.alarm span{font-size:12px;color:var(--ink);opacity:.8}
+.choice:disabled{opacity:.5;cursor:default}
 .tro{background:var(--gold-bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .tro b{color:var(--gold);font-size:14px}
 .tro span{font-size:12px;color:var(--muted);line-height:1.5}
@@ -431,7 +437,7 @@ function newGame(){
   return {answers:{},flags:[],mult:{},costMult:1,s:{atk:20,def:20,mob:20,pow:20},morale:60,turn:1,
     cnt:{arms:0,fortify:0,trade:0,farm:0,fest:0},prog:{},specials:[],used:[],chron:[],name:'',flag:null,type:null,rank:null,done:false,
     built:[],seeds:{},links:[],battles:[],lastKind:null,
-    slow:false,gold:0,hands:0,proj:[],lv:{},heat:0,pendingWar:null,lastWar:0};
+    slow:false,gold:0,hands:0,proj:[],lv:{},war:0,threat:null,empire:null,pendingWar:null};
 }
 const has=(g,f)=>g.flags.includes(f);
 function add(g,d){for(const k in d){ if(k==='morale') g.morale=clamp(g.morale+d[k],0,100); else g.s[k]=clamp(g.s[k]+d[k],1,100); }}
@@ -886,11 +892,11 @@ function battleSetup(g,kind){
   }
   const qn=g.slow?QUESTIONS.length:STD_Q;
   if(kind==='invade'){
-    const o=g.slow?genNPC({turns:clamp(Math.round(g.turn/3),2,9),factor:SLOW.invadeF,qn}):genNPC({turns:6,factor:.95});
-    const from=g.slow?pick(['西','北','南','東']):'西';
+    const o=g.slow&&g.threat?g.threat.opp:genNPC({turns:6,factor:.95});
+    const from=g.slow&&g.threat?g.threat.from:'西';
     return {kind,opp:o,field:pick(Object.keys(FIELDS)),label:`${o.name}の侵攻`,intro:`${from}の${o.name}が、国境を越えて攻め込んできた。`};
   }
-  const o=genNPC({turns:10,factor:g.slow?SLOW.finalF:1.07,suffix:'帝国',qn});
+  const o=g.slow&&g.empire?g.empire:genNPC({turns:10,factor:g.slow?SLOW.finalF:1.07,suffix:'帝国',qn});
   const homes=Object.keys(FIELDS).filter(k=>FIELDS[k].home(g));
   return {kind,opp:o,field:homes.length&&roll(.5)?pick(homes):pick(Object.keys(FIELDS)),label:`${o.name}との決戦`,
     intro:`大陸の東で膨れ上がった${o.name}が、すべての国に臣従を迫ってきた。国の存亡を賭けた戦いが始まる。`};
@@ -916,14 +922,15 @@ function battleMods(g,kind){
     if(S.resentment){e.all*=1.08;note(e,'resentment','恨みを抱いた隣国が、帝国の側についた')}
     if(S.migrants){p.def*=1.05;note(p,'migrants','迎え入れた人々が城を守った')}
     if(S.song){p.all*=1.04;note(p,'song','兵たちは国の歌を歌いながら戦った')}
+    if(g.slow){e.all*=SLOW.empireAll;e.notes.push({seed:null,text:'帝国は30年かけて膨れ上がった大軍だ',effect:''})}
   }
   return {p,e};
 }
 const KIND_LABEL={bandit:'山賊団の討伐',invade:'侵攻',final:'決戦'};
 function battleOutcome(g,kind,win,opp,mods){
   g.battles.push({kind,win,name:opp.name,y:yearOf(g,g.turn)});
-  if(g.slow){g.pendingWar=null;g.lastWar=g.turn;if(kind==='invade')g.heat=Math.max(0,g.heat/2-.02)}
-  for(const n of [...mods.p.notes,...mods.e.notes]) g.links.push({from:n.seed,y:yearOf(g,g.turn),title:KIND_LABEL[kind],choice:n.effect,planted:[]});
+  if(g.slow){g.pendingWar=null;if(kind==='invade'){g.threat=null;g.war=win?WAR.winReset:WAR.loseReset}}
+  for(const n of [...mods.p.notes,...mods.e.notes]) if(n.seed) g.links.push({from:n.seed,y:yearOf(g,g.turn),title:KIND_LABEL[kind],choice:n.effect,planted:[]});
   if(kind==='bandit'){
     if(win){plant(g,'bandit_beaten');add(g,{pow:6,morale:6});return {title:'山賊団の討伐 · 勝利',text:'山賊団を討ち果たした。街道に平和が戻った。'}}
     add(g,{pow:-6,morale:-8});return {title:'山賊団の討伐 · 敗北',text:'山賊団を取り逃がした。街道の商人たちが不安がっている。'};
@@ -937,8 +944,8 @@ function battleOutcome(g,kind,win,opp,mods){
 const playOutcome=(g,kind,win,opp,mods)=>withDelta(g,()=>battleOutcome(g,kind,win,opp,mods));
 
 /* ===== じっくりモード：30年を1年ずつ。事業は「植える」もので、完成まで年数がかかる ===== */
-const SLOW={years:30,slots:3,base:{gold:1,hands:2},start:{gold:5,hands:5},scale:.55,evScale:.5,fatigue:1.5,
-  cbP:.6,choiceP:.2,minorP:.35,invadeF:.98,finalF:1.3,rankShift:45,maxInvade:3};
+const SLOW={years:30,slots:3,base:{gold:2,hands:1},start:{gold:5,hands:5},scale:.45,evScale:.45,fatigue:1.5,
+  cbP:.6,choiceP:.2,minorP:.35,invadeF:1.08,finalF:1.3,empireAll:1.2,rankShift:55,maxInvade:3};
 /* 費用（着工時に払う）・完成までの年数・完成後に毎年入る収入 */
 const BUILD={
  fest:{gold:1,hands:0,yrs:0},
@@ -956,7 +963,7 @@ const BUILD={
  school:{gold:4,hands:1,yrs:6,inc:{hands:1}},
 };
 const RES_WORD={gold:'金貨',hands:'人手'};
-function startSlow(g){g.slow=true;g.gold=SLOW.start.gold;g.hands=SLOW.start.hands;g.proj=[];g.lv={};g.heat=0;g.pendingWar=null;g.lastWar=0}
+function startSlow(g){g.slow=true;g.gold=SLOW.start.gold;g.hands=SLOW.start.hands;g.proj=[];g.lv={};g.war=0;g.threat=null;g.empire=null;g.pendingWar=null}
 function incomeOf(g){
   const r={...SLOW.base};
   for(const id in g.lv){const inc=BUILD[id].inc;if(inc)for(const k in inc)r[k]+=inc[k]}
@@ -989,7 +996,7 @@ function startProject(g,id){
   g.proj.push({id,rem:c.yrs,total:c.yrs,hurried:false});
   return null;
 }
-const HURRY={gold:0,hands:2};
+const HURRY={gold:2,hands:0};
 const canHurry=(g,p)=>!p.hurried&&p.rem>1&&g.gold>=HURRY.gold&&g.hands>=HURRY.hands;
 function hurry(g,i){const p=g.proj[i];if(!p||!canHurry(g,p))return false;g.gold-=HURRY.gold;g.hands-=HURRY.hands;p.rem--;p.hurried=true;return true}
 function applyBuild(g,id){
@@ -1036,8 +1043,8 @@ const MINOR=[
  {id:'m_flu',tone:'bad',title:'流行り風邪',text:'たちの悪い風邪が流行り、働き手が寝込んだ。',run:g=>{g.hands=Math.max(0,g.hands-3);add(g,{morale:-2})}},
  {id:'m_fire',tone:'bad',title:'城下の火事',text:'城下の一角が焼けた。けが人は少なかったが、建て直しに手がかかる。',run:g=>{add(g,{pow:-3});g.hands=Math.max(0,g.hands-2)}},
  {id:'m_thief',tone:'bad',title:'国庫の盗人',text:'夜のうちに、国庫から金貨が盗まれた。犯人は見つかっていない。',run:g=>{g.gold=Math.max(0,g.gold-4)}},
- {id:'m_skirmish',tone:'bad',title:'国境の小競り合い',text:'国境の村で、隣国の兵と小競り合いがあった。戦の気配が濃くなった。',run:g=>{g.heat+=.06;add(g,{def:1})}},
- {id:'m_rumor',tone:'bad',title:'不穏な噂',text:'「あの国は弱い」という噂が、隣国で広まっているらしい。',run:g=>{g.heat+=.04}},
+ {id:'m_skirmish',tone:'bad',title:'国境の小競り合い',text:'国境の村で、隣国の兵と小競り合いがあった。戦の気配が濃くなった。',run:g=>{addWar(g,15);add(g,{def:1})}},
+ {id:'m_rumor',tone:'bad',title:'不穏な噂',text:'「あの国は弱い」という噂が、隣国で広まっているらしい。',run:g=>{addWar(g,10)}},
  {id:'m_feud',tone:'bad',title:'村どうしの水争い',text:'水をめぐって、二つの村がにらみ合っている。',run:g=>{add(g,{morale:-4})}},
  {id:'m_cloud',tone:'none',title:'珍しい雲',text:'城の上に、魚の形をした雲が一日中浮かんでいた。'},
  {id:'m_juggler',tone:'none',title:'旅の曲芸師',text:'旅の曲芸師が広場で皿を七枚回してみせ、翌朝には去っていった。'},
@@ -1077,31 +1084,87 @@ function slowEvent(g){
   }
   return r;
 }
-/* 戦の気配。選んだことや出来事で上がり下がりする */
-function warRisk(g){
-  const S=g.seeds,since=g.turn-(g.lastWar||0),why=[];
-  let r=.03+g.heat;
-  if(g.heat>=.04) why.push('国境が騒がしい');
-  const ak=g.prog.akumyo||0;if(ak){r+=ak*.03;why.push('悪い噂が立っている')}
-  if(S.resentment){r+=.05;why.push('隣国の恨み')}
-  if(S.knights_arrogant){r+=.02;why.push('騎士が好戦的')}
-  if(has(g,'武威')){r+=.02;why.push('力を見せつけてきた')}
-  if(has(g,'策謀')){r+=.02}
-  if(has(g,'友好')) r-=.02;
-  if(S.gratitude){r-=.03}
-  if(g.s.def<35){r+=.03;why.push('守りが手薄')}
-  if(g.s.pow>=70){r+=.02;why.push('豊かさが狙われている')}
-  if(since>6) r+=(since-6)*.01;
-  return {p:clamp(r,.01,.35),why};
+/* ===== 戦のきまり（じっくりモード） =====
+   戦の気配は 0〜100 のゲージ。毎年たまり、選んだことや出来事で速くも遅くもなる。
+   満ちると「2年後に〇〇が攻めてくる」と予告が出て、その2年で備えられる。
+   勝てばゲージは0に戻る。負けると40から始まる。決戦は30年目に必ずあり、25年目に予告が出る */
+const WAR={base:8,lead:2,winReset:0,loseReset:40,empireWarn:25};
+function warRate(g){
+  const S=g.seeds,why=[];let r=WAR.base;
+  const ak=g.prog.akumyo||0;if(ak){r+=ak*3;why.push(['悪い噂',ak*3])}
+  if(S.resentment){r+=5;why.push(['隣国の恨み',5])}
+  if(S.knights_arrogant){r+=2;why.push(['好戦的な騎士',2])}
+  if(has(g,'武威')){r+=2;why.push(['力を見せつけてきた',2])}
+  if(has(g,'策謀')){r+=2;why.push(['探りを入れてきた',2])}
+  if(g.s.def<35){r+=4;why.push(['守りが手薄',4])}
+  if(g.s.pow>=70){r+=2;why.push(['豊かさが狙われている',2])}
+  if(has(g,'友好')){r-=2;why.push(['隣国との友好',-2])}
+  if(S.gratitude){r-=3;why.push(['隣国への恩',-3])}
+  if(S.castaway){r-=1;why.push(['海の向こうの味方',-1])}
+  return {rate:Math.max(1,r),why};
 }
-const warLevel=p=>p<.06?['静か','good']:p<.11?['くすぶっている','warn']:['高まっている','bad'];
+const warLevel=v=>v<40?['静か','good']:v<75?['くすぶっている','warn']:['高まっている','bad'];
+function addWar(g,n){if(!g.threat) g.war=clamp(g.war+n,0,100)}
+/* 年の終わりにゲージが進み、満ちたら予告を出す。予告の結果を返す */
+function warTick(g){
+  const y=g.turn,out=[];
+  if(y===WAR.empireWarn){
+    g.empire=genNPC({turns:10,factor:SLOW.finalF,suffix:'帝国',qn:QUESTIONS.length});
+    out.push({title:`予告 · ${g.empire.name}`,text:`大陸の東で、${g.empire.name}が膨れ上がっている。${SLOW.years}年目、すべての国に臣従を迫ってくるだろう。相手は${TYPES[g.empire.type].name}。`,warn:true});
+  }
+  if(g.threat) return out;
+  addWar(g,warRate(g).rate+Math.floor(Math.random()*4));
+  const at=y+WAR.lead;
+  if(g.war>=100&&at<=SLOW.years-2&&g.battles.filter(b=>b.kind==='invade').length<SLOW.maxInvade){
+    const opp=genNPC({turns:clamp(Math.round(at/3),2,9),factor:SLOW.invadeF,qn:QUESTIONS.length});
+    g.threat={y:at,opp,from:pick(['西','北','南','東'])};
+    out.push({title:`予告 · ${opp.name}`,text:`${g.threat.from}の${opp.name}が兵を集めている。建国${at}年に攻めてくるだろう。相手は${TYPES[opp.type].name}。`,warn:true});
+  }
+  return out;
+}
 function decideWar(g){
   const y=g.turn,done=k=>g.battles.some(b=>b.kind===k);
   let k=null;
   if(y>=SLOW.years) k='final';
   else if(g.seeds.bandit_war&&!done('bandit')&&y-g.seeds.bandit_war.t>=2) k='bandit';
-  else if(y>=3&&y<=SLOW.years-3&&y-(g.lastWar||0)>=3&&g.battles.filter(b=>b.kind==='invade').length<SLOW.maxInvade&&roll(warRisk(g).p)) k='invade';
+  else if(g.threat&&g.threat.y<=y) k='invade';
   return g.pendingWar=k;
+}
+/* 戦いの前に見せる、勝ち負けで変わること */
+const STAKES={
+ bandit:{win:'国力↑ 民心↑ 山賊の財宝が見つかるかも',lose:'国力↓ 民心↓'},
+ invade:{win:'攻め↑ 民心↑ 戦の気配が0に戻る',lose:'国力↓ 民心↓ 守り↓ 戦の気配は40から'},
+ final:{win:'帝国を退け、国が残る',lose:'国が滅びる'},
+};
+
+/* ===== 今年の方針（じっくりモード）。毎年タダで1つ選ぶ。選ぶと1年が終わる ===== */
+const POLICIES=[
+ {id:'p_train',label:'兵を鍛える',hint:'攻め↑',run:g=>{add(g,{atk:2});return '兵たちが、朝から晩まで槍を振るった。'}},
+ {id:'p_patrol',label:'城壁を見回る',hint:'守り↑',run:g=>{add(g,{def:2});return '崩れかけた石を、一つずつ積み直した。'}},
+ {id:'p_roads',label:'道を整える',hint:'機動↑',run:g=>{add(g,{mob:2});return 'ぬかるんだ道に、砂利が敷かれた。'}},
+ {id:'p_study',label:'学問をすすめる',hint:'国力↑',run:g=>{add(g,{pow:2});return '城下の寺子屋に、灯りがともった。'}},
+ {id:'p_market',label:'市を見回る',hint:'金貨+2',run:g=>{g.gold+=2;return '秤をごまかす商人が減り、税がきちんと集まった。'}},
+ {id:'p_youth',label:'若者を集める',hint:'人手+1 民心↓',run:g=>{g.hands+=1;add(g,{morale:-2});return '村々から、働き手の若者が城下に集まった。'}},
+ {id:'p_listen',label:'民の声を聞く',hint:'民心↑',run:g=>{add(g,{morale:5});return '王は広場に座り、日が暮れるまで民の話を聞いた。'}},
+ {id:'p_rest',label:'民を休ませる',hint:'民心↑ 人手+1',run:g=>{add(g,{morale:3});g.hands+=1;return '一年、無理な仕事を言いつけなかった。民はよく眠った。'}},
+ {id:'p_watch',label:'国境に見張りを立てる',hint:'戦の気配↓',ok:g=>!g.threat,run:g=>{addWar(g,-8);return '国境の丘に、見張りの火が絶えず焚かれた。'}},
+ {id:'p_envoy',label:'隣国に使者を送る',hint:'金貨-2 戦の気配↓↓',ok:g=>!g.threat&&g.gold>=2,run:g=>{g.gold-=2;addWar(g,-15);return '贈り物を携えた使者が、隣国の王と杯を交わした。'}},
+ {id:'p_hire',label:'職人を雇う',hint:'金貨-3 人手+2',ok:g=>g.gold>=3,run:g=>{g.gold-=3;g.hands+=2;return '他国から腕のいい職人を呼び寄せた。'}},
+ {id:'p_work',label:'出稼ぎに出す',hint:'人手-2 金貨+3',ok:g=>g.hands>=2,run:g=>{g.hands-=2;g.gold+=3;return '若者たちが他国へ働きに出て、稼ぎを送ってきた。'}},
+ {id:'p_drill',label:'戦に備えて演習する',hint:'攻め↑ 守り↑',ok:g=>!!g.threat||g.turn>=WAR.empireWarn,run:g=>{add(g,{atk:2,def:2});return '迫る戦に備え、兵たちが陣形を組み直した。'}},
+];
+const POLICY_BY_ID=Object.fromEntries(POLICIES.map(p=>[p.id,p]));
+function policyOffers(g){
+  const ok=POLICIES.filter(p=>!p.ok||p.ok(g)),out=[];
+  /* 戦が近いときは、備える方針を必ず1つ混ぜる */
+  const urgent=g.threat||g.turn>=WAR.empireWarn?ok.find(p=>p.id==='p_drill'):g.war>=60?pick(ok.filter(p=>p.id==='p_watch'||p.id==='p_envoy')):null;
+  if(urgent) out.push(urgent.id);
+  for(const p of ok.slice().sort(()=>Math.random()-.5)){if(out.length>=3)break;if(!out.includes(p.id))out.push(p.id)}
+  return out;
+}
+function playPolicy(g,id){
+  const p=POLICY_BY_ID[id];
+  return withDelta(g,()=>({title:`今年の方針 · ${p.label}`,text:p.run(g)}));
 }
 
 /* トロフィー（結末で、その国が満たしたものを集める） */
@@ -1457,7 +1520,7 @@ const SAVE_KEY='kenkoku.saved.v1',TROPHY_KEY='kenkoku.trophy.v1',SAVE_MAX=20;
 const TICK_MS=360;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const freshApp=()=>({ver:4,mode:'std',screen:'title',ans:[],offers:[],q:0,g:null,phase:'card',cards:[],ev:null,log:[],prev:[],camp:null,
+const freshApp=()=>({ver:5,mode:'std',screen:'title',ans:[],offers:[],q:0,g:null,phase:'card',cards:[],pol:[],ev:null,log:[],prev:[],camp:null,
   saved:false,lastBuilt:null,tro:null,newTro:[],rec:null,delArm:null});
 let APP=freshApp();
 let BATTLE=null;
@@ -1495,7 +1558,7 @@ function countryCard(g){
 }
 const causeTag=c=>c?`<p class="cause">${esc(c)}</p>`:'';
 function resultBlock(r){
-  return `<section class="card res ${r.tone?'tone-'+r.tone:''}">${causeTag(r.cause)}<p class="eyebrow">${r.tone?TONE_LABEL[r.tone]+' · ':''}${esc(r.title)}</p><p>${esc(r.text)}</p>${Object.keys(r.d||{}).length?`<div class="chips">${deltaChips(r.d)}</div>`:''}
+  return `<section class="card res ${r.tone?'tone-'+r.tone:''} ${r.warn?'tone-bad':''}">${causeTag(r.cause)}<p class="eyebrow">${r.tone?TONE_LABEL[r.tone]+' · ':''}${esc(r.title)}</p><p>${esc(r.text)}</p>${Object.keys(r.d||{}).length?`<div class="chips">${deltaChips(r.d)}</div>`:''}
   ${r.got&&r.got.length?`<div class="got"><p class="eyebrow">特技を身につけた</p>${spList(r.got)}</div>`:''}</section>`;
 }
 function chainList(cs){
@@ -1524,26 +1587,40 @@ function slowHint(g,id){
   if(inc&&!g.lv[id]) parts.push('毎年 '+Object.keys(inc).map(k=>`${RES_WORD[k]}+${inc[k]}`).join(' '));
   return parts.join(' · ');
 }
+function warHtml(g){
+  const y=g.turn,t=g.threat,parts=[];
+  if(t) parts.push(`<div class="alarm"><b>建国${t.y}年、${t.from}の${esc(t.opp.name)}が攻めてくる</b><span>あと${t.y-y}年 · 相手は${TYPES[t.opp.type].name}(${TYPES[TYPES[t.opp.type].beats].name}に強い) · いまのうちに備える</span></div>`);
+  if(g.empire) parts.push(`<div class="alarm"><b>建国${SLOW.years}年、${esc(g.empire.name)}との決戦</b><span>あと${SLOW.years-y}年 · 相手は${TYPES[g.empire.type].name}(${TYPES[TYPES[g.empire.type].beats].name}に強い)</span></div>`);
+  if(!t){
+    const {rate,why}=warRate(g),[wl,wc]=warLevel(g.war);
+    parts.push(`<div class="period"><b>戦の気配</b><span class="wl" style="--c:var(--${wc})">${wl}</span></div>
+    <div class="bar"><i style="width:${g.war}%;--c:var(--${wc})"></i></div>
+    <p class="small muted">毎年およそ +${rate}${why.length?`(${why.map(([w,n])=>`${w} ${n>0?'+':'−'}${Math.abs(n)}`).join('、')})`:''}。満ちると、${WAR.lead}年後に攻めてくる。見張りや使者で下げられる。</p>`);
+  }
+  return `<section class="card warcard">${parts.join('')}</section>`;
+}
 function planHtml(g){
-  const inc=incomeOf(g),risk=warRisk(g),[wl,wc]=warLevel(risk.p),last=g.turn===SLOW.years;
-  const prev=APP.prev.length?`<section class="stack"><p class="eyebrow">建国${g.turn-1}年のこと</p>${APP.prev.map(resultBlock).join('')}</section>`:'';
+  const inc=incomeOf(g),y=g.turn;
+  const prev=APP.prev.length?`<section class="stack"><p class="eyebrow">建国${y-1}年のこと</p>${APP.prev.map(resultBlock).join('')}</section>`:'';
   const purse=`<section class="card"><div class="purse">
     <div><span class="eyebrow">金貨</span><b>${g.gold}</b><span class="small muted">毎年 +${inc.gold}</span></div>
-    <div><span class="eyebrow">人手</span><b>${g.hands}</b><span class="small muted">毎年 +${inc.hands}</span></div>
-    <div><span class="eyebrow">戦の気配</span><b class="war" style="--c:var(--${wc})">${wl}</b><span class="small muted">${esc(risk.why.slice(0,2).join('、'))}</span></div></div></section>`;
+    <div><span class="eyebrow">人手</span><b>${g.hands}</b><span class="small muted">毎年 +${inc.hands}</span></div></div></section>`;
   const projs=g.proj.map((p,i)=>{const pct=Math.round((p.total-p.rem)/p.total*100);
     return `<div class="proj"><span class="thumb">${thumbSVG(g,p.id)}</span><span class="ptext"><span class="ck">${CARDS[p.id].title}</span><span class="bar" style="--c:var(--primary)"><i style="width:${pct}%"></i></span><span class="small muted">あと${p.rem}年で完成${p.hurried?' · 急がせた':''}</span></span>
-    <button class="btn ghost sm" data-act="hurry" data-i="${i}" ${canHurry(g,p)?'':'disabled'}>急がせる<small>人手${HURRY.hands}</small></button></div>`}).join('');
+    <button class="btn ghost sm" data-act="hurry" data-i="${i}" ${canHurry(g,p)?'':'disabled'}>急がせる<small>金貨${HURRY.gold}</small></button></div>`}).join('');
   const offers=APP.cards.map((id,i)=>{const c=CARDS[id],k=costOf(g,id),no=whyNot(g,id);
     return `<button class="pcard" data-act="build" data-i="${i}" ${no?'disabled':''}><span class="thumb">${thumbSVG(g,id)}</span><span class="ptext"><span class="ck">${c.title}${g.lv[id]?'(増築)':''}</span><span class="cd">${c.flavor}</span>
     <span class="cost">金貨${k.gold} · 人手${k.hands} · ${k.yrs?`完成まで${k.yrs}年`:'すぐ終わる'}</span><span class="cg">${esc(no||slowHint(g,id))}</span></span></button>`}).join('');
-  return `${prev}<span id="yearhead"></span>${purse}
+  const pols=APP.pol.map(id=>{const p=POLICY_BY_ID[id],ok=!p.ok||p.ok(g);
+    return `<button class="choice" data-act="policy" data-id="${id}" ${ok?'':'disabled'}><b>${p.label}</b><span>${p.hint}</span></button>`}).join('');
+  return `${prev}<span id="yearhead"></span>${warHtml(g)}${purse}
   <section class="stack"><div class="period"><b>工事中</b><span class="small muted">${g.proj.length} / ${SLOW.slots}</span></div>
     ${projs||'<p class="small muted">工事中の事業はない。</p>'}</section>
-  <section class="stack"><div class="period"><b>今年はじめる事業</b><span class="small muted">いくつでも・やめてもよい</span></div>
+  <section class="stack"><div class="period"><b>今年はじめる事業</b><span class="small muted">いくつでも・なくてもよい</span></div>
     <div class="cards">${offers||'<p class="small muted">今年の候補は、すべて手をつけた。</p>'}</div></section>
   ${APP.log.length?`<section class="stack"><p class="eyebrow">今年のこと</p>${APP.log.map(resultBlock).join('')}</section>`:''}
-  <button class="btn" data-act="endyear">${last?'30年目を終え、決戦へ':`建国${g.turn}年を終える`}</button>`;
+  <section class="stack"><div class="period"><b>今年の方針</b><span class="small muted">1つ選ぶと、建国${y}年が終わる</span></div>
+    <div class="choices">${pols}</div></section>`;
 }
 
 /* 画面ごとの描画 */
@@ -1556,7 +1633,7 @@ const VIEWS={
     <p class="lead">土地を選んで国を建て、事業を選んで国を育てる。選んだことは国の景色に残り、何年か後に思いがけない形で返ってくる。</p>
     <div class="modes">
       <button class="btn" data-act="start" data-mode="std">国を建てる<small>標準 · 3年ごとに事業を選ぶ(10回)</small></button>
-      <button class="btn ghost" data-act="start" data-mode="slow">じっくり建てる<small>30年を1年ずつ · 事業を育て、戦は思いがけずやって来る</small></button>
+      <button class="btn ghost" data-act="start" data-mode="slow">じっくり建てる<small>30年を1年ずつ · 事業を育て、迫る戦に備える</small></button>
     </div>
     <div class="row"><button class="btn ghost sm" data-act="archive">残した国 ${saved.length}</button><button class="btn ghost sm" data-act="trophies">トロフィー ${nt} / ${TROPHIES.length}</button></div>
   </header>
@@ -1568,7 +1645,7 @@ const VIEWS={
     <li><span><b>問いに答えて、国を建てる</b><span class="small muted">どんな国になるかは、建国の瞬間まで分からない。選択肢は毎回入れ替わる。</span></span></li>
     <li><span><b>事業を選んで、国を育てる</b><span class="small muted">砦、港、畑、学舎。建てたものは景色に増えていき、何年か後に出来事として返ってくる。</span></span></li>
     <li><span><b>戦いと、帝国との決戦</b><span class="small muted">過去の選択が戦いで効く。最後に、国の呼び名と、選択のつながりが残る。</span></span></li>
-    <li><span><b>じっくりモード</b><span class="small muted">問いは12。1年ずつ、金貨と人手をやりくりして事業を植える。完成まで何年もかかるものほど、大きく返ってくる。</span></span></li>
+    <li><span><b>じっくりモード</b><span class="small muted">問いは12。1年ずつ、金貨と人手をやりくりして事業を植え、毎年ひとつ方針を決める。戦の気配が満ちると、攻めてくる2年前に予告が出る。</span></span></li>
   </ol></section>`;
  },
  found(){
@@ -1609,6 +1686,7 @@ const VIEWS={
   <div class="vs">${miniCard(g,'あなた')}${miniCard(o,'相手')}</div>
   <div class="hint">相性: ${hint}</div>
   <div class="hint">戦場: <b style="--c:var(--ink)">${F.name}</b> · ${fhint}</div>
+  <div class="hint">勝てば: ${stakeText(g,c.kind,'win')}<br>負ければ: ${stakeText(g,c.kind,'lose')}</div>
   <section class="stack"><p class="eyebrow">作戦を選ぶ</p><div class="tactics">${Object.entries(TACTICS).map(([k,t])=>`<button class="tac ${c.tactic===k?'sel':''}" data-act="tactic" data-k="${k}" aria-pressed="${c.tactic===k}"><b>${t.name}</b><span>${t.desc}</span></button>`).join('')}</div></section>
   <button class="btn" data-act="fight">開戦</button>`;
  },
@@ -1697,7 +1775,7 @@ function slowReign(g){
   let action='';
   if(APP.phase==='plan') action=planHtml(g);
   else if(APP.phase==='story') action=`${logHtml}${eventCard(g,APP.ev,y)}`;
-  else {const k=battleKindAt(g);action=`${logHtml}<button class="btn" data-act="prep">${k==='final'?'決戦の地へ':k==='bandit'?'山賊団の討伐へ':'敵が攻めてきた。迎え撃つ'}</button>`}
+  else {const k=battleKindAt(g);action=`${logHtml}<button class="btn" data-act="prep">${k==='final'?'決戦の地へ':k==='bandit'?'山賊団の討伐へ':`${esc(g.threat.opp.name)}が攻めてきた。迎え撃つ`}</button>`}
   return `${nationBand(g,`<span class="small muted">建国${y}年 · ${esc(landPhrase(g))}</span>`)}
   <div class="pips thin" style="--n:${SLOW.years}">${Array.from({length:SLOW.years},(_,i)=>`<i class="${i<y?'on':''} ${marks[i+1]||''}"></i>`).join('')}</div>
   <div class="frame land">${sceneSVG(g,{mood:landMood(g),focus:APP.lastBuilt},{label:'今の国の景色'})}</div>
@@ -1705,6 +1783,7 @@ function slowReign(g){
   ${action}
   ${chronTail(g)}`;
 }
+const stakeText=(g,kind,k)=>g.slow?STAKES[kind][k]:STAKES[kind][k].replace(/ 戦の気配.*$/,'');
 function miniCard(g,label){
   return `<section class="card mini"><p class="eyebrow">${label}</p><div class="row" style="gap:8px">${flagSVG(g.flag,36,24)}${typeBadge(g.type)}</div><h3>${esc(g.name)}</h3>${statsPanel(g,true)}
   <div class="chips">${g.specials.map(spChip).join('')||'<span class="small muted">特技なし</span>'}</div></section>`;
@@ -1728,7 +1807,7 @@ function askQ(){if(!APP.offers[APP.q]) APP.offers[APP.q]=offerOpts(QUESTIONS[APP
 function startTurn(){const g=APP.g;APP.phase='card';APP.cards=drawCards(g);APP.ev=null;APP.log=[];APP.lastBuilt=null;g.type=computeType(g.s)}
 function afterStory(){APP.phase=battleKindAt(APP.g)?'prebattle':'end'}
 /* じっくりモードの1年 */
-function beginSlowYear(){const g=APP.g;beginYear(g);APP.phase='plan';APP.cards=drawCards(g);APP.ev=null;APP.lastBuilt=null}
+function beginSlowYear(){const g=APP.g;beginYear(g);APP.phase='plan';APP.cards=drawCards(g);APP.pol=policyOffers(g);APP.ev=null;APP.lastBuilt=null}
 function nextSlowYear(){
   const g=APP.g;g.turn++;APP.prev=APP.log;APP.log=[];beginSlowYear();show('reign');
   scrollEl(APP.prev.length?root.querySelector('.res'):$('#yearhead'),'start');
@@ -1776,8 +1855,11 @@ root.addEventListener('click',e=>{
      if(r) logResult(r); else toast(`「${CARDS[id].title}」に取りかかった`);
      show('reign');break;}
    case 'hurry': if(hurry(g,+el.dataset.i)) show('reign');break;
-   case 'endyear':{
+   case 'policy':{
+     const p=POLICY_BY_ID[el.dataset.id];if(!p||(p.ok&&!p.ok(g))) break;
+     logResult(playPolicy(g,p.id));
      for(const r of endYear(g)) logResult(r);
+     for(const r of warTick(g)) logResult(r,`${r.title}: ${r.text}`);
      const ev=slowEvent(g);
      if(ev.minor){const r=playMinor(g,ev.minor);logResult(r,`${r.title}: ${r.text}`)}
      if(ev.id){APP.ev=ev.id;APP.phase='story';show('reign');scrollToAction();break}
@@ -1952,7 +2034,7 @@ function finishBattle(){
 /* 起動（公開ページの更新時も状態を引き継ぐ） */
 window.claude?.hot?.snapshot?.(()=>({app:{...APP,camp:APP.camp?{...APP.camp,sim:APP.camp.applied?APP.camp.sim:null}:null}}));
 function boot(data){
-  if(data&&data.app&&data.app.ver===4&&data.app.screen){APP=data.app;if(APP.screen==='battle'){if(APP.camp&&!APP.camp.applied){APP.camp.sim=null;APP.screen='campaign'}else APP.screen='reign'}}
+  if(data&&data.app&&data.app.ver===5&&data.app.screen){APP=data.app;if(APP.screen==='battle'){if(APP.camp&&!APP.camp.applied){APP.camp.sim=null;APP.screen='campaign'}else APP.screen='reign'}}
   try{show(APP.screen)}catch(e){APP=freshApp();show('title')}
 }
 window.claude?.hot?.ready?window.claude.hot.ready(boot):boot(window.claude?.hot?.data??{});
