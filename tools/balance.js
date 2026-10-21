@@ -26,21 +26,24 @@ function playReign(){
   }
   g.turn=10;finalize(g);return g;
 }
-const ST={pol:0,warn:0,builds:0,minor:0,events:0,invade:0,gold:0,hands:0};
+const ST={repay:0,borrow:0,immig:0,issue:0,pol:0,warn:0,builds:0,minor:0,events:0,invade:0,gold:0,hands:0};
 function playSlow(){
   const g=newNation(true);startSlow(g);
   for(g.turn=1;g.turn<=SLOW.years;g.turn++){
     beginYear(g);
+    if(canRepay(g)&&roll(.7)){repay(g);ST.repay++}
+    if(g.gold<3&&canBorrow(g)&&roll(.3)){borrow(g);ST.borrow++}
+    if(g.hands<3&&canImmig(g)&&roll(.4)){acceptImmig(g);ST.immig++}
     let offers=drawCards(g);
     if(g.morale<35&&offers.includes('fest')&&!whyNot(g,'fest')){startProject(g,'fest');offers=offers.filter(x=>x!=='fest')}
     for(const id of offers.sort(()=>Math.random()-.5)) if(!whyNot(g,id)&&roll(.85)){startProject(g,id);ST.builds++}
-    g.proj.forEach((p,i)=>{if(roll(.5))hurry(g,i,g.gold>g.hands+1?'g':g.hands>g.gold+1?'h':'m')});
+    g.proj.forEach((p,i)=>{for(let n=0;n<2;n++)if(roll(.4))hurry(g,i,g.gold>g.hands+1?'g':g.hands>g.gold+1?'h':'m')});
     const pol=policyOffers(g),pref=pol.find(x=>(x==='p_work'&&g.hands>g.gold+4)||(x==='p_hire'&&g.gold>g.hands+5));
     playPolicy(g,pref||(pol[0]==='p_drill'||(g.war>=60&&roll(.5))?pol[0]:pick(pol)));ST.pol++;
     endYear(g);warTick(g);
     const ev=slowEvent(g);
     if(ev.minor){playMinor(g,ev.minor);ST.minor++}
-    if(ev.id){playEvent(g,ev.id,Math.floor(Math.random()*getEvent(ev.id).choices.length));ST.events++}
+    if(ev.id){const E=getEvent(ev.id),ok=E.choices.map((c,i)=>i).filter(i=>!E.choices[i].ok||E.choices[i].ok(g));playEvent(g,ev.id,pick(ok));ST.events++;if(ISSUES.some(x=>x.id===ev.id))ST.issue++}
     const kind=decideWar(g);if(kind){if(kind==='invade')ST.invade++;fight(g,kind)}
   }
   g.turn=SLOW.years;finalize(g);ST.gold+=g.gold;ST.hands+=g.hands;ST.stat=(ST.stat||0)+STAT_KEYS.reduce((a,k)=>a+g.s[k],0);return g;
@@ -55,4 +58,5 @@ console.log('結末',JSON.stringify(titles));
 console.log('国家ランク',JSON.stringify(ranks));
 console.log('トロフィー(%)',JSON.stringify(Object.fromEntries(TROPHIES.map(t=>[t.name,+((tro[t.id]||0)/${N}*100).toFixed(1)]))));
 if('${MODE}'==='slow')console.log('1国あたり: 着工',(ST.builds/${N}).toFixed(1),'/ 選択の出来事',(ST.events/${N}).toFixed(1),'/ 小さな出来事',(ST.minor/${N}).toFixed(1),'/ 侵攻',(ST.invade/${N}).toFixed(2),'/ 残った金貨',(ST.gold/${N}).toFixed(1),'人手',(ST.hands/${N}).toFixed(1),'/ 平均の能力',(ST.stat/${N}).toFixed(0));
+if('${MODE}'==='slow')console.log('1国あたり: 借金',(ST.borrow/${N}).toFixed(2),'返済',(ST.repay/${N}).toFixed(2),'移民',(ST.immig/${N}).toFixed(2),'問題の出来事',(ST.issue/${N}).toFixed(2));
 `, ctx);

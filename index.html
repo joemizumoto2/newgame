@@ -232,6 +232,12 @@ input.name{font-family:var(--font-head);font-size:22px;padding:10px 12px;border-
 .hb{font-size:12px;font-weight:700;padding:5px 9px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer}
 .hb:hover{border-color:var(--primary)}
 .hb:disabled{opacity:.45;cursor:default}
+.hb small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.quick{gap:8px;margin-top:10px}
+.quick .hb{border-radius:12px;text-align:left;padding:7px 11px}
+.debt{display:flex;flex-direction:column;margin-top:10px;padding:8px 12px;border-radius:10px;background:var(--gold-bg);color:var(--gold)}
+.debt b{font-size:14px}
+.debt span{font-size:12px;color:var(--ink);opacity:.8}
 .pcard .cost{font-size:12px;font-weight:700}
 .pcard:disabled{opacity:.5;cursor:default}
 .pcard:disabled:hover{border-color:var(--line)}
@@ -440,7 +446,7 @@ function newGame(){
   return {answers:{},flags:[],mult:{},costMult:1,s:{atk:20,def:20,mob:20,pow:20},morale:60,turn:1,
     cnt:{arms:0,fortify:0,trade:0,farm:0,fest:0},prog:{},specials:[],used:[],chron:[],name:'',flag:null,type:null,rank:null,done:false,
     built:[],seeds:{},links:[],battles:[],lastKind:null,
-    slow:false,gold:0,hands:0,proj:[],lv:{},war:0,threat:null,empire:null,pendingWar:null};
+    slow:false,gold:0,hands:0,proj:[],lv:{},war:0,threat:null,empire:null,pendingWar:null,loan:null,loans:0,immig:0,lastImm:-9,due:[],curIssue:null};
 }
 const has=(g,f)=>g.flags.includes(f);
 function add(g,d){for(const k in d){ if(k==='morale') g.morale=clamp(g.morale+d[k],0,100); else g.s[k]=clamp(g.s[k]+d[k],1,100); }}
@@ -611,7 +617,7 @@ const SEED_LABEL={
  scouted:'敵の動きに先回りして備えた',bandit_ally:'山賊を許して雇い入れた',bandit_war:'山賊討伐の兵を挙げた',
  bandit_beaten:'山賊団を討ち果たした',bandit_guard:'元山賊を国境の見張りにした',genius:'学者に研究を任せた',
  fort_vet:'砦の兵が怪しい一団を追い払った',merc:'流れ者の傭兵を招き入れた',castaway:'難破船の生存者を助けた',
- migrants:'移り住む人々を迎え入れた',
+ migrants:'移り住む人々を迎え入れた',loan:'商人組合から金貨を借りた',immig:'移民を受け入れた',defaulted:'借金の取り立てを突っぱねた',
 };
 function plant(g,k){if(!g.seeds[k]) g.seeds[k]={t:g.turn}}
 const causeOf=(g,k)=>`建国${yearOf(g,g.seeds[k].t)}年に${SEED_LABEL[k]}`;
@@ -859,7 +865,7 @@ function nextEvent(g){
   return ge?ge.id:null;
 }
 function getEvent(id){return ALL_EVENTS[id]}
-function eventCause(g,ev){return ev.need&&g.seeds[ev.need[0]]?causeOf(g,ev.need[0])+'ことから':null}
+function eventCause(g,ev){if(ev.causeFn) return ev.causeFn(g);return ev.need&&g.seeds[ev.need[0]]?causeOf(g,ev.need[0])+'ことから':null}
 
 function withDelta(g,fn){
   const b=snap(g),sp=[...g.specials];const r=fn();checkSpecials(g);
@@ -869,6 +875,7 @@ const playCard=(g,id)=>withDelta(g,()=>applyCard(g,id));
 function playEvent(g,id,i){
   return withDelta(g,()=>{
     const ev=getEvent(id),ch=ev.choices[i],before=Object.keys(g.seeds);
+    if(ch.ok&&!ch.ok(g)) return {title:ev.title,text:''};
     const cause=eventCause(g,ev);
     g.used.push(id);
     const s0={...g.s},text=ch.run(g);
@@ -948,7 +955,7 @@ const playOutcome=(g,kind,win,opp,mods)=>withDelta(g,()=>battleOutcome(g,kind,wi
 
 /* ===== じっくりモード：30年を1年ずつ。事業は「植える」もので、完成まで年数がかかる ===== */
 const SLOW={years:30,slots:3,base:{gold:2,hands:1},start:{gold:5,hands:5},scale:.45,evScale:.45,fatigue:1.5,
-  cbP:.6,choiceP:.2,minorP:.35,invadeF:1.08,finalF:1.3,empireAll:1.23,rankShift:55,maxInvade:3};
+  cbP:.6,choiceP:.2,minorP:.35,invadeF:1.11,finalF:1.3,empireAll:1.26,rankShift:55,maxInvade:3};
 /* 費用（着工時に払う）・完成までの年数・完成後に毎年入る収入 */
 const BUILD={
  fest:{gold:1,hands:0,yrs:0},
@@ -966,7 +973,7 @@ const BUILD={
  school:{gold:4,hands:1,yrs:6,inc:{hands:1}},
 };
 const RES_WORD={gold:'金貨',hands:'人手'};
-function startSlow(g){g.slow=true;g.gold=SLOW.start.gold;g.hands=SLOW.start.hands;g.proj=[];g.lv={};g.war=0;g.threat=null;g.empire=null;g.pendingWar=null}
+function startSlow(g){g.slow=true;g.gold=SLOW.start.gold;g.hands=SLOW.start.hands;g.proj=[];g.lv={};g.war=0;g.threat=null;g.empire=null;g.pendingWar=null;g.loan=null;g.loans=0;g.immig=0;g.lastImm=-9;g.due=[];g.curIssue=null}
 function incomeOf(g){
   const r={...SLOW.base};
   for(const id in g.lv){const inc=BUILD[id].inc;if(inc)for(const k in inc)r[k]+=inc[k]}
@@ -987,7 +994,7 @@ function whyNot(g,id){
 }
 function beginYear(g){
   const inc=incomeOf(g);g.gold+=inc.gold;g.hands+=inc.hands;
-  for(const p of g.proj) p.hurried=false;
+  for(const p of g.proj) p.hurried=0;
   g.type=computeType(g.s);return inc;
 }
 /* 着工。すぐ終わる事業（収穫祭）は、その場で結果を返す */
@@ -996,13 +1003,14 @@ function startProject(g,id){
   g.gold-=c.gold;g.hands-=c.hands;
   add(g,{morale:-Math.round(c.hands*SLOW.fatigue)});
   if(!c.yrs) return withDelta(g,()=>applyBuild(g,id));
-  g.proj.push({id,rem:c.yrs,total:c.yrs,hurried:false});
+  g.proj.push({id,rem:c.yrs,total:c.yrs,hurried:0});
   return null;
 }
 /* 急がせる：金貨と人手を同じ価値として、合わせて2払う（払い方は3通り） */
 const HURRY={g:{gold:2,hands:0,label:'金貨2'},m:{gold:1,hands:1,label:'金貨1 人手1'},h:{gold:0,hands:2,label:'人手2'}};
-const canHurry=(g,p,k)=>!p.hurried&&p.rem>1&&(k?g.gold>=HURRY[k].gold&&g.hands>=HURRY[k].hands:Object.keys(HURRY).some(x=>canHurry(g,p,x)));
-function hurry(g,i,k){const p=g.proj[i],c=HURRY[k];if(!p||!c||!canHurry(g,p,k))return false;g.gold-=c.gold;g.hands-=c.hands;p.rem--;p.hurried=true;return true}
+const HURRY_MAX=2;
+const canHurry=(g,p,k)=>(p.hurried||0)<HURRY_MAX&&p.rem>1&&(k?g.gold>=HURRY[k].gold&&g.hands>=HURRY[k].hands:Object.keys(HURRY).some(x=>canHurry(g,p,x)));
+function hurry(g,i,k){const p=g.proj[i],c=HURRY[k];if(!p||!c||!canHurry(g,p,k))return false;g.gold-=c.gold;g.hands-=c.hands;p.rem--;p.hurried=(p.hurried||0)+1;return true}
 function applyBuild(g,id){
   const c=CARDS[id],lv=g.lv[id]||0;
   plant(g,id);if(!g.built.includes(id))g.built.push(id);
@@ -1073,6 +1081,7 @@ function slowEvent(g){
   const pool=MINOR.filter(m=>!g.used.includes(m.id)&&(!m.when||m.when(g)));
   if(pool.length&&roll(SLOW.minorP)) r.minor=pick(pool).id;
   if(y===4){r.id='sanzoku';return r}
+  const iss=dueIssue(g);if(iss){r.id=iss;return r}
   if(!g.used.includes('genius')&&!g.used.includes('alchemist')){
     if(y===21){r.id=g.seeds.genius?'genius':'alchemist';return r}
     if(y>21&&g.seeds.genius){r.id='genius';return r}
@@ -1088,6 +1097,61 @@ function slowEvent(g){
   }
   return r;
 }
+/* ===== その場でできること（じっくりモード）：借金と移民。あとで問題として返ってくる ===== */
+const LOAN={amt:6,owe:9,years:5};
+const canBorrow=g=>!g.loan&&g.turn<=SLOW.years-2;
+const canRepay=g=>!!g.loan&&g.gold>=g.loan.owe;
+function borrow(g){
+  if(!canBorrow(g)) return null;
+  return withDelta(g,()=>{
+    g.gold+=LOAN.amt;g.loan={owe:LOAN.owe,due:g.turn+LOAN.years,from:g.turn};g.loans=(g.loans||0)+1;plant(g,'loan');
+    return {title:'金貨を借りた',text:`商人組合から金貨${LOAN.amt}を借りた。建国${g.loan.due}年までに、金貨${LOAN.owe}を返す約束だ。`};
+  });
+}
+function repay(g){
+  if(!canRepay(g)) return null;
+  return withDelta(g,()=>{const o=g.loan.owe;g.gold-=o;g.loan=null;return {title:'借金を返した',text:`約束の金貨${o}を返した。商人組合の信用を得た。`}});
+}
+const IMMIG={hands:3,morale:-3,gap:2,issueP:.6};
+const canImmig=g=>g.turn-(g.lastImm??-9)>=IMMIG.gap&&g.turn<SLOW.years;
+function acceptImmig(g){
+  if(!canImmig(g)) return null;
+  return withDelta(g,()=>{
+    g.hands+=IMMIG.hands;add(g,{morale:IMMIG.morale});g.immig=(g.immig||0)+1;g.lastImm=g.turn;plant(g,'immig');
+    if(roll(IMMIG.issueP)) g.due.push({id:g.immig>=3&&roll(.5)?'imm_quarter':'imm_clash',y:g.turn+2+(roll(.5)?1:0),from:g.turn});
+    return {title:'移民を受け入れた',text:'遠くの国から来た人々が、城下に住みついた。古くからの民は、少し不安そうに見ている。'};
+  });
+}
+/* 借金と移民から生まれる問題。その年の「選択のある出来事」として起きる */
+const ISSUES=[
+ {id:'debt_collect',need:['loan'],scene:{prop:'strangers',mood:'dusk'},title:'取り立ての使者',causeFn:g=>`建国${g.loan.from}年に金貨を借りたことから`,
+  text:g=>`商人組合の使者が、約束の金貨${g.loan.owe}を取り立てに来た。期限は今年だ。`,choices:[
+  {label:'今すぐ払う',hint:'借金がなくなる',ok:g=>g.gold>=g.loan.owe,run:g=>{g.gold-=g.loan.owe;g.loan=null;return '金貨を数えて渡すと、使者は満足そうに帰っていった。'}},
+  {label:'期限を延ばしてもらう',hint:'借金が1.5倍 期限が3年延びる',run:g=>{g.loan.owe=Math.ceil(g.loan.owe*1.5);g.loan.due=g.turn+3;return `使者はしぶしぶ承知した。借りは金貨${g.loan.owe}に膨らんだ。`}},
+  {label:'土地で払う',hint:'国力↓ 民心↓ 借金はなくなる',run:g=>{add(g,{pow:-8,morale:-6});g.loan=null;return '国境の村をひとつ、商人組合に明け渡した。'}},
+  {label:'突っぱねる',hint:'借金はなくなる 戦の気配↑↑ 悪い噂',run:g=>{g.loan=null;addWar(g,35);prog(g,'akumyo');plant(g,'defaulted');return '使者は顔を真っ赤にして帰っていった。隣国の王が、商人組合の味方につくという噂だ。'}}]},
+ {id:'imm_clash',need:['immig'],scene:{prop:'crowd',mood:'dusk'},title:'古い民と新しい民',causeFn:g=>`建国${g.curIssue.from}年に移民を受け入れたことから`,
+  text:'移り住んできた人々と、古くからの民のあいだで、井戸の順番をめぐる喧嘩が絶えない。',choices:[
+  {label:'住む場所を分ける',hint:'民心↑ 機動↓',run:g=>{add(g,{morale:3,mob:-2});return '川を境に、新しい町が作られた。喧嘩は減ったが、行き来も減った。'}},
+  {label:'祭りで交わらせる',hint:'金貨-2 民心↑ いつか実を結ぶかも',ok:g=>g.gold>=2,run:g=>{g.gold-=2;add(g,{morale:4});plant(g,'migrants');return '両方の歌と料理を持ち寄った祭りが開かれた。夜が更けるころには、肩を組んで歌っていた。'}},
+  {label:'追い出す',hint:'人手-3 民心↑ 悪い噂',run:g=>{g.hands=Math.max(0,g.hands-3);add(g,{morale:4});prog(g,'akumyo');return '移民たちは荷物をまとめて去っていった。その話は、隣国にも伝わった。'}}]},
+ {id:'imm_quarter',need:['immig'],scene:{prop:'crowd',mood:'war'},title:'移民の街の騒ぎ',causeFn:g=>`建国${g.curIssue.from}年に移民を受け入れたことから`,
+  text:'移民が多く住む一角で、重い税に抗議する人々が通りを埋めた。',choices:[
+  {label:'言い分を聞く',hint:'金貨-3 民心↑',ok:g=>g.gold>=3,run:g=>{g.gold-=3;add(g,{morale:6});return '税を少し軽くした。人々は通りから引き上げた。'}},
+  {label:'兵で鎮める',hint:'民心↓↓ 内紛の恐れ',run:g=>{add(g,{morale:-8});if(roll(.4))prog(g,'naifun');return '騒ぎは収まった。だが、移民の街には冷たい空気が残った。'}},
+  {label:'自分たちで治めさせる',hint:'国力↓ 人手+2',run:g=>{add(g,{pow:-4});g.hands+=2;return '移民の街に、自分たちの長が立った。人々は前より熱心に働くようになった。'}}]},
+];
+Object.assign(ALL_EVENTS,Object.fromEntries(ISSUES.map(e=>[e.id,e])));
+/* その年に起きる問題があれば返す */
+function dueIssue(g){
+  const y=g.turn;
+  if(g.loan&&y>=g.loan.due) return 'debt_collect';
+  const i=g.due.findIndex(d=>d.y<=y);
+  if(i<0) return null;
+  g.curIssue=g.due.splice(i,1)[0];
+  return g.curIssue.id;
+}
+
 /* ===== 戦のきまり（じっくりモード） =====
    戦の気配は 0〜100 のゲージ。毎年たまり、選んだことや出来事で速くも遅くもなる。
    満ちると「2年後に〇〇が攻めてくる」と予告が出て、その2年で備えられる。
@@ -1198,11 +1262,13 @@ const TROPHIES=[
  {id:'peace',name:'静かな30年',desc:'じっくりモードで、決戦まで一度も攻め込まれなかった',cond:g=>g.slow&&!g.battles.some(b=>b.kind==='invade')},
  {id:'siege3',name:'三度の侵攻',desc:'じっくりモードで、3度の侵攻をすべて退けた',cond:g=>g.battles.filter(b=>b.kind==='invade'&&b.win).length>=3},
  {id:'rich',name:'あふれる国庫',desc:'じっくりモードで、金貨を30枚以上残した',cond:g=>g.slow&&g.gold>=30},
+ {id:'debtor',name:'借金の国',desc:'じっくりモードで、3度以上金貨を借りた',cond:g=>(g.loans||0)>=3},
+ {id:'welcome',name:'人の集まる国',desc:'じっくりモードで、移民を3度以上受け入れた',cond:g=>(g.immig||0)>=3},
 ];
 const trophiesOf=(g,e)=>TROPHIES.filter(t=>t.cond(g,e)).map(t=>t.id);
 
 /* 結末：国の呼び名は、その国が積み重ねたものから決まる */
-const EPITHET=[['iryo','医術'],['gratitude','慈悲'],['castaway','恩義'],['port','港'],['fort','砦'],['song','歌'],['knights','騎士'],['smith','鋼'],['farm','実り'],['school','学び'],['market','市'],['bandit_ally','寛容'],['mill','水車'],['watch','物見'],['road','街道'],['wall','石壁'],['fest','祭り'],['hunt','弓'],['resentment','商魂']];
+const EPITHET=[['iryo','医術'],['gratitude','慈悲'],['castaway','恩義'],['port','港'],['fort','砦'],['song','歌'],['knights','騎士'],['smith','鋼'],['farm','実り'],['school','学び'],['market','市'],['bandit_ally','寛容'],['mill','水車'],['watch','物見'],['road','街道'],['wall','石壁'],['fest','祭り'],['hunt','弓'],['resentment','商魂'],['immig','移民'],['defaulted','踏み倒し']];
 function endingOf(g){
   const fin=g.battles.find(b=>b.kind==='final'),won=!!(fin&&fin.win);
   const tagOf=Object.fromEntries(EPITHET),ok=k=>(g.seeds[k]||g.specials.includes(k))&&!(k==='port'&&g.seeds.port_closed);
@@ -1576,8 +1642,8 @@ function troGrid(ids,newIds=[]){
 function eventCard(g,id,y){
   const ev=getEvent(id),cause=eventCause(g,ev);
   return `<section class="card ev">${causeTag(cause)}<div class="frame">${sceneSVG(g,ev.scene||{},{label:ev.title})}</div>
-    <p class="eyebrow">建国${y}年の出来事</p><h3>${ev.title}</h3><p>${esc(ev.text)}</p>
-    <div class="choices">${ev.choices.map((c,i)=>`<button class="choice" data-act="choose" data-i="${i}"><b>${c.label}</b><span>${c.hint}</span></button>`).join('')}</div></section>`;
+    <p class="eyebrow">建国${y}年の出来事</p><h3>${ev.title}</h3><p>${esc(typeof ev.text==='function'?ev.text(g):ev.text)}</p>
+    <div class="choices">${ev.choices.map((c,i)=>`<button class="choice" data-act="choose" data-i="${i}" ${c.ok&&!c.ok(g)?'disabled':''}><b>${c.label}</b><span>${c.hint}</span></button>`).join('')}</div></section>`;
 }
 const chronTail=g=>g.chron.length>1?`<section class="quiet"><p class="eyebrow">年代記</p>${chronList(g.chron.slice(-4).reverse())}</section>`:'';
 
@@ -1608,10 +1674,16 @@ function planHtml(g){
   const prev=APP.prev.length?`<section class="stack"><p class="eyebrow">建国${y-1}年のこと</p>${APP.prev.map(resultBlock).join('')}</section>`:'';
   const purse=`<section class="card"><div class="purse">
     <div><span class="eyebrow">金貨</span><b>${g.gold}</b><span class="small muted">毎年 +${inc.gold}</span></div>
-    <div><span class="eyebrow">人手</span><b>${g.hands}</b><span class="small muted">毎年 +${inc.hands}</span></div></div></section>`;
+    <div><span class="eyebrow">人手</span><b>${g.hands}</b><span class="small muted">毎年 +${inc.hands}</span></div></div>
+    ${g.loan?`<div class="debt"><b>借金 金貨${g.loan.owe}</b><span>建国${g.loan.due}年までに返す${g.loan.due-y<=1?'(期限が近い)':''}</span></div>`:''}
+    <div class="row quick">
+      ${g.loan?`<button class="hb" data-act="repay" ${canRepay(g)?'':'disabled'}>返す 金貨${g.loan.owe}</button>`:`<button class="hb" data-act="borrow" ${canBorrow(g)?'':'disabled'}>借りる 金貨+${LOAN.amt}<small>${LOAN.years}年後に${LOAN.owe}返す</small></button>`}
+      <button class="hb" data-act="immig" ${canImmig(g)?'':'disabled'}>移民を受け入れる 人手+${IMMIG.hands}<small>${canImmig(g)?'民心が少し下がる':'2年に1回まで'}</small></button>
+    </div></section>`;
   const projs=g.proj.map((p,i)=>{const pct=Math.round((p.total-p.rem)/p.total*100);
-    const hb=p.hurried?'<span class="small muted">今年は急がせた</span>':p.rem<=1?'<span class="small muted">来年完成</span>'
-      :`<span class="small muted">1年急がせる</span>${Object.entries(HURRY).map(([k,c])=>`<button class="hb" data-act="hurry" data-i="${i}" data-k="${k}" ${canHurry(g,p,k)?'':'disabled'}>${c.label}</button>`).join('')}`;
+    const left=HURRY_MAX-(p.hurried||0);
+    const hb=p.rem<=1?'<span class="small muted">来年完成</span>':!left?'<span class="small muted">今年はもう急がせられない</span>'
+      :`<span class="small muted">1年急がせる(あと${left}回)</span>${Object.entries(HURRY).map(([k,c])=>`<button class="hb" data-act="hurry" data-i="${i}" data-k="${k}" ${canHurry(g,p,k)?'':'disabled'}>${c.label}</button>`).join('')}`;
     return `<div class="proj"><span class="thumb">${thumbSVG(g,p.id)}</span><span class="ptext"><span class="ck">${CARDS[p.id].title}</span><span class="bar" style="--c:var(--primary)"><i style="width:${pct}%"></i></span><span class="small muted">あと${p.rem}年で完成</span></span>
     <div class="hrow">${hb}</div></div>`}).join('');
   const offers=APP.cards.map((id,i)=>{const c=CARDS[id],k=costOf(g,id),no=whyNot(g,id);
@@ -1861,6 +1933,10 @@ root.addEventListener('click',e=>{
      if(r) logResult(r); else toast(`「${CARDS[id].title}」に取りかかった`);
      show('reign');break;}
    case 'hurry': if(hurry(g,+el.dataset.i,el.dataset.k)) show('reign');break;
+   case 'borrow': case 'repay': case 'immig':{
+     const r=act==='borrow'?borrow(g):act==='repay'?repay(g):acceptImmig(g);
+     if(r){logResult(r);toast(r.title)}
+     show('reign');break;}
    case 'policy':{
      const p=POLICY_BY_ID[el.dataset.id];if(!p||(p.ok&&!p.ok(g))) break;
      logResult(playPolicy(g,p.id));
