@@ -904,12 +904,26 @@ function battleSetup(g,kind){
   if(kind==='invade'){
     const o=g.slow&&g.threat?g.threat.opp:genNPC({turns:6,factor:.95});
     const from=g.slow&&g.threat?g.threat.from:'西';
-    return {kind,opp:o,field:pick(Object.keys(FIELDS)),label:`${o.name}の侵攻`,intro:`${from}の${o.name}が、国境を越えて攻め込んできた。`};
+    chaseUp(g,o,kind);
+  return {kind,opp:o,field:pick(Object.keys(FIELDS)),label:`${o.name}の侵攻`,intro:`${from}の${o.name}が、国境を越えて攻め込んできた。`+(o.chased?'あなたの国の評判を聞いて、兵を増やしてきたようだ。':'')};
   }
   const o=g.slow&&g.empire?g.empire:genNPC({turns:10,factor:g.slow?SLOW.finalF:1.07,suffix:'帝国',qn});
+  chaseUp(g,o,kind);
   const homes=Object.keys(FIELDS).filter(k=>FIELDS[k].home(g));
   return {kind,opp:o,field:homes.length&&roll(.5)?pick(homes):pick(Object.keys(FIELDS)),label:`${o.name}との決戦`,
-    intro:`大陸の東で膨れ上がった${o.name}が、すべての国に臣従を迫ってきた。国の存亡を賭けた戦いが始まる。`};
+    intro:`大陸の東で膨れ上がった${o.name}が、すべての国に臣従を迫ってきた。国の存亡を賭けた戦いが始まる。`+(o.chased?'あなたの国を最大の敵と見て、帝国は全軍を差し向けてきた。':'')};
+}
+/* 強い国ほど狙われる（じっくりモード）：こちらが強いほど、相手も兵を増やしてくる */
+const CHASE={invade:.8,final:1.1};
+function chaseUp(g,o,kind){
+  const k=CHASE[kind];if(!g.slow||!k) return false;
+  const gap=nationScore(g)-nationScore(o);if(gap<=0) return false;
+  const sum=STAT_KEYS.reduce((a,x)=>a+o.s[x],0),want=sum+gap*k,f=want/sum;
+  for(const x of STAT_KEYS) o.s[x]=clamp(Math.round(o.s[x]*f),1,100);
+  /* 能力が100で頭打ちになった分は、戦場での兵の多さとして上乗せする */
+  const got=STAT_KEYS.reduce((a,x)=>a+o.s[x],0);
+  o.chaseAll=got<want?1+(want-got)/got:1;
+  o.chased=true;return true;
 }
 /* これまでの選択が、戦いでどう効くか */
 function battleMods(g,kind){
@@ -936,6 +950,8 @@ function battleMods(g,kind){
   }
   return {p,e};
 }
+/* 戦う相手が決まってから、相手側の上乗せを足す */
+function oppMods(mods,o){if(o.chaseAll&&o.chaseAll>1) mods.e.all*=o.chaseAll;return mods}
 const KIND_LABEL={bandit:'山賊団の討伐',invade:'侵攻',final:'決戦'};
 function battleOutcome(g,kind,win,opp,mods){
   g.battles.push({kind,win,name:opp.name,y:yearOf(g,g.turn)});
@@ -1070,6 +1086,8 @@ const MINOR=[
  {id:'m_hat',tone:'none',title:'背の高い帽子',text:'城下で、やたらと背の高い帽子が流行った。翌年には、誰もかぶっていなかった。'},
 ];
 const MINOR_BY_ID=Object.fromEntries(MINOR.map(m=>[m.id,m]));
+/* くじで起きる、読むだけの出来事（ふだんの小さな出来事には混ざらない） */
+MINOR_BY_ID.m_guild={id:'m_guild',tone:'good',title:'商人組合の破産',text:'金を貸していた商人組合が、ほかの国への貸し倒れで潰れた。借金は帳消しになった。'};
 const TONE_LABEL={good:'良い知らせ',bad:'悪い知らせ',none:'今年の噂'};
 function playMinor(g,id){
   return withDelta(g,()=>{const m=MINOR_BY_ID[id];g.used.push(id);const extra=m.run?m.run(g):'';return {title:m.title,text:m.text+(extra?' '+extra:''),tone:m.tone}});
@@ -1081,7 +1099,7 @@ function slowEvent(g){
   const pool=MINOR.filter(m=>!g.used.includes(m.id)&&(!m.when||m.when(g)));
   if(pool.length&&roll(SLOW.minorP)) r.minor=pick(pool).id;
   if(y===4){r.id='sanzoku';return r}
-  const iss=dueIssue(g);if(iss){r.id=iss;return r}
+  const iss=dueIssue(g);if(iss==='m_guild'){r.minor=iss;}else if(iss){r.id=iss;return r}
   if(!g.used.includes('genius')&&!g.used.includes('alchemist')){
     if(y===21){r.id=g.seeds.genius?'genius':'alchemist';return r}
     if(y>21&&g.seeds.genius){r.id='genius';return r}
@@ -1112,20 +1130,31 @@ function repay(g){
   if(!canRepay(g)) return null;
   return withDelta(g,()=>{const o=g.loan.owe;g.gold-=o;g.loan=null;return {title:'借金を返した',text:`約束の金貨${o}を返した。商人組合の信用を得た。`}});
 }
-const IMMIG={hands:3,morale:-3,gap:2,issueP:.6};
+const IMMIG={hands:3,morale:-3,gap:2};
+/* 受け入れた人々の中に、たまに当たりとハズレが混ざる */
+const IMMIG_LUCK=[
+ {p:.12,tone:'good',text:'その中に、腕のいい鍛冶屋の一家がいた。武器庫の剣が見違えるようになった。',run:g=>add(g,{atk:4})},
+ {p:.08,tone:'good',text:'その中に、遠い国で学問を修めた学者がいた。学舎の塔に籠もって、何かを研究し始めた。',run:g=>plant(g,'genius')},
+ {p:.12,tone:'bad',text:'ところが、その中に隣国の密偵が紛れていたらしい。国の様子が筒抜けになり、戦の気配が濃くなった。',run:g=>addWar(g,25)},
+ {p:.08,tone:'bad',text:'ところが、旅の途中でかかった病を持ち込んだ者がいた。城下で熱を出す者が相次いだ。',run:g=>{add(g,{morale:-6});g.hands=Math.max(0,g.hands-2)}},
+];
 const canImmig=g=>g.turn-(g.lastImm??-9)>=IMMIG.gap&&g.turn<SLOW.years;
 function acceptImmig(g){
   if(!canImmig(g)) return null;
   return withDelta(g,()=>{
     g.hands+=IMMIG.hands;add(g,{morale:IMMIG.morale});g.immig=(g.immig||0)+1;g.lastImm=g.turn;plant(g,'immig');
-    if(roll(IMMIG.issueP)) g.due.push({id:g.immig>=3&&roll(.5)?'imm_quarter':'imm_clash',y:g.turn+2+(roll(.5)?1:0),from:g.turn});
-    return {title:'移民を受け入れた',text:'遠くの国から来た人々が、城下に住みついた。古くからの民は、少し不安そうに見ている。'};
+    /* 受け入れるほど、諍いが起きやすくなる */
+    if(roll(Math.min(.9,.4+.1*g.immig))) g.due.push({id:g.immig>=3&&roll(.5)?'imm_quarter':'imm_clash',y:g.turn+2+(roll(.5)?1:0),from:g.turn});
+    let r=Math.random(),luck=null;
+    for(const L of IMMIG_LUCK){if(r<L.p){luck=L;break}r-=L.p}
+    if(luck) luck.run(g);
+    return {title:'移民を受け入れた',text:'遠くの国から来た人々が、城下に住みついた。'+(luck?luck.text:'古くからの民は、少し不安そうに見ている。'),tone:luck?luck.tone:undefined};
   });
 }
 /* 借金と移民から生まれる問題。その年の「選択のある出来事」として起きる */
 const ISSUES=[
  {id:'debt_collect',need:['loan'],scene:{prop:'strangers',mood:'dusk'},title:'取り立ての使者',causeFn:g=>`建国${g.loan.from}年に金貨を借りたことから`,
-  text:g=>`商人組合の使者が、約束の金貨${g.loan.owe}を取り立てに来た。期限は今年だ。`,choices:[
+  text:g=>`商人組合の使者が、約束の金貨${g.loan.owe}を取り立てに来た。期限は今年だ。${g.loan.spiked?'しかも、商人組合は「利息が上がった」と言って、額を吊り上げてきた。':''}`,choices:[
   {label:'今すぐ払う',hint:'借金がなくなる',ok:g=>g.gold>=g.loan.owe,run:g=>{g.gold-=g.loan.owe;g.loan=null;return '金貨を数えて渡すと、使者は満足そうに帰っていった。'}},
   {label:'期限を延ばしてもらう',hint:'借金が1.5倍 期限が3年延びる',run:g=>{g.loan.owe=Math.ceil(g.loan.owe*1.5);g.loan.due=g.turn+3;return `使者はしぶしぶ承知した。借りは金貨${g.loan.owe}に膨らんだ。`}},
   {label:'土地で払う',hint:'国力↓ 民心↓ 借金はなくなる',run:g=>{add(g,{pow:-8,morale:-6});g.loan=null;return '国境の村をひとつ、商人組合に明け渡した。'}},
@@ -1143,9 +1172,17 @@ const ISSUES=[
 ];
 Object.assign(ALL_EVENTS,Object.fromEntries(ISSUES.map(e=>[e.id,e])));
 /* その年に起きる問題があれば返す */
+const LOAN_LUCK={collapse:.12,spike:.2};
 function dueIssue(g){
   const y=g.turn;
-  if(g.loan&&y>=g.loan.due) return 'debt_collect';
+  if(g.loan&&y>=g.loan.due){
+    if(!g.loan.rolled){
+      g.loan.rolled=true;
+      if(roll(LOAN_LUCK.collapse)){g.loan=null;return 'm_guild'}
+      if(roll(LOAN_LUCK.spike/(1-LOAN_LUCK.collapse))){g.loan.owe=Math.ceil(g.loan.owe*1.5);g.loan.spiked=true}
+    }
+    return 'debt_collect';
+  }
   const i=g.due.findIndex(d=>d.y<=y);
   if(i<0) return null;
   g.curIssue=g.due.splice(i,1)[0];
@@ -1955,7 +1992,7 @@ root.addEventListener('click',e=>{
    case 'prep':{
      g.type=computeType(g.s);
      const kind=battleKindAt(g),b=battleSetup(g,kind);
-     APP.camp={...b,mods:battleMods(g,kind),tactic:'rush',sim:null,applied:false};show('campaign');break;}
+     APP.camp={...b,mods:oppMods(battleMods(g,kind),b.opp),tactic:'rush',sim:null,applied:false};show('campaign');break;}
    case 'tactic': APP.camp.tactic=el.dataset.k;show('campaign');break;
    case 'fight':{
      const c=APP.camp,seed=(Math.random()*2147483647)|0;

@@ -1,14 +1,16 @@
-// 自動プレイで数値の釣り合いを確かめる。使い方: node tools/balance.js [回数] [std|slow]
+// 自動プレイで数値の釣り合いを確かめる。使い方: node tools/balance.js [回数] [std|slow] [smart]
+// smart を付けると、じっくりモードを「考えて遊ぶ人」に近い打ち方で遊ぶ（借金・移民を使い切り、出来事は得な方を選ぶ）
 // index.html の1つ目の <script>（ゲームの中身）だけを取り出して動かす。
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const logic = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const N = +process.argv[2] || 2000, MODE = process.argv[3] === 'slow' ? 'slow' : 'std';
+const N = +process.argv[2] || 2000, MODE = process.argv[3] === 'slow' ? 'slow' : 'std', SMART = process.argv[4] === 'smart';
 const ctx = vm.createContext({ console, Math });
 vm.runInContext(logic + `
 function fight(g,kind){
-  g.type=computeType(g.s);const b=battleSetup(g,kind),m=battleMods(g,kind);
+  g.type=computeType(g.s);const b=battleSetup(g,kind),m=oppMods(battleMods(g,kind),b.opp);
   const r=simulate(g,b.opp,b.field,pick(Object.keys(TACTICS)),pick(Object.keys(TACTICS)),(Math.random()*1e9)|0,m);
+  ST.oppSc=(ST.oppSc||0)+nationScore(b.opp)*(kind==='final');ST.meSc=(ST.meSc||0)+nationScore(g)*(kind==='final');
   if(r.ticks.some(t=>!isFinite(t.f)))throw new Error('NaN in battle');
   playOutcome(g,kind,r.end.winner==='p',b.opp,m);
 }
@@ -27,23 +29,34 @@ function playReign(){
   g.turn=10;finalize(g);return g;
 }
 const ST={repay:0,borrow:0,immig:0,issue:0,pol:0,warn:0,builds:0,minor:0,events:0,invade:0,gold:0,hands:0};
+const SMART=${SMART};
+const worth=g=>STAT_KEYS.reduce((a,k)=>a+g.s[k],0)+Math.min(g.morale,80)*.5+(g.gold+g.hands)*.8-g.war*.2-(g.loan?g.loan.owe*.8:0)-(g.prog.akumyo||0)*12-(g.prog.naifun||0)*15;
+/* 選択肢を試しに選んでみて、いちばん得なものを選ぶ（考えて遊ぶ人の代わり） */
+function bestChoice(g,id){
+  const E=getEvent(id),ok=E.choices.map((c,i)=>i).filter(i=>!E.choices[i].ok||E.choices[i].ok(g));
+  if(!SMART) return pick(ok);
+  let best=ok[0],bv=-1e9;
+  for(const i of ok){let v=0;for(let k=0;k<3;k++){const c=JSON.parse(JSON.stringify(g));c.used=[];playEvent(c,id,i);v+=worth(c)+c.specials.length*8}if(v>bv){bv=v;best=i}}
+  return best;
+}
 function playSlow(){
   const g=newNation(true);startSlow(g);
   for(g.turn=1;g.turn<=SLOW.years;g.turn++){
     beginYear(g);
-    if(canRepay(g)&&roll(.7)){repay(g);ST.repay++}
-    if(g.gold<3&&canBorrow(g)&&roll(.3)){borrow(g);ST.borrow++}
-    if(g.hands<3&&canImmig(g)&&roll(.4)){acceptImmig(g);ST.immig++}
+    if(canRepay(g)&&(SMART||roll(.7))){repay(g);ST.repay++}
+    if((SMART?g.gold<6:g.gold<3)&&canBorrow(g)&&(SMART||roll(.3))){borrow(g);ST.borrow++}
+    if((SMART||g.hands<3)&&canImmig(g)&&(SMART||roll(.4))){acceptImmig(g);ST.immig++}
     let offers=drawCards(g);
     if(g.morale<35&&offers.includes('fest')&&!whyNot(g,'fest')){startProject(g,'fest');offers=offers.filter(x=>x!=='fest')}
     for(const id of offers.sort(()=>Math.random()-.5)) if(!whyNot(g,id)&&roll(.85)){startProject(g,id);ST.builds++}
-    g.proj.forEach((p,i)=>{for(let n=0;n<2;n++)if(roll(.4))hurry(g,i,g.gold>g.hands+1?'g':g.hands>g.gold+1?'h':'m')});
+    g.proj.forEach((p,i)=>{for(let n=0;n<2;n++)if(SMART||roll(.4))hurry(g,i,g.gold>g.hands+1?'g':g.hands>g.gold+1?'h':'m')});
     const pol=policyOffers(g),pref=pol.find(x=>(x==='p_work'&&g.hands>g.gold+4)||(x==='p_hire'&&g.gold>g.hands+5));
-    playPolicy(g,pref||(pol[0]==='p_drill'||(g.war>=60&&roll(.5))?pol[0]:pick(pol)));ST.pol++;
+    if(SMART){let best=pol[0],bv=-1e9;for(const id of pol){const c=JSON.parse(JSON.stringify(g));playPolicy(c,id);const v=worth(c);if(v>bv){bv=v;best=id}}playPolicy(g,best)}
+    else playPolicy(g,pref||(pol[0]==='p_drill'||(g.war>=60&&roll(.5))?pol[0]:pick(pol)));ST.pol++;
     endYear(g);warTick(g);
     const ev=slowEvent(g);
     if(ev.minor){playMinor(g,ev.minor);ST.minor++}
-    if(ev.id){const E=getEvent(ev.id),ok=E.choices.map((c,i)=>i).filter(i=>!E.choices[i].ok||E.choices[i].ok(g));playEvent(g,ev.id,pick(ok));ST.events++;if(ISSUES.some(x=>x.id===ev.id))ST.issue++}
+    if(ev.id){playEvent(g,ev.id,bestChoice(g,ev.id));ST.events++;if(ISSUES.some(x=>x.id===ev.id))ST.issue++}
     const kind=decideWar(g);if(kind){if(kind==='invade')ST.invade++;fight(g,kind)}
   }
   g.turn=SLOW.years;finalize(g);ST.gold+=g.gold;ST.hands+=g.hands;ST.stat=(ST.stat||0)+STAT_KEYS.reduce((a,k)=>a+g.s[k],0);return g;
@@ -52,11 +65,11 @@ const W={bandit:[0,0],invade:[0,0],final:[0,0]},titles={},ranks={},tro={};
 for(let i=0;i<${N};i++){const g=${MODE === 'slow' ? 'playSlow' : 'playReign'}();g.battles.forEach(b=>{W[b.kind][0]++;if(b.win)W[b.kind][1]++});
   const e=endingOf(g);titles[e.title]=(titles[e.title]||0)+1;ranks[g.rank]=(ranks[g.rank]||0)+1;
   trophiesOf(g,e).forEach(t=>tro[t]=(tro[t]||0)+1)}
-console.log('モード','${MODE}');
+console.log('モード','${MODE}'+(SMART?' (考えて遊ぶ)':''));
 console.log('勝率',Object.entries(W).map(([k,[n,w]])=>k+' '+(n?(w/n*100).toFixed(0):'-')+'%').join(' / '));
 console.log('結末',JSON.stringify(titles));
 console.log('国家ランク',JSON.stringify(ranks));
 console.log('トロフィー(%)',JSON.stringify(Object.fromEntries(TROPHIES.map(t=>[t.name,+((tro[t.id]||0)/${N}*100).toFixed(1)]))));
 if('${MODE}'==='slow')console.log('1国あたり: 着工',(ST.builds/${N}).toFixed(1),'/ 選択の出来事',(ST.events/${N}).toFixed(1),'/ 小さな出来事',(ST.minor/${N}).toFixed(1),'/ 侵攻',(ST.invade/${N}).toFixed(2),'/ 残った金貨',(ST.gold/${N}).toFixed(1),'人手',(ST.hands/${N}).toFixed(1),'/ 平均の能力',(ST.stat/${N}).toFixed(0));
-if('${MODE}'==='slow')console.log('1国あたり: 借金',(ST.borrow/${N}).toFixed(2),'返済',(ST.repay/${N}).toFixed(2),'移民',(ST.immig/${N}).toFixed(2),'問題の出来事',(ST.issue/${N}).toFixed(2));
+if('${MODE}'==='slow')console.log('1国あたり: 借金',(ST.borrow/${N}).toFixed(2),'返済',(ST.repay/${N}).toFixed(2),'移民',(ST.immig/${N}).toFixed(2),'問題の出来事',(ST.issue/${N}).toFixed(2),'/ 決戦の国の強さ 自国',(ST.meSc/${N}).toFixed(0),'帝国',(ST.oppSc/${N}).toFixed(0));
 `, ctx);
