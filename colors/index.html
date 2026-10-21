@@ -245,7 +245,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
       <div class="sample" id="sample-d" hidden><i id="sample-d-sw"></i><span><b id="sample-d-name"></b><br><span class="muted" id="sample-d-sub"></span></span></div>
     </div>
     <div class="knobs">
-      <div class="actions" style="justify-content:space-between"><span class="muted">器に入るのは <b id="d-cap">20</b> 滴まで</span><div class="meter" id="meter"></div></div>
+      <div class="actions" style="justify-content:space-between"><span class="muted">器に入るのは <b id="d-cap">14</b> 滴まで</span><div class="meter" id="meter"></div></div>
       <div class="droprows">
         <div class="droprow"><b>赤</b><button class="dropbtn" data-ch="0" data-a="64"><span class="dot big" style="background:#ff0000"></span>大</button><button class="dropbtn" data-ch="0" data-a="16"><span class="dot small" style="background:#ff0000"></span>小</button><button class="dropbtn" data-ch="0" data-a="8"><span class="dot tiny" style="background:#ff0000"></span>ごく小</button></div>
         <div class="droprow"><b>緑</b><button class="dropbtn" data-ch="1" data-a="64"><span class="dot big" style="background:#00ff00"></span>大</button><button class="dropbtn" data-ch="1" data-a="16"><span class="dot small" style="background:#00ff00"></span>小</button><button class="dropbtn" data-ch="1" data-a="8"><span class="dot tiny" style="background:#00ff00"></span>ごく小</button></div>
@@ -262,7 +262,7 @@ tr.here td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
         </ul>
       </details>
       <div class="panel">
-        <div class="status" id="d-status">真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。20滴を使い切る前に「仕上げる」を押しても構いません。</div>
+        <div class="status" id="d-status">真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。14滴を使い切る前に「仕上げる」を押しても構いません。</div>
         <div class="actions">
           <button class="btn" id="d-done">仕上げる</button>
           <button class="btn ghost" id="d-empty">器を空ける</button>
@@ -915,8 +915,8 @@ function emptyCup(){ stopPour(); cupC=pourStart.slice(); pourLog=[]; renderPourN
 $('p-empty').onclick=emptyCup;
 
 // ---------- しずくモード ----------
-// 大きいしずく＝64（約25%）、小さいしずく＝16（約6%）、ごく小さいしずく＝8（約3%）、彩度のしずく＝今の色の鮮やかさを3割ほど上げる。器は20滴まで。
-const DROP_CAP=20, DROP_SAT=0.35;
+// 大きいしずく＝64（約25%）、小さいしずく＝16（約6%）、ごく小さいしずく＝8（約3%）、彩度のしずく＝今の色の鮮やかさを3割ほど上げる。器は14滴まで（すべての色が14滴以内で金冠に届く）。
+const DROP_CAP=14, DROP_SAT=0.35;
 let dropC=[0,0,0], dropUsed=0, dropDone=false, dChal=null, dropLog=[], dropAdd=[]; // dChal={target, ch}: 継ぎ足しチャレンジ中
 function satDrop(c){ const [h,s,l]=rgb2hsl(c); return s ? hsl2rgb(h,s+(1-s)*DROP_SAT,l) : c; }
 function renderDrop(){
@@ -1022,7 +1022,7 @@ $('d-done').onclick=()=>{
   else $('d-empty').textContent='次の器へ';
   renderDrop(); };
 $('d-empty').onclick=()=>{ dropC=[0,0,0]; dropUsed=0; dropLog=[]; dropAdd=[]; dropDone=false; dChal=null; $('d-done').textContent='仕上げる'; $('sample-d').hidden=true; $('d-empty').textContent='器を空ける';
-  $('d-status').className='status'; $('d-status').textContent='真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。20滴を使い切る前に「仕上げる」を押しても構いません。'; renderDrop(); };
+  $('d-status').className='status'; $('d-status').textContent='真っ暗な器に、光のしずくを1滴ずつ落とします。戻せません。14滴を使い切る前に「仕上げる」を押しても構いません。'; renderDrop(); };
 
 function setMode(m){
   mode=m; stopPour();
@@ -1091,9 +1091,9 @@ const ICON={
 function crownChips(c){ const chips=['drop','pour'].filter(m=>crowns[m][c.name]>=2).map(m=>{ const v=crowns[m][c.name], label=MODE_JA[m]+CROWN[v]+'冠';
   return `<svg class="mark ${v===3?'gold':'silver'}" viewBox="0 0 18 16" role="img" aria-label="${label}"><title>${label}</title>${ICON[m]}</svg>`; }).join('');
   return chips ? `<div class="chips">${chips}</div>` : ''; }
-// しずくモードの20滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
+// しずくモードの14滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
 const POUR_ONLY=new Set([]);
-// しずくの20滴では金冠（差3%未満）に届かない色、銀冠（継ぎ足しで差5%未満）に届かない色。これも総当たりで調べた
+// しずくの14滴では金冠（差3%未満）に届かない色、銀冠（継ぎ足しで差5%未満）に届かない色。これも総当たりで調べた
 const DROP_NO_GOLD=new Set([]);
 const DROP_NO_SILVER=new Set([]);
 function limitTag(c){
