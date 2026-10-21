@@ -1092,10 +1092,10 @@ function crownChips(c){ const chips=['drop','pour'].filter(m=>crowns[m][c.name]>
   return `<svg class="mark ${v===3?'gold':'silver'}" viewBox="0 0 18 16" role="img" aria-label="${label}"><title>${label}</title>${ICON[m]}</svg>`; }).join('');
   return chips ? `<div class="chips">${chips}</div>` : ''; }
 // しずくモードの20滴では届かず、注ぐモードでしか作れない色（全手順を総当たりで調べて決めた）
-const POUR_ONLY=new Set(["白練", "aliceblue", "azure", "cornsilk", "ghostwhite", "ivory", "lavenderblush", "lightyellow", "mintcream", "oldlace", "papayawhip", "seashell", "whitesmoke"]);
+const POUR_ONLY=new Set([]);
 // しずくの20滴では金冠（差3%未満）に届かない色、銀冠（継ぎ足しで差5%未満）に届かない色。これも総当たりで調べた
-const DROP_NO_GOLD=new Set(["桜", "黒橡", "白練", "aliceblue", "azure", "beige", "blanchedalmond", "cornsilk", "gainsboro", "ghostwhite", "honeydew", "ivory", "lavender", "lavenderblush", "lightcyan", "lightgoldenrodyellow", "lightyellow", "linen", "mintcream", "mistyrose", "moccasin", "oldlace", "papayawhip", "seashell", "whitesmoke"]);
-const DROP_NO_SILVER=new Set(["白練", "胡粉", "aliceblue", "azure", "blanchedalmond", "cornsilk", "ghostwhite", "ivory", "lavenderblush", "lightyellow", "mintcream", "mistyrose", "moccasin", "oldlace", "papayawhip", "seashell", "whitesmoke"]);
+const DROP_NO_GOLD=new Set([]);
+const DROP_NO_SILVER=new Set([]);
 function limitTag(c){
   if(POUR_ONLY.has(c.name)) return '<span class="badge strong">注ぐ専用</span>';
   const g=DROP_NO_GOLD.has(c.name), sv=DROP_NO_SILVER.has(c.name);
