@@ -250,12 +250,21 @@ input.name{font-family:var(--font-head);font-size:22px;padding:10px 12px;border-
 .alarm b{font-size:15px}
 .alarm span{font-size:12px;color:var(--ink);opacity:.8}
 .choice:disabled{opacity:.5;cursor:default}
+.fold{background:var(--surface-2);border-radius:14px;padding:10px 14px}
+.fold summary{font-size:13px;font-weight:700;color:var(--muted);cursor:pointer}
+.fold[open] summary{margin-bottom:10px}
+.rvtap{cursor:pointer}
+.res.pop{animation:pop .35s cubic-bezier(.2,.7,.2,1) both;border-color:var(--primary)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.seg button{font-size:13px;font-weight:700;padding:8px 6px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer}
+.seg button.sel{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
 .tro{background:var(--gold-bg);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .tro b{color:var(--gold);font-size:14px}
 .tro span{font-size:12px;color:var(--muted);line-height:1.5}
 .tro.off{background:var(--surface-2)} .tro.off b{color:var(--muted)}
 .tro .new{font-size:10px;color:var(--primary-ink);background:var(--primary);padding:0 6px;border-radius:999px;vertical-align:2px}
-@media (prefers-reduced-motion: reduce){ .bar i{transition:none} .btn{transition:none} .reveal .bar i{animation:none} }
+@media (prefers-reduced-motion: reduce){ .res.pop{animation:none} .bar i{transition:none} .btn{transition:none} .reveal .bar i{animation:none} }
 </style>
 
 <main id="app" class="app" aria-live="polite"></main>
@@ -1628,7 +1637,7 @@ const TICK_MS=360;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const freshApp=()=>({ver:5,mode:'std',screen:'title',ans:[],offers:[],q:0,g:null,phase:'card',cards:[],pol:[],ev:null,log:[],prev:[],camp:null,
-  saved:false,lastBuilt:null,tro:null,newTro:[],rec:null,delArm:null});
+  saved:false,lastBuilt:null,tro:null,newTro:[],rec:null,delArm:null,rv:null,auto:0});
 let APP=freshApp();
 let BATTLE=null;
 
@@ -1664,8 +1673,8 @@ function countryCard(g){
   ${statsPanel(g)}${spList(g.specials)}`;
 }
 const causeTag=c=>c?`<p class="cause">${esc(c)}</p>`:'';
-function resultBlock(r){
-  return `<section class="card res ${r.tone?'tone-'+r.tone:''} ${r.warn?'tone-bad':''}">${causeTag(r.cause)}<p class="eyebrow">${r.tone?TONE_LABEL[r.tone]+' · ':''}${esc(r.title)}</p><p>${esc(r.text)}</p>${Object.keys(r.d||{}).length?`<div class="chips">${deltaChips(r.d)}</div>`:''}
+function resultBlock(r,extra=''){
+  return `<section class="card res ${r.tone?'tone-'+r.tone:''} ${r.warn?'tone-bad':''} ${extra}">${causeTag(r.cause)}<p class="eyebrow">${r.tone?TONE_LABEL[r.tone]+' · ':''}${esc(r.title)}</p><p>${esc(r.text)}</p>${Object.keys(r.d||{}).length?`<div class="chips">${deltaChips(r.d)}</div>`:''}
   ${r.got&&r.got.length?`<div class="got"><p class="eyebrow">特技を身につけた</p>${spList(r.got)}</div>`:''}</section>`;
 }
 function chainList(cs){
@@ -1708,7 +1717,7 @@ function warHtml(g){
 }
 function planHtml(g){
   const inc=incomeOf(g),y=g.turn;
-  const prev=APP.prev.length?`<section class="stack"><p class="eyebrow">建国${y-1}年のこと</p>${APP.prev.map(resultBlock).join('')}</section>`:'';
+  const prev=APP.prev.length?foldLog(`建国${y-1}年のこと`,APP.prev):'';
   const purse=`<section class="card"><div class="purse">
     <div><span class="eyebrow">金貨</span><b>${g.gold}</b><span class="small muted">毎年 +${inc.gold}</span></div>
     <div><span class="eyebrow">人手</span><b>${g.hands}</b><span class="small muted">毎年 +${inc.hands}</span></div></div>
@@ -1884,11 +1893,25 @@ function stdReign(g){
   ${action}
   ${chronTail(g)}`;
 }
+/* 見終わった結果は、たたんでおく */
+const foldLog=(title,list)=>`<details class="fold"><summary>${title}(${list.length}件)</summary><div class="stack">${list.map(r=>resultBlock(r)).join('')}</div></details>`;
+const RV_MS={1:1300,2:650};
+/* 1年の結果を1枚ずつ見せる */
+function revealHtml(g){
+  const rv=APP.rv,items=APP.log.slice(rv.from),n=items.length,done=rv.shown>=n;
+  const cards=items.slice(0,rv.shown).map((r,i)=>i===rv.shown-1?`<div data-act="rv-next" class="rvtap">${resultBlock(r,'pop')}</div>`:resultBlock(r)).join('');
+  const nextLabel=done?(rv.then==='story'?`建国${g.turn}年の出来事へ`:'続ける'):`次へ(あと${n-rv.shown}件)`;
+  return `${rv.from?foldLog(`建国${g.turn}年のこと`,APP.log.slice(0,rv.from)):''}
+  <section class="stack rv"><div class="period" id="rvhead"><b>${rv.title}</b><span class="small muted">${rv.shown} / ${n}</span></div>${cards}
+  <button class="btn" data-act="rv-next">${nextLabel}</button>
+  <div class="seg" role="group" aria-label="送り方">${[['0','タップで送る'],['1','自動'],['2','2倍速']].map(([v,t])=>`<button data-act="rv-auto" data-v="${v}" class="${String(APP.auto||0)===v?'sel':''}" aria-pressed="${String(APP.auto||0)===v}">${t}</button>`).join('')}</div></section>`;
+}
 function slowReign(g){
-  const y=g.turn,logHtml=APP.log.map(resultBlock).join('');
+  const y=g.turn,logHtml=APP.log.length?foldLog(`建国${y}年のこと`,APP.log):'';
   const marks=Object.fromEntries(g.battles.map(b=>[b.y,b.win?'win':'lose']));
   let action='';
   if(APP.phase==='plan') action=planHtml(g);
+  else if(APP.phase==='reveal') action=revealHtml(g);
   else if(APP.phase==='story') action=`${logHtml}${eventCard(g,APP.ev,y)}`;
   else {const k=battleKindAt(g);action=`${logHtml}<button class="btn" data-act="prep">${k==='final'?'決戦の地へ':k==='bandit'?'山賊団の討伐へ':`${esc(g.threat.opp.name)}が攻めてきた。迎え撃つ`}</button>`}
   return `${nationBand(g,`<span class="small muted">建国${y}年 · ${esc(landPhrase(g))}</span>`)}
@@ -1925,7 +1948,29 @@ function afterStory(){APP.phase=battleKindAt(APP.g)?'prebattle':'end'}
 function beginSlowYear(){const g=APP.g;beginYear(g);APP.phase='plan';APP.cards=drawCards(g);APP.pol=policyOffers(g);APP.ev=null;APP.lastBuilt=null}
 function nextSlowYear(){
   const g=APP.g;g.turn++;APP.prev=APP.log;APP.log=[];beginSlowYear();show('reign');
-  scrollEl(APP.prev.length?root.querySelector('.res'):$('#yearhead'),'start');
+  scrollEl($('#yearhead'),'start');
+}
+let RV_T=null;
+function startReveal(from,then,title){
+  APP.rv={from,shown:1,then,title};APP.phase='reveal';show('reign');scrollEl($('#rvhead'),'start');schedReveal();
+}
+function revealNext(){
+  const rv=APP.rv;if(!rv) return;
+  clearTimeout(RV_T);
+  if(rv.shown<APP.log.length-rv.from){
+    rv.shown++;show('reign');
+    const c=root.querySelectorAll('.rv .res');scrollEl(c[c.length-1],'center');schedReveal();
+  } else {
+    APP.rv=null;
+    if(rv.then==='story'){APP.phase='story';show('reign');scrollToAction()}
+    else slowAfter();
+  }
+}
+/* 自動送り：最後の1枚まで出したら止まる（その先は自分で押す） */
+function schedReveal(){
+  clearTimeout(RV_T);
+  const rv=APP.rv;if(!APP.auto||!rv||rv.shown>=APP.log.length-rv.from) return;
+  RV_T=setTimeout(()=>{if(APP.phase==='reveal'&&APP.screen==='reign') revealNext()},RV_MS[APP.auto]);
 }
 function slowAfter(){
   if(decideWar(APP.g)){APP.phase='prebattle';show('reign');scrollToAction()}
@@ -1944,7 +1989,7 @@ root.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]'); if(!el||el.disabled) return;
   const act=el.dataset.act,g=APP.g;
   switch(act){
-   case 'start': APP=freshApp();APP.mode=el.dataset.mode==='slow'?'slow':'std';askQ();show('found');break;
+   case 'start':{const auto=APP.auto;APP=freshApp();APP.auto=auto;}APP.mode=el.dataset.mode==='slow'?'slow':'std';askQ();show('found');break;
    case 'home': show('title');break;
    case 'back': if(APP.q>0){APP.q--;show('found')} else show('title');break;
    case 'answer':
@@ -1981,13 +2026,15 @@ root.addEventListener('click',e=>{
      for(const r of warTick(g)) logResult(r,`${r.title}: ${r.text}`);
      const ev=slowEvent(g);
      if(ev.minor){const r=playMinor(g,ev.minor);logResult(r,`${r.title}: ${r.text}`)}
-     if(ev.id){APP.ev=ev.id;APP.phase='story';show('reign');scrollToAction();break}
-     slowAfter();break;}
+     if(ev.id) APP.ev=ev.id;
+     startReveal(0,ev.id?'story':'after',`建国${g.turn}年の終わり`);break;}
+   case 'rv-next': revealNext();break;
+   case 'rv-auto': APP.auto=+el.dataset.v;show('reign');schedReveal();break;
    case 'choose':{
      const r=playEvent(g,APP.ev,+el.dataset.i);
      logResult(r,`${r.title.split(' · ')[0]}: ${r.text}${gotText(r)}`);
      APP.ev=null;
-     if(g.slow){slowAfter();break}
+     if(g.slow){startReveal(APP.log.length-1,'after',r.title.split(' · ')[0]);break}
      afterStory();show('reign');scrollToAction();break;}
    case 'prep':{
      g.type=computeType(g.s);

@@ -24,6 +24,12 @@ const out = process.argv[3] || path.join(require('os').tmpdir(), 'kenkoku-smoke-
     wide = Math.max(wide, await p.evaluate(() => document.documentElement.scrollWidth));
     if (scr === 'ending') break;
     if (await p.$('[data-act=card]')) { if (await p.evaluate(() => APP.g.turn === 6)) await shot('reign'); await click('[data-act=card][data-i="0"]'); continue; }
+    if (await p.$('button.btn[data-act=rv-next]')) {
+      const st = await p.evaluate(() => APP.rv && APP.rv.shown);
+      if (st === 2 && !fs.existsSync(path.join(out, 'reveal.png'))) await shot('reveal');
+      if (await p.evaluate(() => APP.g.turn === 15 && !APP.auto)) await click('[data-act=rv-auto][data-v="2"]'); // 2倍速も一度通す
+      await click('button.btn[data-act=rv-next]'); continue;
+    }
     if (await p.$('[data-act=policy]')) {
       const y = await p.evaluate(() => APP.g.turn);
       if (y === 8) await p.evaluate(() => { APP.g.war = 99; }); // 予告と侵攻の画面を必ず通す
